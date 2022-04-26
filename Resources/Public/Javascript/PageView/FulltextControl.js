@@ -55,8 +55,7 @@ var dlfViewerFullTextControl = function(map, image, fulltextUrl) {
      * @type {Object}
      * @private
      */
-    this.dic = $('#tx-dlf-tools-fulltext').length > 0 && $('#tx-dlf-tools-fulltext').attr('data-dic') ?
-        dlfUtils.parseDataDic($('#tx-dlf-tools-fulltext')) :
+    this.dic = $('#tx-dlf-tools-fulltext').length > 0 && $('#tx-dlf-tools-fulltext').attr('data-dic') ? dlfUtils.parseDataDic($('#tx-dlf-tools-fulltext')) :
         {
             'fulltext':'Fulltext',
             'fulltext-on':'Activate Fulltext',
@@ -357,10 +356,12 @@ dlfViewerFullTextControl.prototype.scrollToText = function(element, fullTextScro
 };
 
 /**
- * Activate Fulltext Features
+ * Activate Fulltext Features: Shows sidebar and with fulltext
  */
 dlfViewerFullTextControl.prototype.activate = function() {
 
+    /*DEBUG*/ alert("BE:FullTextControl.activate:"); //DEBUG
+    
     var controlEl = $('#tx-dlf-tools-fulltext');
 
     // if the activate method is called for the first time fetch
@@ -369,6 +370,9 @@ dlfViewerFullTextControl.prototype.activate = function() {
         this.fulltextData_ = dlfFullTextUtils.fetchFullTextDataFromServer(this.url, this.image);
 
         if (this.fulltextData_ !== undefined) {
+
+            /*DEBUG*/   ///alert("BE:dlfViewerFullTextControl.activate: fulltextData_ !== undefined"); //DEBUG
+
             // add features to fulltext layer
             this.layers_.textblock.getSource().addFeatures(this.fulltextData_.getTextblocks());
             this.layers_.textline.getSource().addFeatures(this.fulltextData_.getTextlines());
@@ -392,9 +396,10 @@ dlfViewerFullTextControl.prototype.activate = function() {
 };
 
 /**
- * Activate Fulltext Features
+ * Deactivates Fulltext Features: Hides sidebar and with fulltext
  */
 dlfViewerFullTextControl.prototype.deactivate = function() {
+    /**DEBUG**/ alert("FullTextControl.deactivate");
 
     var controlEl = $('#tx-dlf-tools-fulltext');
 
@@ -477,6 +482,7 @@ dlfViewerFullTextControl.prototype.enableFulltextSelect = function() {
  * @param {Array.<ol.Feature>|undefined} features
  */
 dlfViewerFullTextControl.prototype.showFulltext = function(features) {
+    /**DEBUG**/ alert("BE:FullTextControl.showFulltext");
 
     if (features !== undefined) {
         $('#tx-dlf-fulltextselection').children().remove();
@@ -496,6 +502,10 @@ dlfViewerFullTextControl.prototype.showFulltext = function(features) {
  * @param {Object} textLine
  */
 dlfViewerFullTextControl.prototype.appendTextLineSpan = function(textLine) {
+
+    /*DEBUG*/ //alert("BE:dlfViewerFullTextControl.appendTextLineSpan: " + textLine.toString()); //DEBUG
+    /*DEBUG*/ ///alert("BE:dlfViewerFullTextControl.appendTextLineSpan"); //DEBUG
+
     var textLineSpan = $('<span class="textline" id="' + textLine.getId() + '">');
     var content = textLine.get('content');
 
