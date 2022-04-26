@@ -13,7 +13,7 @@
 $EM_CONF[$_EXTKEY] = [
     'title' => 'Kitodo.Presentation',
     'description' => 'Base plugins, modules, services and API of the Digital Library Framework. It is part of the community-based Kitodo Digitization Suite.',
-    'version' => '3.3.4',
+    'version' => '3.3.4-ocr-test-04-26',
     'category' => 'misc',
     'constraints' => [
         'depends' => [
@@ -31,7 +31,7 @@ $EM_CONF[$_EXTKEY] = [
     'author_company' => 'Kitodo. Key to digital objects e. V.',
     'autoload' => [
         'psr-4' => [
-            'Kitodo\\Dlf\\' => 'Classes/'
+            'csidirop\\Dlf\\' => 'Classes/'
         ],
         'classmap' => [
             'vendor/solarium',
