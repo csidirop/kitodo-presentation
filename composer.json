@@ -17,6 +17,12 @@
       "email": "sebastian.meyer@slub-dresden.de",
       "homepage": "https://www.slub-dresden.de",
       "role": "maintainer"
+    },
+    {
+      "name": "Christos Sidiropoulos",
+      "email": "christos.sidiropoulos@bib.uni-mannheim.de",
+      "homepage": "https://www.bib.uni-mannheim.de",
+      "role": "developer"
     }
   ],
   "support": {
