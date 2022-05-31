@@ -10,16 +10,9 @@ use TYPO3\CMS\Core\Log\LogLevel;
 
 class FullTextGenerator {
 
-  //DEBUG!
+  //DEBUG //TODO: remove when not used anymore
   protected static function printDebuggVals($doc){
-  //  $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
-
-    //TEST:
-    //echo "<h2>" ."TEST!!!" . $doc . "</h2>";
-
     var_dump($doc);
-
-    //echo '<script>alert("DOC: ")</script>';
   }
 
   protected $conf = [];
@@ -67,7 +60,7 @@ class FullTextGenerator {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)
       ->get($ext_key);
     $doc_id = self::getDocLocalId($doc);    
-/* DEBUG */ if($conf['ocrDebugBackend']) echo '<script>alert("BE:FullTextGen.getDocLocalPath: '.$conf['fulltextFolder'] . "/$doc_id".'")</script>'; //DEBUG
+    /* DEBUG */ if($conf['ocrDebugBackend']) echo '<script>alert("BE:FullTextGen.getDocLocalPath: '.$conf['fulltextFolder'] . "/$doc_id".'")</script>'; //DEBUG
     return $conf['fulltextFolder'] . "/$doc_id";
   }
   
