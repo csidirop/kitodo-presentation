@@ -23,7 +23,7 @@ $EM_CONF[$_EXTKEY] = [
         'conflicts' => [],
         'suggests' => []
     ],
-    'state' => 'stable',
+    'state' => 'dev',
     'uploadfolder' => false,
     'clearCacheOnLoad' => false,
     'author' => 'Sebastian Meyer (Maintainer)',
