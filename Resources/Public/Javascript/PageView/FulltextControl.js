@@ -360,7 +360,7 @@ dlfViewerFullTextControl.prototype.scrollToText = function(element, fullTextScro
  */
 dlfViewerFullTextControl.prototype.activate = function() {
 
-    /*DEBUG*/ alert("BE:FullTextControl.activate:"); //DEBUG
+    /*DEBUG*/ //alert("FullTextControl.activate:"); //DEBUG
     
     var controlEl = $('#tx-dlf-tools-fulltext');
 
@@ -371,7 +371,7 @@ dlfViewerFullTextControl.prototype.activate = function() {
 
         if (this.fulltextData_ !== undefined) {
 
-            /*DEBUG*/   ///alert("BE:dlfViewerFullTextControl.activate: fulltextData_ !== undefined"); //DEBUG
+            /*DEBUG*/   ///alert("dlfViewerFullTextControl.activate: fulltextData_ !== undefined"); //DEBUG
 
             // add features to fulltext layer
             this.layers_.textblock.getSource().addFeatures(this.fulltextData_.getTextblocks());
@@ -399,7 +399,7 @@ dlfViewerFullTextControl.prototype.activate = function() {
  * Deactivates Fulltext Features: Hides sidebar and with fulltext
  */
 dlfViewerFullTextControl.prototype.deactivate = function() {
-    /**DEBUG**/ alert("FullTextControl.deactivate");
+    /**DEBUG**/ //alert("FullTextControl.deactivate");
 
     var controlEl = $('#tx-dlf-tools-fulltext');
 
@@ -482,7 +482,7 @@ dlfViewerFullTextControl.prototype.enableFulltextSelect = function() {
  * @param {Array.<ol.Feature>|undefined} features
  */
 dlfViewerFullTextControl.prototype.showFulltext = function(features) {
-    /**DEBUG**/ alert("BE:FullTextControl.showFulltext");
+    /**DEBUG**/ alert("FullTextControl.showFulltext");
 
     if (features !== undefined) {
         $('#tx-dlf-fulltextselection').children().remove();
@@ -503,8 +503,8 @@ dlfViewerFullTextControl.prototype.showFulltext = function(features) {
  */
 dlfViewerFullTextControl.prototype.appendTextLineSpan = function(textLine) {
 
-    /*DEBUG*/ //alert("BE:dlfViewerFullTextControl.appendTextLineSpan: " + textLine.toString()); //DEBUG
-    /*DEBUG*/ ///alert("BE:dlfViewerFullTextControl.appendTextLineSpan"); //DEBUG
+    /*DEBUG*/ //alert("dlfViewerFullTextControl.appendTextLineSpan: " + textLine.toString()); //DEBUG
+    /*DEBUG*/ ///alert("dlfViewerFullTextControl.appendTextLineSpan"); //DEBUG
 
     var textLineSpan = $('<span class="textline" id="' + textLine.getId() + '">');
     var content = textLine.get('content');
