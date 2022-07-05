@@ -49,7 +49,7 @@
   },
   "autoload": {
     "psr-4": {
-      "csidirop\\Dlf\\": "Classes/"
+      "Kitodo\\Dlf\\": "Classes/"
     }
   },
   "extra": {
