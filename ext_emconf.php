@@ -11,9 +11,9 @@
  */
 
 $EM_CONF[$_EXTKEY] = [
-    'title' => 'Kitodo.Presentation - OCR-On-Demand-Testbuild',
+    'title' => 'Kitodo.Presentation - OCR-On-Demand',
     'description' => 'Base plugins, modules, services and API of the Digital Library Framework. It is part of the community-based Kitodo Digitization Suite.',
-    'version' => '3.3.4-ocr-test',
+    'version' => '3.3.4-ocr',
     'category' => 'misc',
     'constraints' => [
         'depends' => [
