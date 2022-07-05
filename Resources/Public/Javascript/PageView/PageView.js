@@ -1,3 +1,5 @@
+//OCR-Test: Copied from KIT project.
+
 /**
  * (c) Kitodo. Key to digital objects e.V. <contact@kitodo.org>
  *
@@ -18,6 +20,7 @@
  * @constructor
  */
 var dlfViewer = function(settings){
+    alert("PageView.js EDIT: x7 ");
 
     /**
      * The element id of the map container
@@ -161,33 +164,37 @@ dlfViewer.prototype.addCustomControls = function() {
         annotationControl = undefined,
         imageManipulationControl = undefined,
         images = this.images;
-
-    // Adds fulltext behavior and download only if there is fulltext available and no double page
-    // behavior is active
-    if (dlfUtils.isFulltextDescriptor(this.fulltexts[0]) && this.images.length === 1) {
+    // Adds fulltext behavior and download only if there is fulltext available and no double page behavior is active
+    if (dlfUtils.isFulltextDescriptor(this.fulltexts[0]) && (this.fulltexts[0].url !== undefined) && (this.images.length === 1)) { //OCR-Test
+    //if ((this.fulltexts[0] !== undefined) && (this.fulltexts[0].url !== '') && (this.fulltexts[0].url !== undefined) && (this.images.length === 1)) { //OCR-Test
+        /**DEBUG**/ alert("PageView.addCustomControls: if1: true");
+        $('.ocr-create').remove();  //OCR-Test
+        
         fulltextControl = new dlfViewerFullTextControl(this.map, this.images[0], this.fulltexts[0].url);
         fulltextDownloadControl = new dlfViewerFullTextDownloadControl(this.map, this.images[0], this.fulltexts[0].url);
     } else {
+        /**DEBUG**/ alert("PageView.addCustomControls: if1: false");
         $('#tx-dlf-tools-fulltext').remove();
+        // $('.fulltext').remove(); //?? //OCR-Test
     }
 
-    if (this.annotationContainers[0] !== undefined && this.annotationContainers[0].annotationContainers !== undefined
-        && this.annotationContainers[0].annotationContainers.length > 0 && this.images.length === 1) {
+    if (this.annotationContainers[0] !== undefined && this.annotationContainers[0].annotationContainers !== undefined && this.annotationContainers[0].annotationContainers.length > 0 && this.images.length === 1) {
+    // if(true){ //DEBUG: force fulltext/annotations show
+        /**DEBUG**/ alert("PageView.addCustomControls: if2: true");
         // Adds annotation behavior only if there are annotations available and view is single page
         annotationControl = new DlfAnnotationControl(this.map, this.images[0], this.annotationContainers[0]);
         if (fulltextControl !== undefined) {
             $(fulltextControl).on("activate-fulltext", $.proxy(annotationControl.deactivate, annotationControl));
             $(annotationControl).on("activate-annotations", $.proxy(fulltextControl.deactivate, fulltextControl));
         }
-    }
-    else {
+    } else {
+        /*DEBUG*/ alert("PageView.addCustomControls: if2: false");
         $('#tx-dlf-tools-annotations').remove();
     }
 
-    //
     // Add image manipulation tool if container is added.
-    //
     if ($('#tx-dlf-tools-imagetools').length > 0) {
+        /**DEBUG**/ alert("PageView.addCustomControls: if3: true");
 
         // should be called if cors is enabled
         imageManipulationControl = new dlfViewerImageManipulationControl({
@@ -197,17 +204,23 @@ dlfViewer.prototype.addCustomControls = function() {
 
         // bind behavior of both together
         if (fulltextControl !== undefined) {
+            /**DEBUG**/ alert("PageView.addCustomControls: if3a: true");
+
             $(imageManipulationControl).on("activate-imagemanipulation", $.proxy(fulltextControl.deactivate, fulltextControl));
             $(fulltextControl).on("activate-fulltext", $.proxy(imageManipulationControl.deactivate, imageManipulationControl));
+        } else {
+        /**DEBUG**/ alert("PageView.addCustomControls: if3a: false");
         }
         if (annotationControl !== undefined) {
+            /**DEBUG**/ alert("PageView.addCustomControls: if3b: true");
             $(imageManipulationControl).on("activate-imagemanipulation", $.proxy(annotationControl.deactivate, annotationControl));
             $(annotationControl).on("activate-annotations", $.proxy(imageManipulationControl.deactivate, imageManipulationControl));
-        }
+        } else {
+            /**DEBUG**/ alert("PageView.addCustomControls: if3b: false");
+        } 
 
         // set on object scope
         this.imageManipulationControl = imageManipulationControl;
-
     }
 };
 
@@ -244,29 +257,19 @@ dlfViewer.prototype.addHighlightField = function(highlightField, imageIndex, wid
  * @private
  */
 dlfViewer.prototype.createControls_ = function(controlNames, layers) {
-
     var controls = [];
 
     for (var i in controlNames) {
-
         if (controlNames[i] !== "") {
-
             switch(controlNames[i]) {
-
                 case "OverviewMap":
-
                     controls.push(new ol.control.OverviewMap({layers}));
                     break;
-
                 case "ZoomPanel":
-
                     controls.push(new ol.control.Zoom());
                     break;
-
                 default:
-
                     break;
-
             }
         }
     }
