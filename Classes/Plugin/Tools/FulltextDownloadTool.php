@@ -84,7 +84,7 @@ class FulltextDownloadTool extends \Kitodo\Dlf\Common\AbstractPlugin
         }
 
         if (!empty($fullTextFile)) {
-            /**DEBUG**/if($this->conf['ocrDebugBackend']) echo '<script>alert(FulltextDownloadTool: not emty ")</script>'; //DEBUG
+            /**DEBUG**/if($this->conf['ocrDebug']) echo '<script>alert(FulltextDownloadTool: not emty ")</script>'; //DEBUG
             $markerArray['###FULLTEXT_DOWNLOAD###'] = '<a href="#" id="tx-dlf-tools-fulltextdownload" title="' . htmlspecialchars($this->pi_getLL('download-current-page', '')) . '">' . htmlspecialchars($this->pi_getLL('download-current-page', '')) . '</a>';
         } else {
             $markerArray['###FULLTEXT_DOWNLOAD###'] = '<span class="no-fulltext">' . htmlspecialchars($this->pi_getLL('fulltext-not-available', '')) . '</span>';

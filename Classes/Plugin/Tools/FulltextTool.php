@@ -88,13 +88,13 @@ class FulltextTool extends \Kitodo\Dlf\Common\AbstractPlugin
         }
 
         /* DEBUG */ 
-        if($this->conf['ocrDebugBackend']) echo '<script>alert("FulltextTool: Pre check")</script>'; //DEBUG
-        if($this->conf['ocrDebugBackend']) echo '<script>alert("FulltextTool: fullTextFile emty: "'. (string) empty($fullTextFile).')</script>'; //DEBUG
-        if($this->conf['ocrDebugBackend']) echo '<script>alert("FulltextTool: FullTextGenerator::checkLocal: "'. (string) FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page']).')</script>'; //DEBUG
+        if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: Pre check")</script>'; //DEBUG
+        if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: fullTextFile emty: "'. (string) empty($fullTextFile).')</script>'; //DEBUG
+        if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: FullTextGenerator::checkLocal: "'. (string) FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page']).')</script>'; //DEBUG
 
 
         if (!empty($fullTextFile) || FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page'])) {  //ORC-Test
-            /** DEBUG **/ if($this->conf['ocrDebugBackend']) echo '<script>alert("FulltextTool: check fulltext: true")</script>'; //DEBUG
+            /** DEBUG **/ if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: check fulltext: true")</script>'; //DEBUG
             $markerArray['###FULLTEXT_SELECT###'] = '<a class="select switchoff" id="tx-dlf-tools-fulltext" title="" data-dic="'
             . 'fulltext:' . htmlspecialchars($this->pi_getLL('fulltext', ''))
             . ';fulltext-on:' . htmlspecialchars($this->pi_getLL('fulltext-on', ''))
@@ -103,7 +103,7 @@ class FulltextTool extends \Kitodo\Dlf\Common\AbstractPlugin
             . ';full-text-scroll-element:' . $this->conf['fullTextScrollElement']
             . '">&nbsp;</a>';
         } else {
-            /** DEBUG **/ if($this->conf['ocrDebugBackend']) echo '<script>alert("FulltextTool: check fulltext: false")</script>'; //DEBUG
+            /** DEBUG **/ if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: check fulltext: false")</script>'; //DEBUG
             $markerArray['###FULLTEXT_SELECT###'] = '<span class="no-fulltext">' . htmlspecialchars($this->pi_getLL('fulltext-not-available', '')) . '</span>';
         }
         $content .= $this->templateService->substituteMarkerArray($this->template, $markerArray);

@@ -60,7 +60,7 @@ class FullTextGenerator {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)
       ->get($ext_key);
     $doc_id = self::getDocLocalId($doc);    
-    /* DEBUG */ if($conf['ocrDebugBackend']) echo '<script>alert("FullTextGen.getDocLocalPath: '.$conf['fulltextFolder'] . "/$doc_id".'")</script>'; //DEBUG
+    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.getDocLocalPath: '.$conf['fulltextFolder'] . "/$doc_id".'")</script>'; //DEBUG
     return $conf['fulltextFolder'] . "/$doc_id";
   }
   
@@ -173,7 +173,7 @@ class FullTextGenerator {
    * @return void
    */
   protected static function generatePageOCR($ext_key, $conf, $doc, $image_url, $page_num, $sleep_interval = 0) { 
-    /* DEBUG */ if($conf['ocrDebugBackend']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
+    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
     $page_id = self::getPageLocalId($doc, $page_num);
     $image_path = $conf['fulltextImagesFolder'] . "/$page_id";
 
@@ -188,14 +188,14 @@ class FullTextGenerator {
 
     $image_download_command = "wget $image_url -O $image_path";  
 
-    /* DEBUG */ if($conf['ocrDebugBackend']) echo '<script>alert("FullTextGen.genPageOCR: ocrDummyText: ' . $conf['ocrDummyText'] . '")</script>'; //DEBUG
+    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR: ocrDummyText: ' . $conf['ocrDummyText'] . '")</script>'; //DEBUG
 
     if ($conf['ocrDummyText']) {
-      /* DEBUG */ if($conf['ocrDebugBackend']) echo '<script>alert("FullTextGen.genPageOCR: ocrDummyText true")</script>'; //DEBUG
+      /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR: ocrDummyText true")</script>'; //DEBUG
       // Schema:  tesseract fileadmin/test_images/test.jpg fileadmin/temp_xmls/test_temp.xml -l de alto && mv -f fileadmin/temp_xmls/test.xml fileadmin/test_xmls/test.xml
       $ocr_shell_command = self::getDummyOCRCommand($conf, $image_path, $temp_xml_path, $xml_path);
     } else {
-      /* DEBUG */ if($conf['ocrDebugBackend']) echo '<script>alert("FullTextGen.genPageOCR: ocrDummyText false")</script>'; //DEBUG
+      /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR: ocrDummyText false")</script>'; //DEBUG
       // Schema:  tesseract fileadmin/test_images/test.jpg fileadmin/test_xmls/test.xml -l de alto 
       $ocr_shell_command = $conf['ocrEngine'] . " $image_path $xml_path " . " -l " . $conf['ocrLanguages'] . " " . $conf['ocrOptions'] . ";";
     }

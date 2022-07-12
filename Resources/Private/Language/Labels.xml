@@ -198,8 +198,7 @@
             <label index="config.ocrOptions">OCR command options (separated by space)</label>
             <label index="config.ocrDelay">Delay until OCR start</label>
             <label index="config.ocrLock">Make run only one instance of OCR at time</label>
-            <label index="config.ocrDebugBackend">Show interupting debugging alerts for backend</label>
-            <label index="config.ocrDebugFrontend">Show interupting debugging alerts for frontend</label>
+            <label index="config.ocrDebug">Show interupting debugging alerts for backend</label>
             <!-- OCR-Test Ende -->
             <label index="config.indexAnnotations">Handle IIIF annotations with motivation "painting" as fulltext?: Handling annotations as fulltexts means they are indexed (default is "FALSE")</label>
             <label index="config.iiifThumbnailWidth">Maximum thumbnail width for IIIF images: Only for images without a thumbnail declaration (default is "150")</label>
