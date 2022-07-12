@@ -31,7 +31,7 @@ $EM_CONF[$_EXTKEY] = [
     'author_company' => 'Kitodo. Key to digital objects e. V.',
     'autoload' => [
         'psr-4' => [
-            'csidirop\\Dlf\\' => 'Classes/'
+            'Kitodo\\Dlf\\' => 'Classes/'
         ],
         'classmap' => [
             'vendor/solarium',
