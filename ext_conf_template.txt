@@ -26,11 +26,11 @@ fileGrpFulltext = FULLTEXT
 fileGrpAudio = AUDIO
 #//OCR-Test
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fulltextFolder
-fulltextFolder = fileadmin/test_xmls
+fulltextFolder = fileadmin/fulltextFolder
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fulltextTempFolder
-fulltextTempFolder = fileadmin/_temp_/test_xmls
+fulltextTempFolder = fileadmin/_temp_/fulltextTempFolder
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fulltextImagesFolder
-fulltextImagesFolder = fileadmin/_temp_/test_images
+fulltextImagesFolder = fileadmin/_temp_/imagesTempFolder
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDummy
 ocrDummy=true
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDummyText
