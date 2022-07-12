@@ -42,7 +42,7 @@ ocrLanguages=um
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrOptions
 ocrOptions=alto
 # cat=FulltextOCR; type=int; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDelay
-ocrDelay=0
+ocrDelay=5
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrLock
 ocrLock=true
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDebug
