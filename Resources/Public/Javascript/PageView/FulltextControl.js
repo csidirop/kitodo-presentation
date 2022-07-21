@@ -482,7 +482,7 @@ dlfViewerFullTextControl.prototype.enableFulltextSelect = function() {
  * @param {Array.<ol.Feature>|undefined} features
  */
 dlfViewerFullTextControl.prototype.showFulltext = function(features) {
-    /**DEBUG**/ alert("FullTextControl.showFulltext");
+    ///**DEBUG**/ alert("FullTextControl.showFulltext");
 
     if (features !== undefined) {
         $('#tx-dlf-fulltextselection').children().remove();
