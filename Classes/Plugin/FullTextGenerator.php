@@ -159,6 +159,7 @@ class FullTextGenerator {
 
   protected static function generatePageOCRwithScript($ext_key, $conf, $doc, $image_url, $page_num, $sleep_interval = 0) { 
     //TODO add debug output ?
+    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
     $public_dir = "/var/www/typo3/public";
 
     $page_id = self::getPageLocalId($doc, $page_num);
@@ -184,7 +185,7 @@ class FullTextGenerator {
       // Schema:  tesseract fileadmin/test_images/test.jpg fileadmin/temp_xmls/test_temp.xml -l de alto && mv -f fileadmin/temp_xmls/test.xml fileadmin/test_xmls/test.xml
       //$ocr_shell_command = $conf['ocrEngine'] . " $image_path $temp_xml_path " . " -l " . $conf['ocrLanguages'] . " " . $conf['ocrOptions'] . " && mv -f $temp_xml_path.xml $xml_path;";
       $ocr_shell_command = "./$ocr_script_path --image_path $image_path_abs --temp_xml_path $temp_xml_path_abs --page_id $page_id --ocrLanguages ".$conf['ocrLanguages']." --ocrOptions ".$conf['ocrOptions']." && mv -f $temp_xml_path_abs.xml $xml_path_abs;";
-      echo '<script>alert("X1. $ocr_shell_command: ' . $ocr_shell_command . '")</script>';
+      /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("X1. $ocr_shell_command: ' . $ocr_shell_command . '")</script>'; //DEBUG
     } else {
       //TODO: umzug zu script
       // Schema:  tesseract fileadmin/test_images/test.jpg fileadmin/test_xmls/test.xml -l de alto 
@@ -238,29 +239,14 @@ class FullTextGenerator {
 
     $image_download_command = "wget $image_url -O $image_path";  
 
-    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR: ocrDummyText: ' . $conf['ocrDummyText'] . '")</script>'; //DEBUG
-
-    echo '<script>alert("1. $page_id: ' . $page_id . '")</script>';
-    echo '<script>alert("2. $image_path: ' . $image_path . '")</script>';
-    echo '<script>alert("3. $doc_path: ' . $doc_path . '")</script>';
-    echo '<script>alert("4. $xml_path: ' . $xml_path . '")</script>';
-    echo '<script>alert("5. $temp_xml_path: ' . $temp_xml_path . '")</script>';
-    echo '<script>alert("6. $lock_folder: ' . $lock_folder . '")</script>';
-    echo '<script>alert("7. $image_download_command: ' . $image_download_command . '")</script>';
-    #echo '<script>alert("8. $temp_xml_path: ' . $temp_xml_path . '")</script>';
-    #echo '<script>alert("9. $temp_xml_path: ' . $temp_xml_path . '")</script>';
-
-
     if ($conf['ocrDummyText']) {
       /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR: ocrDummyText true")</script>'; //DEBUG
       // Schema:  tesseract fileadmin/test_images/test.jpg fileadmin/temp_xmls/test_temp.xml -l de alto && mv -f fileadmin/temp_xmls/test.xml fileadmin/test_xmls/test.xml
       $ocr_shell_command = self::getDummyOCRCommand($conf, $image_path, $temp_xml_path, $xml_path);
-      echo '<script>alert("X1. $ocr_shell_command: ' . $ocr_shell_command . '")</script>';
     } else {
       /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR: ocrDummyText false")</script>'; //DEBUG
       // Schema:  tesseract fileadmin/test_images/test.jpg fileadmin/test_xmls/test.xml -l de alto 
       $ocr_shell_command = $conf['ocrEngine'] . " $image_path $xml_path " . " -l " . $conf['ocrLanguages'] . " " . $conf['ocrOptions'] . ";";
-      echo '<script>alert("X2. $ocr_shell_command: ' . $ocr_shell_command . '")</script>';
     }
     echo '<script>alert("z1")</script>';
     // Removing used image
@@ -270,8 +256,7 @@ class FullTextGenerator {
     if ($conf['ocrLock']) {
       $ocr_shell_command= "while ! mkdir \"$lock_folder\"; do sleep 3; done; $ocr_shell_command rm -r $lock_folder;" ;
     }
-    echo '<script>alert("z2")</script>';
-    echo '<script>alert("X3. $ocr_shell_command: ' . $ocr_shell_command . '")</script>';
+
     exec("($image_download_command && sleep $sleep_interval && ($ocr_shell_command)) > /dev/null 2>&1 &");
   }
 
