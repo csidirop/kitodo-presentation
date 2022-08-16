@@ -140,7 +140,6 @@ class FullTextGenerator {
 
   /**
    * 
-   * 
    * @access protected
    *
    * @param string ext_key
@@ -154,46 +153,63 @@ class FullTextGenerator {
 
     if (!(self::checkLocal($ext_key, $doc, $page_num) || self::checkInProgress($ext_key, $doc, $page_num))) {
       return self::generatePageOCRwithScript($ext_key, $conf, $doc, $image_url, $page_num);
+      //return self::generatePageOCR($ext_key, $conf, $doc, $image_url, $page_num); //TODO einbinden
     }
   }
 
   protected static function generatePageOCRwithScript($ext_key, $conf, $doc, $image_url, $page_num, $sleep_interval = 0) { 
-    //TODO add debug output ?
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
-    $public_dir = "/var/www/typo3/public";
+    
+    //Parse parameter:
+    //TODO code clean up
+    //TODO outsource to different funktion -> later multiple scripts
+    $ocr_script_path = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/tesseract-basic.sh";
+    $public_dir = "/var/www/typo3/public"; //same as /var/www/html because sym link
 
-    $page_id = self::getPageLocalId($doc, $page_num);
-    $image_path = $conf['fulltextImagesFolder'] . "/$page_id";
-    $image_path_abs = $public_dir."/".$image_path;
-    $doc_path = self::getDocLocalPath($ext_key, $doc);
+    $page_id = self::getPageLocalId($doc, $page_num);           //Page number
+    $image_path = $conf['fulltextImagesFolder'] . "/$page_id";  //Imagefile path
+    // $image_path_abs = $public_dir."/".$image_path;           //Imagefile path absolute //TODO
+    $doc_path = self::getDocLocalPath($ext_key, $doc);          //Fulltextfolder path
     if (!file_exists($doc_path)){
       mkdir($doc_path);
-    } 
-    $xml_path = self::getPageLocalPath($ext_key, $doc, $page_num);
-    $temp_xml_path = $conf['fulltextTempFolder'] . "/$page_id";
-    $xml_path_abs = $public_dir."/".$xml_path;
-    $temp_xml_path_abs = $public_dir."/".$temp_xml_path;
+    }
+    $xml_path = self::getPageLocalPath($ext_key, $doc, $page_num); //Fulltextfile path
+    $temp_xml_path = $conf['fulltextTempFolder'] . "/$page_id";    //Fulltextfile TMP path
+    // $xml_path_abs = $public_dir."/".$xml_path;                  //Fulltextfile path absolute //TODO
+    // $temp_xml_path_abs = $public_dir."/".$temp_xml_path;        //Fulltextfile TMP path absolute //TODO
 
-    $lock_folder = $conf['fulltextTempFolder'] . "/lock"; // Folder used to lock ocr command
+    $lock_folder = $conf['fulltextTempFolder'] . "/lock";          //Folder used to lock ocr command
 
-    $image_download_command = "wget $image_url -O $image_path";  
-    //TODO code clean up
-    //TODO outsource to different funktions -> later multipe scripts
-    $ocr_script_path="typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/tesseract-basic.sh";
+    $image_download_command = "wget $image_url -O $image_path";    //wget image and save to $image_path
 
-    if ($conf['ocrDummyText']) {
-      // Schema:  tesseract fileadmin/test_images/test.jpg fileadmin/temp_xmls/test_temp.xml -l de alto && mv -f fileadmin/temp_xmls/test.xml fileadmin/test_xmls/test.xml
-      //$ocr_shell_command = $conf['ocrEngine'] . " $image_path $temp_xml_path " . " -l " . $conf['ocrLanguages'] . " " . $conf['ocrOptions'] . " && mv -f $temp_xml_path.xml $xml_path;";
-      $ocr_shell_command = "./$ocr_script_path --image_path $image_path_abs --temp_xml_path $temp_xml_path_abs --page_id $page_id --ocrLanguages ".$conf['ocrLanguages']." --ocrOptions ".$conf['ocrOptions']." && mv -f $temp_xml_path_abs.xml $xml_path_abs;";
-      /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("X1. $ocr_shell_command: ' . $ocr_shell_command . '")</script>'; //DEBUG
-    } else {
-      //TODO: umzug zu script
-      // Schema:  tesseract fileadmin/test_images/test.jpg fileadmin/test_xmls/test.xml -l de alto 
-      $ocr_shell_command = $conf['ocrEngine'] . " $image_path $xml_path " . " -l " . $conf['ocrLanguages'] . " " . $conf['ocrOptions'] . ";";
+    //TODO!! move commands to function and get if-else-clause working
+    // //Build OCR script Command:
+    // //Distinguish if image is remote (URL) or local (PATH):
+    // if ($conf['dwnlTempImage']){ //download image
+    //   $image_download_command = "wget $image_url -O $image_path";    //wget image and save to $image_path
+
+
+          
+    //   $ocr_shell_command .= " rm $image_path";  // Remove used image
+    // } else { //pass URL to the engine
+
+    // }
+
+
+
+    if ($conf['ocrDummyText']) { //create first dummy xmls to prevent multiple tesseract jobs for the same page
+      // Schema:  tesseract fileadmin/.../test.jpg fileadmin/.../test_temp.xml -l de alto && mv -f fileadmin/.../test.xml fileadmin/.../test.xml
+      $ocr_shell_command = "./$ocr_script_path --image_path $image_path --temp_xml_path $temp_xml_path --page_id $page_id --ocrLanguages ".$conf['ocrLanguages']." --ocrOptions ".$conf['ocrOptions']." && mv -f $temp_xml_path.xml $xml_path;";
+    } else { //do not create dummy xml, write direcly the final file
+      // Schema:  tesseract fileadmin/.../test.jpg fileadmin/.../test.xml -l de alto 
+      //TODO
+      //$ocr_shell_command = $conf['ocrEngine'] . " $image_path $xml_path " . " -l " . $conf['ocrLanguages'] . " " . $conf['ocrOptions'] . ";";
     }
 
-    // Removing used image
-    $ocr_shell_command .= " rm $image_path";
+    $ocr_shell_command .= " rm $image_path";  // Remove used image
+
+    ///* DEBUG */ if($conf['ocrDebug']) 
+    //self::varOutput($conf, $page_id, $image_path, $image_path_abs, $doc_path, $xml_path, $xml_path_abs, $temp_xml_path, $temp_xml_path_abs, $lock_folder, $image_download_command, $ocr_shell_command);
 
     // Locking command, so that only one instance of tesseract can run in one time moment
     if ($conf['ocrLock']) {
@@ -201,9 +217,8 @@ class FullTextGenerator {
       $ocr_shell_command = "while ! mkdir \"$lock_folder\"; do sleep 3; done; $ocr_shell_command rm -r $lock_folder;" ;
     }
 
-    //exec("($image_download_command && sleep $sleep_interval && ($ocr_shell_command)) > /dev/null 2>&1 &");
     exec("($image_download_command && sleep $sleep_interval && ($ocr_shell_command))", $output, $retval);
-    if($output!=0){
+    if($retval!=0){ //if exitcode != 0 -> script not successful
       echo '<script>alert(" Status '.$retval.' \n Error: '.implode(" ",$output).'")</script>';
     }
   }
@@ -260,9 +275,12 @@ class FullTextGenerator {
     exec("($image_download_command && sleep $sleep_interval && ($ocr_shell_command)) > /dev/null 2>&1 &");
   }
 
-  protected static function varOutput($conf, $page_id, $image_path, $doc_path, $xml_path, $temp_xml_path, $temp_xml_path_abs, $lock_folder, $image_download_command){
+  protected static function varOutput($conf, $page_id, $image_path, $image_path_abs, $doc_path, $xml_path, $xml_path_abs, $temp_xml_path, $temp_xml_path_abs, $lock_folder, $image_download_command, $ocr_shell_command){
+    exec("pwd", $output, $retval);
+    echo '<script>alert("pwd: ' .implode(" ",$output). '")</script>';
     echo '<script>alert("1. $page_id: ' . $page_id . '")</script>';
     echo '<script>alert("2. $image_path: ' . $image_path . '")</script>';
+    echo '<script>alert("2a. $image_path_abs: ' . $image_path_abs . '")</script>';
     //echo '<script>alert("2a. $image_path: ' . (__DIR__.$image_path) . '")</script>';
     echo '<script>alert("3. $doc_path: ' . $doc_path . '")</script>';
     echo '<script>alert("4. $xml_path: ' . $xml_path . '")</script>';
@@ -273,15 +291,17 @@ class FullTextGenerator {
     echo '<script>alert("7. $image_download_command: ' . $image_download_command . '")</script>';
     echo '<script>alert("8. $ocrLanguages: ' . $conf['ocrLanguages'] . '")</script>';
     echo '<script>alert("9. $ocrOptions: ' . $conf['ocrOptions']  . '")</script>';
+    echo '<script>alert("10. $ocr_shell_command: ' . $ocr_shell_command . '")</script>';
+
   }
 
   protected static function getDummyOCRCommand($conf, $image_path, $temp_xml_path, $xml_path) {
-      self::createDummyOCR($xml_path, $conf['ocrDummyText']);
+      self::createPlaceholderFulltext($xml_path, $conf['ocrDummyText']);
       return $conf['ocrEngine'] . " $image_path $temp_xml_path " . " -l " . $conf['ocrLanguages'] . " " . $conf['ocrOptions'] . " && mv -f $temp_xml_path.xml $xml_path;";
   }
 
   /**
-   * Create dummy (WIP file) at given path with given text
+   * Create dummy/placeholder (WIP) file at given path with given text
    * 
    * @access protected
    *
@@ -290,7 +310,7 @@ class FullTextGenerator {
    *
    * @return void
    */
-  protected static function createDummyOCR($path, $text) {
+  protected static function createPlaceholderFulltext($path, $text) {
     $dom = new DOMdocument();
 
     $root = $dom->createelement("alto");

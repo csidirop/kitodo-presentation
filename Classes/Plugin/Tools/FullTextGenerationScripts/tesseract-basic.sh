@@ -37,18 +37,13 @@ if [[ -z ${page_id} || -z ${ocrLanguages} || -z ${ocrOptions} ]] ; then
   exit 1
 fi
 
-# Distinguish if image is remote or local:
-if [[ -n ${image_path} ]] ; then 
+# Distinguish if image is remote or local: 
+if [[ -n ${image_path} ]] ; then
 	echo "Running OCR: with local image"
 	echo "Running: tesseract $image_path $temp_xml_path -l $ocrLanguages $ocrOptions"
 	tesseract $image_path $temp_xml_path -l $ocrLanguages $ocrOptions
 	exit 0
 else
 	echo "Running OCR: with remote image"
-
+	#TODO
 fi
-
-#echo "tesseract $image_path out -l $ocrLanguages txt pdf"
-
-#tesseract $temp_xml_path $page_id -l $ocrLanguages $ocrOptions
-#tesseract $image_path $page_id -l $ocrLanguages $ocrOptions
