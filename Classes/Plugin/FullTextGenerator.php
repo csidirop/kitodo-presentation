@@ -183,33 +183,31 @@ class FullTextGenerator {
     $image_download_command = "wget $image_url -O $image_path";    //wget image and save to $image_path
 
     //TODO!! move commands to function and get if-else-clause working
-    // //Build OCR script Command:
-    // //Distinguish if image is remote (URL) or local (PATH):
+    //Build OCR script Command:
+    //Distinguish if image is remote (URL) or local (PATH):
     // if ($conf['dwnlTempImage']){ //download image
     //   $image_download_command = "wget $image_url -O $image_path";    //wget image and save to $image_path
-
-
-          
+    //   //TODO
     //   $ocr_shell_command .= " rm $image_path";  // Remove used image
     // } else { //pass URL to the engine
 
     // }
 
 
-
     if ($conf['ocrDummyText']) { //create first dummy xmls to prevent multiple tesseract jobs for the same page
-      // Schema:  tesseract fileadmin/.../test.jpg fileadmin/.../test_temp.xml -l de alto && mv -f fileadmin/.../test.xml fileadmin/.../test.xml
-      $ocr_shell_command = "./$ocr_script_path --image_path $image_path --temp_xml_path $temp_xml_path --page_id $page_id --ocrLanguages ".$conf['ocrLanguages']." --ocrOptions ".$conf['ocrOptions']." && mv -f $temp_xml_path.xml $xml_path;";
+      //$ocr_shell_command = "./$ocr_script_path --image_path $image_path --temp_xml_path $temp_xml_path --page_id $page_id --ocrLanguages ".$conf['ocrLanguages']." --ocrOptions ".$conf['ocrOptions']." && mv -f $temp_xml_path.xml $xml_path;";
+      self::createPlaceholderFulltext($xml_path, $conf['ocrDummyText']);
+      $ocr_shell_command = self::genOCRshellCommand($conf, $ocr_script_path, $image_path, $temp_xml_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+      $ocr_shell_command .= " && mv -f $temp_xml_path.xml $xml_path ";
     } else { //do not create dummy xml, write direcly the final file
-      // Schema:  tesseract fileadmin/.../test.jpg fileadmin/.../test.xml -l de alto 
-      //TODO
-      //$ocr_shell_command = $conf['ocrEngine'] . " $image_path $xml_path " . " -l " . $conf['ocrLanguages'] . " " . $conf['ocrOptions'] . ";";
+      $ocr_shell_command = self::genOCRshellCommand($conf, $ocr_script_path, $image_path, $xml_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
     }
 
-    $ocr_shell_command .= " rm $image_path";  // Remove used image
+    $ocr_shell_command .= " && rm $image_path";  // Remove used image
 
-    ///* DEBUG */ if($conf['ocrDebug']) 
-    //self::varOutput($conf, $page_id, $image_path, $image_path_abs, $doc_path, $xml_path, $xml_path_abs, $temp_xml_path, $temp_xml_path_abs, $lock_folder, $image_download_command, $ocr_shell_command);
+    echo '<script>alert("'.$ocr_shell_command.'")</script>';
+
+    //* DEBUG */ if($conf['ocrDebug']) self::varOutput($conf, $page_id, $image_path, $image_path_abs, $doc_path, $xml_path, $xml_path_abs, $temp_xml_path, $temp_xml_path_abs, $lock_folder, $image_download_command, $ocr_shell_command);
 
     // Locking command, so that only one instance of tesseract can run in one time moment
     if ($conf['ocrLock']) {
@@ -218,6 +216,7 @@ class FullTextGenerator {
     }
 
     exec("($image_download_command && sleep $sleep_interval && ($ocr_shell_command))", $output, $retval);
+
     if($retval!=0){ //if exitcode != 0 -> script not successful
       echo '<script>alert(" Status '.$retval.' \n Error: '.implode(" ",$output).'")</script>';
     }
@@ -273,6 +272,10 @@ class FullTextGenerator {
     }
 
     exec("($image_download_command && sleep $sleep_interval && ($ocr_shell_command)) > /dev/null 2>&1 &");
+  }
+
+  protected static function genOCRshellCommand($conf, $ocr_script_path, $image_path, $xml_path, $page_id, $OCR_languages, $OCR_options){
+    return "./$ocr_script_path --image_path $image_path --xml_path $xml_path --page_id $page_id --ocrLanguages $OCR_languages --ocrOptions $OCR_options ";
   }
 
   protected static function varOutput($conf, $page_id, $image_path, $image_path_abs, $doc_path, $xml_path, $xml_path_abs, $temp_xml_path, $temp_xml_path_abs, $lock_folder, $image_download_command, $ocr_shell_command){
