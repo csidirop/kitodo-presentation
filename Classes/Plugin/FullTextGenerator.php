@@ -180,30 +180,43 @@ class FullTextGenerator {
 
     $lock_folder = $conf['fulltextTempFolder'] . "/lock";          //Folder used to lock ocr command
 
-    $image_download_command = "wget $image_url -O $image_path";    //wget image and save to $image_path
+    $image_download_command =":"; //non empty command without effect //TODO find better solution
+    //$image_download_command = "wget $image_url -O $image_path";    //wget image and save to $image_path
 
-    //TODO!! move commands to function and get if-else-clause working
     //Build OCR script Command:
+    //TODO: Cleanup merge identical code parts
     //Distinguish if image is remote (URL) or local (PATH):
-    // if ($conf['dwnlTempImage']){ //download image
-    //   $image_download_command = "wget $image_url -O $image_path";    //wget image and save to $image_path
-    //   //TODO
-    //   $ocr_shell_command .= " rm $image_path";  // Remove used image
-    // } else { //pass URL to the engine
+    if ($conf['dwnlTempImage']){ //download image
+      echo '<script>alert("DWL")</script>'; //DEBUG
+      $image_download_command = "wget $image_url -O $image_path";    //wget image and save to $image_path
 
-    // }
+      //check if placeholder files have to be created:
+      if ($conf['ocrDummyText']) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
+        self::createPlaceholderFulltext($xml_path, $conf['ocrDummyText']); 
+        $ocr_shell_command = self::genOCRshellCommand($conf, $ocr_script_path, $image_path, $temp_xml_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+        $ocr_shell_command .= " && mv -f $temp_xml_path.xml $xml_path ";
+      } else { //do not create dummy xml, write direcly the final file
+        $ocr_shell_command = self::genOCRshellCommand($conf, $ocr_script_path, $image_path, $xml_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+      }
 
+      $ocr_shell_command .= " && rm $image_path";  // Remove used image
+    } else { //pass URL to the engine
+      echo '<script>alert("No DWL")</script>'; //DEBUG
 
-    if ($conf['ocrDummyText']) { //create first dummy xmls to prevent multiple tesseract jobs for the same page
-      //$ocr_shell_command = "./$ocr_script_path --image_path $image_path --temp_xml_path $temp_xml_path --page_id $page_id --ocrLanguages ".$conf['ocrLanguages']." --ocrOptions ".$conf['ocrOptions']." && mv -f $temp_xml_path.xml $xml_path;";
-      self::createPlaceholderFulltext($xml_path, $conf['ocrDummyText']);
-      $ocr_shell_command = self::genOCRshellCommand($conf, $ocr_script_path, $image_path, $temp_xml_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
-      $ocr_shell_command .= " && mv -f $temp_xml_path.xml $xml_path ";
-    } else { //do not create dummy xml, write direcly the final file
-      $ocr_shell_command = self::genOCRshellCommand($conf, $ocr_script_path, $image_path, $xml_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+      //check if placeholder files have to be created:
+      if ($conf['ocrDummyText']) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
+        self::createPlaceholderFulltext($xml_path, $conf['ocrDummyText']); 
+        $ocr_shell_command = self::genOCRshellCommand($conf, $ocr_script_path, $image_url, $temp_xml_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+        $ocr_shell_command .= " && mv -f $temp_xml_path.xml $xml_path ";
+      } else { //do not create dummy xml, write direcly the final file
+        $ocr_shell_command = self::genOCRshellCommand($conf, $ocr_script_path, $image_url, $xml_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+      }
+
     }
 
-    $ocr_shell_command .= " && rm $image_path";  // Remove used image
+
+
+    //$ocr_shell_command .= " && rm $image_path";  // Remove used image
 
     echo '<script>alert("'.$ocr_shell_command.'")</script>';
 
@@ -212,7 +225,7 @@ class FullTextGenerator {
     // Locking command, so that only one instance of tesseract can run in one time moment
     if ($conf['ocrLock']) {
       //TODO eleganter, min. file statt folder
-      $ocr_shell_command = "while ! mkdir \"$lock_folder\"; do sleep 3; done; $ocr_shell_command rm -r $lock_folder;" ;
+      $ocr_shell_command = "while ! mkdir \"$lock_folder\"; do sleep 3; done; $ocr_shell_command; rm -r $lock_folder;" ;
     }
 
     exec("($image_download_command && sleep $sleep_interval && ($ocr_shell_command))", $output, $retval);

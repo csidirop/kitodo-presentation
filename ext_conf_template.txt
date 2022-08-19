@@ -47,6 +47,8 @@ ocrDelay=5
 ocrLock=true
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDebug
 ocrDebug=false
+# cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.dwnlTempImage
+dwnlTempImage=false
 # cat=IIIF; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.indexAnnotations
 indexAnnotations = 0
 # cat=IIIF; type=int[1-2000]; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.iiifThumbnailWidth
