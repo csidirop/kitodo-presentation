@@ -133,7 +133,7 @@ class FullTextGenerator {
     for ($i=1; $i <= $doc->numPages; $i++) {
       $delay = $i * $conf['ocrDelay'];
       if (!(self::checkLocal($ext_key, $doc, $i) || self::checkInProgress($ext_key, $doc, $i))) {
-	      self::generatePageOCR($ext_key, $conf, $doc, $images_urls[$i], $i, $delay);
+	      self::generatePageOCRwithScript($ext_key, $conf, $doc, $images_urls[$i], $i, $delay);
       }
     }
   }
@@ -160,34 +160,30 @@ class FullTextGenerator {
   protected static function generatePageOCRwithScript($ext_key, $conf, $doc, $image_url, $page_num, $sleep_interval = 0) { 
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
     
+    //Working dir is "/var/www/typo3/public"; //same as /var/www/html because sym link
+    
     //Parse parameter:
     //TODO code clean up
     //TODO outsource to different funktion -> later multiple scripts
     $ocr_script_path = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/tesseract-basic.sh";
-    $public_dir = "/var/www/typo3/public"; //same as /var/www/html because sym link
 
     $page_id = self::getPageLocalId($doc, $page_num);           //Page number
     $image_path = $conf['fulltextImagesFolder'] . "/$page_id";  //Imagefile path
-    // $image_path_abs = $public_dir."/".$image_path;           //Imagefile path absolute //TODO
     $doc_path = self::getDocLocalPath($ext_key, $doc);          //Fulltextfolder path
     if (!file_exists($doc_path)){
       mkdir($doc_path);
     }
     $xml_path = self::getPageLocalPath($ext_key, $doc, $page_num); //Fulltextfile path
     $temp_xml_path = $conf['fulltextTempFolder'] . "/$page_id";    //Fulltextfile TMP path
-    // $xml_path_abs = $public_dir."/".$xml_path;                  //Fulltextfile path absolute //TODO
-    // $temp_xml_path_abs = $public_dir."/".$temp_xml_path;        //Fulltextfile TMP path absolute //TODO
 
     $lock_folder = $conf['fulltextTempFolder'] . "/lock";          //Folder used to lock ocr command
 
     $image_download_command =":"; //non empty command without effect //TODO find better solution
-    //$image_download_command = "wget $image_url -O $image_path";    //wget image and save to $image_path
 
     //Build OCR script Command:
     //TODO: Cleanup merge identical code parts
     //Distinguish if image is remote (URL) or local (PATH):
     if ($conf['dwnlTempImage']){ //download image
-      echo '<script>alert("DWL")</script>'; //DEBUG
       $image_download_command = "wget $image_url -O $image_path";    //wget image and save to $image_path
 
       //check if placeholder files have to be created:
@@ -201,8 +197,7 @@ class FullTextGenerator {
 
       $ocr_shell_command .= " && rm $image_path";  // Remove used image
     } else { //pass URL to the engine
-      echo '<script>alert("No DWL")</script>'; //DEBUG
-
+      
       //check if placeholder files have to be created:
       if ($conf['ocrDummyText']) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
         self::createPlaceholderFulltext($xml_path, $conf['ocrDummyText']); 
@@ -213,10 +208,6 @@ class FullTextGenerator {
       }
 
     }
-
-
-
-    //$ocr_shell_command .= " && rm $image_path";  // Remove used image
 
     echo '<script>alert("'.$ocr_shell_command.'")</script>';
 
