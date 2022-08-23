@@ -9,12 +9,6 @@ use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
 
 class FullTextGenerator {
-
-  //DEBUG //TODO: remove when not used anymore
-  protected static function printDebuggVals($doc){
-    var_dump($doc);
-  }
-
   protected $conf = [];
 
   /**
@@ -27,7 +21,6 @@ class FullTextGenerator {
    * @return string
    */
   protected static function getDocLocalId($doc) {
-    ///self::printDebuggVals($doc); //DEBUG
     return $doc->toplevelId;
   }
 
@@ -196,7 +189,7 @@ class FullTextGenerator {
       }
 
       $ocr_shell_command .= " && rm $image_path";  // Remove used image
-    } else { //pass URL to the engine
+    } else { //do not download image, pass URL to the engine
       
       //check if placeholder files have to be created:
       if ($conf['ocrDummyText']) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
@@ -209,8 +202,6 @@ class FullTextGenerator {
 
     }
 
-    echo '<script>alert("'.$ocr_shell_command.'")</script>';
-
     //* DEBUG */ if($conf['ocrDebug']) self::varOutput($conf, $page_id, $image_path, $image_path_abs, $doc_path, $xml_path, $xml_path_abs, $temp_xml_path, $temp_xml_path_abs, $lock_folder, $image_download_command, $ocr_shell_command);
 
     // Locking command, so that only one instance of tesseract can run in one time moment
@@ -219,7 +210,10 @@ class FullTextGenerator {
       $ocr_shell_command = "while ! mkdir \"$lock_folder\"; do sleep 3; done; $ocr_shell_command; rm -r $lock_folder;" ;
     }
 
-    exec("($image_download_command && sleep $sleep_interval && ($ocr_shell_command))", $output, $retval);
+    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocr_shell_command.'")</script>'; //DEBUG
+
+    //Execute OCR commands:
+    exec("($image_download_command && sleep $sleep_interval && $ocr_shell_command)", $output, $retval);
 
     if($retval!=0){ //if exitcode != 0 -> script not successful
       echo '<script>alert(" Status '.$retval.' \n Error: '.implode(" ",$output).'")</script>';
