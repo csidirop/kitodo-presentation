@@ -25,6 +25,20 @@ class FullTextGenerator {
   }
 
   /**
+   * Get the URN of the document
+   * 
+   * @access protected
+   * 
+   * @param \Kitodo\Dlf\Common\Document doc
+   * 
+   * @return string the document's URN
+   */
+  protected static function getDocURN($doc) {
+    //var_dump($doc->getLogicalUnits()[self::getDocLocalId($doc)]['contentIds']);
+    return $doc->getLogicalUnits()[self::getDocLocalId($doc)]['contentIds'];
+  }
+
+  /**
    * Returns local id of page   
    * 
    * @access protected
@@ -40,25 +54,28 @@ class FullTextGenerator {
   }
   
   /**
-   * Returns doc's local path (for example can be a folder)
+   * Generates and returns a document specific local path for the fulltext doc (for example can be a folder)
    * 
    * @access protected
    *
-   * @param string ext_key
    * @param \Kitodo\Dlf\Common\Document doc
    *
-   * @return string
+   * @return string path to documents specific fulltext folder
    */
-  protected static function getDocLocalPath($ext_key, $doc) {
-    $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)
-      ->get($ext_key);
-    $doc_id = self::getDocLocalId($doc);    
-    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.getDocLocalPath: '.$conf['fulltextFolder'] . "/$doc_id".'")</script>'; //DEBUG
-    return $conf['fulltextFolder'] . "/$doc_id";
+  protected static function genDocLocalPath($ext_key, $doc) {
+    $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
+    $doc_id = self::getDocLocalId($doc);
+    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genDocLocalPath: '.$conf['fulltextFolder'] . "/$doc_id".'")</script>'; //DEBUG
+
+    $urn = self::getDocURN($doc); // eg.: urn:nbn:de:bsz:180-digosi-30
+    $doc_path = $conf['fulltextFolder'] . "/" . str_replace("urn/","",str_replace("-", "/", str_replace(":", "/", $urn))); // -> nbn/de/bsz/180/digosi/30
+    //echo '<script>alert("genDocLocalPath: '.$doc_path.'")</script>'; //DEBUG
+    return $doc_path;
+    //return $conf['fulltextFolder'] . "/$doc_id"; //OLD TODO: remove
   }
   
   /**
-   * Returns local path to the doc's page (uses getDocLocalPath)
+   * Returns local path to the doc's page (uses genDocLocalPath)
    * 
    * @access public
    *
@@ -69,7 +86,7 @@ class FullTextGenerator {
    * @return string
    */
   public static function getPageLocalPath($ext_key, $doc, $page_num) {
-    $doc_path = self::getDocLocalPath($ext_key, $doc);
+    $doc_path = self::genDocLocalPath($ext_key, $doc);
     $page_id = self::getPageLocalId($doc, $page_num);
     return "$doc_path/$page_id.xml";
   }
@@ -154,7 +171,7 @@ class FullTextGenerator {
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
     
     //Working dir is "/var/www/typo3/public"; //same as /var/www/html because sym link
-    
+
     //Parse parameter:
     //TODO code clean up
     //TODO outsource to different funktion -> later multiple scripts
@@ -162,15 +179,13 @@ class FullTextGenerator {
 
     $page_id = self::getPageLocalId($doc, $page_num);           //Page number
     $image_path = $conf['fulltextImagesFolder'] . "/$page_id";  //Imagefile path
-    $doc_path = self::getDocLocalPath($ext_key, $doc);          //Fulltextfolder path
+    $doc_path = self::genDocLocalPath($ext_key, $doc);          //Fulltextfolder path (fileadmin/fulltextfolder/)
     if (!file_exists($doc_path)){
-      mkdir($doc_path);
+      mkdir($doc_path, 0777, true);                             //Create folder structure (fileadmin/fulltextfolder/nbn/de/bsz/180/digosi/30)
     }
     $xml_path = self::getPageLocalPath($ext_key, $doc, $page_num); //Fulltextfile path
     $temp_xml_path = $conf['fulltextTempFolder'] . "/$page_id";    //Fulltextfile TMP path
-
     $lock_folder = $conf['fulltextTempFolder'] . "/lock";          //Folder used to lock ocr command
-
     $image_download_command =":"; //non empty command without effect //TODO find better solution
 
     //Build OCR script Command:
@@ -240,7 +255,7 @@ class FullTextGenerator {
     $page_id = self::getPageLocalId($doc, $page_num);
     $image_path = $conf['fulltextImagesFolder'] . "/$page_id";
 
-    $doc_path = self::getDocLocalPath($ext_key, $doc);
+    $doc_path = self::genDocLocalPath($ext_key, $doc);
     if (!file_exists($doc_path)){
       mkdir($doc_path);
     } 
