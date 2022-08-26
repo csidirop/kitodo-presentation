@@ -25,7 +25,10 @@ class FullTextGenerator {
   }
 
   /**
-   * Get the URN of the document
+   * Get the URN of the document. 
+   * 
+   * ATTENTION: not working on all METS files! 
+   * //TODO: fix?
    * 
    * @access protected
    * 
@@ -67,11 +70,13 @@ class FullTextGenerator {
     $doc_id = self::getDocLocalId($doc);
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genDocLocalPath: '.$conf['fulltextFolder'] . "/$doc_id".'")</script>'; //DEBUG
 
-    $urn = self::getDocURN($doc); // eg.: urn:nbn:de:bsz:180-digosi-30
+    // $urn = self::getDocURN($doc); // eg.: urn:nbn:de:bsz:180-digosi-30
+    $urn = sha1($doc->uid); // TEMP alternative, because urns not on the same xml position in mets
     $doc_path = $conf['fulltextFolder'] . "/" . str_replace("urn/","",str_replace("-", "/", str_replace(":", "/", $urn))); // -> nbn/de/bsz/180/digosi/30
     //echo '<script>alert("genDocLocalPath: '.$doc_path.'")</script>'; //DEBUG
     return $doc_path;
     //return $conf['fulltextFolder'] . "/$doc_id"; //OLD TODO: remove
+  }
 
   /**
    * Returns local path to the doc's page (uses genDocLocalPath)
@@ -172,9 +177,9 @@ class FullTextGenerator {
     $ocr_script_path = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/tesseract-basic.sh";
     $page_id = self::getPageLocalId($doc, $page_num);              //Page number
     $image_path = $conf['fulltextImagesFolder'] . "/$page_id";     //Imagefile path
-    $doc_path = self::genDocLocalPath($ext_key, $doc);             //Fulltextfolder path (fileadmin/fulltextfolder/nbn/de/bsz/180/digosi/30)
+    $doc_path = self::genDocLocalPath($ext_key, $doc);             //Fulltextfolder path (fileadmin/fulltextfolder/nbn/de/bsz/180/digosi/30) //temp: (sha hash)
     if (!file_exists($doc_path)){ mkdir($doc_path, 0777, true); }  //Create documents path if not present
-    $xml_path = self::getPageLocalPath($ext_key, $doc, $page_num); //Fulltextfile path
+    $xml_path = "$doc_path/$page_id.xml";                          //Fulltextfile path
     $temp_xml_path = $conf['fulltextTempFolder'] . "/$page_id";    //Fulltextfile TMP path
     $lock_folder = $conf['fulltextTempFolder'] . "/lock";          //Folder used to lock ocr command
     $image_download_command =":"; //non empty command without effect //TODO: find better solution
@@ -298,7 +303,7 @@ class FullTextGenerator {
   protected static function genShellCommand($ocrDummyText, $ocr_script_path, $image_path, $temp_xml_path, $xml_path, $page_id, $OCR_languages, $OCR_options){
     $ocr_shell_command = "";
     if ($ocrDummyText) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
-      self::createPlaceholderFulltext($temp_xml_path, $ocrDummyText); 
+      self::createPlaceholderFulltext($xml_path, $ocrDummyText);
       $ocr_shell_command = self::genOCRscriptShellCommand($ocr_script_path, $image_path, $temp_xml_path, $page_id, $OCR_languages, $OCR_options);
       $ocr_shell_command .= " && mv -f $temp_xml_path.xml $xml_path ";
     } else { //do not create dummy xml, write direcly the final file
