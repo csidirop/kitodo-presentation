@@ -1,10 +1,15 @@
 #!/bin/bash
 
+### Tesseract OCR generation script ###
+# This script provides an uniform way to run OCR with Tesseract on local or remote images
+
+# Error message:
 function usage() { 
 	echo "No parameter set";
 	exit 1; 
 }
 
+# Test fuction, for manually testing the script
 function test() {
 	tesseract https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/max/1652998276_0001.jpg testout -l frak2021_1.069 txt pdf alto
 	exit 0;
@@ -19,8 +24,6 @@ while [ $# -gt 0 ] ; do
   	-h | --help) 		usage;;
 	--page_id) 			page_id="$2" ;;			#Page number
 	--image_path) 		image_path="$2" ;;		#Image path/URL
-	#--image_URL) 		image_URL="$2" ;;		#Image URL
-	#--doc_path)			doc_path="$2" ;;		#Fulltextfolder path
 	--xml_path)			xml_path="$2" ;;		#Fulltextfile path
 	--ocrLanguages) 	ocrLanguages="$2" ;;	#Models&Languages for Tesseract
 	--ocrOptions)		ocrOptions="$2" ;;		#Output types
