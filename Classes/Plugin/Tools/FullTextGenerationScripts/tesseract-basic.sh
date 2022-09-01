@@ -24,7 +24,7 @@ while [ $# -gt 0 ] ; do
   	-h | --help) 		usage;;
 	--page_id) 			page_id="$2" ;;			#Page number
 	--image_path) 		image_path="$2" ;;		#Image path/URL
-	--xml_path)			xml_path="$2" ;;		#Fulltextfile path
+	--output_path)		output_path="$2" ;;		#Fulltextfile path
 	--ocrLanguages) 	ocrLanguages="$2" ;;	#Models&Languages for Tesseract
 	--ocrOptions)		ocrOptions="$2" ;;		#Output types
 	--test)				test ;;
@@ -33,7 +33,7 @@ while [ $# -gt 0 ] ; do
 done
 
 # Check for required parameters:
-if [[ -z ${image_path} || -z ${xml_path} || -z ${ocrLanguages} || -z ${ocrOptions} ]] ; then
+if [[ -z ${image_path} || -z ${output_path} || -z ${ocrLanguages} || -z ${ocrOptions} ]] ; then
   echo "Missing parameter" #TODO
   exit 1
 fi
@@ -42,8 +42,8 @@ fi
 regex='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]' #Regex for URL validation ( https://stackoverflow.com/a/3184819 )
 if [[ (${image_path} =~ $regex) || (-f ${image_path}) ]] ; then # If image_path is a valid URL or a local file
     #echo "Link valid and file exists"
-	echo "Running OCR: tesseract $image_path $xml_path -l $ocrLanguages $ocrOptions"
-	tesseract $image_path $xml_path -l $ocrLanguages $ocrOptions
+	echo "Running OCR: tesseract $image_path $output_path -l $ocrLanguages $ocrOptions"
+	tesseract $image_path $output_path -l $ocrLanguages $ocrOptions
 	exit 0
 else
 	echo "File not found: ${image_path}" 
