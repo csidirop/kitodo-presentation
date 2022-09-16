@@ -5,6 +5,7 @@
 namespace Kitodo\Dlf\Plugin;
 use DOMdocument;
 use DOMattr;
+use XMLReader;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
 
@@ -25,20 +26,29 @@ class FullTextGenerator {
   }
 
   /**
-   * Get the URN of the document. 
+   * Get the URN of the document by reparsing the METS XML.
    * 
-   * ATTENTION: not working on all METS files! 
-   * //TODO: fix?
+   * Unfortunately the URN is not stored consistently by PResentation with different METS XML files.
    * 
    * @access protected
    * 
    * @param \Kitodo\Dlf\Common\Document doc
    * 
-   * @return string the document's URN
+   * @return string The document's URN or null if not found.
    */
   protected static function getDocURN($doc) {
-    //var_dump($doc->getLogicalUnits()[self::getDocLocalId($doc)]['contentIds']);
-    return $doc->getLogicalUnits()[self::getDocLocalId($doc)]['contentIds'];
+    $reader = new XMLReader();
+    $reader->open("$doc->uid"); //open Mets XML
+    $urn;
+    while ($reader->read()) {
+      if($key=="mods:identifier" && substr($reader->readInnerXml(),0,3)=='urn'){ //if XML key is mods:identifier and value starts with 'urn'
+            $urn = $reader->readInnerXml();
+          //Help: no way to check for attribute like type='urn'
+          //echo '<script>alert("'.$reader->name.' | '.$reader->localName.' | '.$reader->prefix.' | '.$reader->$namespaceURI.' | '.$reader->xmlLang.' | '.$reader->getAttribute('urn').' | '.$reader->readString().' | '.$reader->$baseURI.' | '.$reader->readInnerXml().'")</script>'; //DEBUG
+          //                    //mods:identifier  |   identifier           |   mods              |   -                        |  |                   |                                  | urn:nbn:de:bsz:180-digosi-30 |                    |  urn:nbn:de:bsz:180-digosi-30
+      }
+    }
+    return $urn;
   }
 
   /**
@@ -70,12 +80,14 @@ class FullTextGenerator {
     $doc_id = self::getDocLocalId($doc);
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genDocLocalPath: '.$conf['fulltextFolder'] . "/$doc_id".'")</script>'; //DEBUG
 
-    // $urn = self::getDocURN($doc); // eg.: urn:nbn:de:bsz:180-digosi-30
-    $urn = sha1($doc->uid); // TEMP alternative, because urns not on the same xml position in mets
-    $outputFolder_path = $conf['fulltextFolder'] . "/" . str_replace("urn/","",str_replace("-", "/", str_replace(":", "/", $urn))); // -> nbn/de/bsz/180/digosi/30
-    //echo '<script>alert("genDocLocalPath: '.$outputFolder_path.'")</script>'; //DEBUG
+    $urn = self::getDocURN($doc); // eg.: urn:nbn:de:bsz:180-digosi-30
+    if($urn){ //$urn is present
+      $outputFolder_path = $conf['fulltextFolder'] . "/" . str_replace("urn/","URN/",str_replace("-", "/", str_replace(":", "/", $urn))); // -> URN/nbn/de/bsz/180/digosi/30
+    } else { //no urn was present
+      $outputFolder_path = $conf['fulltextFolder'] . "/noURN/" . sha1($doc->uid); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757
+    }
+    
     return $outputFolder_path;
-    //return $conf['fulltextFolder'] . "/$doc_id"; //OLD TODO: remove
   }
 
   /**
