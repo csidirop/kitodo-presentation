@@ -41,11 +41,11 @@ class FullTextGenerator {
     $reader->open("$doc->uid"); //open Mets XML
     $urn;
     while ($reader->read()) {
-      if($key=="mods:identifier" && substr($reader->readInnerXml(),0,3)=='urn'){ //if XML key is mods:identifier and value starts with 'urn'
-            $urn = $reader->readInnerXml();
-          //Help: no way to check for attribute like type='urn'
-          //echo '<script>alert("'.$reader->name.' | '.$reader->localName.' | '.$reader->prefix.' | '.$reader->$namespaceURI.' | '.$reader->xmlLang.' | '.$reader->getAttribute('urn').' | '.$reader->readString().' | '.$reader->$baseURI.' | '.$reader->readInnerXml().'")</script>'; //DEBUG
-          //                    //mods:identifier  |   identifier           |   mods              |   -                        |  |                   |                                  | urn:nbn:de:bsz:180-digosi-30 |                    |  urn:nbn:de:bsz:180-digosi-30
+      if($reader->name=="mods:identifier" && substr($reader->readInnerXml(),0,3)=='urn'){ //if XML key is mods:identifier and value starts with 'urn'
+        $urn = $reader->readInnerXml();
+        //Help: no way to check for attribute like type='urn'
+        //echo '<script>alert("'.$reader->name.' | '.$reader->localName.' | '.$reader->prefix.' | '.$reader->$namespaceURI.' | '.$reader->xmlLang.' | '.$reader->getAttribute('urn').' | '.$reader->readString().' | '.$reader->$baseURI.' | '.$reader->readInnerXml().'")</script>'; //DEBUG
+        //                    //mods:identifier  |   identifier           |   mods              |   -                        |  |                   |                                  | urn:nbn:de:bsz:180-digosi-30 |                    |  urn:nbn:de:bsz:180-digosi-30
       }
     }
     return $urn;
