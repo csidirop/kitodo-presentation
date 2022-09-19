@@ -51,7 +51,7 @@ class FullTextGenerator {
     if(!file_exists($outputFolder_path . "/"."$doc_id.xml")){ //check if METS XML file already exists
       $file = self::getMetsXML($doc);
       // $file = $doc->xml->asXML(); //Alternative: Get METS XML file from doc object -> faster but slightly different header
-      $metsFile = fopen($outputFolder_path . "/"."$doc_id.xml", "w+") or die("Unable to open mets!"); //create METS XML file
+      $metsFile = fopen($outputFolder_path . "/"."$doc_id.xml", "w+") or die("Unable to write METS XML file!"); //create METS XML file
       fwrite($metsFile, $file); //write METS XML file
       fclose($metsFile);
     }
