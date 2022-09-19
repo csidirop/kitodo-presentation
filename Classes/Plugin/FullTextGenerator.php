@@ -1,7 +1,5 @@
 <?php
 
-//OCR-Test: Copied from KIT project.
-
 namespace Kitodo\Dlf\Plugin;
 use DOMdocument;
 use DOMattr;
@@ -78,7 +76,7 @@ class FullTextGenerator {
   protected static function genDocLocalPath($ext_key, $doc) {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
     $doc_id = self::getDocLocalId($doc);
-    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genDocLocalPath: '.$conf['fulltextFolder'] . "/$doc_id".'")</script>'; //DEBUG
+    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genDocLocalPath: '.$conf['fulltextFolder'].'")</script>'; //DEBUG
 
     $urn = self::getDocURN($doc); // eg.: urn:nbn:de:bsz:180-digosi-30
     if($urn){ //$urn is present
