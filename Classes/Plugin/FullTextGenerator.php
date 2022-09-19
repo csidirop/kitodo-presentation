@@ -24,6 +24,39 @@ class FullTextGenerator {
   }
 
   /**
+   * Reads and returns the METS file.
+   * //TODO for the future: Do not re-download the METS file, but use the one from presentation in &doc if possible
+   * 
+   * @access protected
+   * 
+   * @param \Kitodo\Dlf\Common\Document doc
+   * 
+   * @return string METS XML content
+   */
+  protected static function getMetsXML($doc) {
+    return file_get_contents($doc->uid);
+  }
+
+  /**
+   * Write METS XML file to its corresponding directory with the fulltext ALTO files, if it does not exist yet.
+   * 
+   * @access protected
+   * 
+   * @param \Kitodo\Dlf\Common\Document doc
+   * @param String outputFolder_path Path to the output folder
+   * 
+   */
+  protected static function writeMetsXML($doc, $outputFolder_path) {
+    $doc_id = self::getDocLocalId($doc);
+    if(!file_exists($outputFolder_path . "/"."$doc_id.xml")){ //check if METS XML file already exists
+      $file = self::getMetsXML($doc);
+      $metsFile = fopen($outputFolder_path . "/"."$doc_id.xml", "w+") or die("Unable to open mets!"); //create METS XML file
+      fwrite($metsFile, $file); //write METS XML file
+      fclose($metsFile);
+    }
+  }
+
+  /**
    * Get the URN of the document by reparsing the METS XML.
    * 
    * Unfortunately the URN is not stored consistently by PResentation with different METS XML files.
@@ -75,7 +108,6 @@ class FullTextGenerator {
    */
   protected static function genDocLocalPath($ext_key, $doc) {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
-    $doc_id = self::getDocLocalId($doc);
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genDocLocalPath: '.$conf['fulltextFolder'].'")</script>'; //DEBUG
 
     $urn = self::getDocURN($doc); // eg.: urn:nbn:de:bsz:180-digosi-30
@@ -188,6 +220,7 @@ class FullTextGenerator {
     $page_id = self::getPageLocalId($doc, $page_num);              //Page number
     $image_path = $conf['fulltextImagesFolder'] . "/$page_id";     //Imagefile path
     $outputFolder_path = self::genDocLocalPath($ext_key, $doc);    //Fulltextfolder path (fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30)
+    self::writeMetsXML($doc, $outputFolder_path);                  //Write METS XML file to its fulltext results
     if (!file_exists($outputFolder_path)){ mkdir($outputFolder_path, 0777, true); }  //Create documents path if not present
     $output_path = "$outputFolder_path/$page_id.xml";              //Fulltextfile path
     $temp_output_path = $conf['fulltextTempFolder'] . "/$page_id"; //Fulltextfile TMP path
