@@ -87,12 +87,6 @@ class FulltextTool extends \Kitodo\Dlf\Common\AbstractPlugin
             }
         }
 
-        /* DEBUG */ 
-        if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: Pre check")</script>'; //DEBUG
-        if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: fullTextFile emty: "'. (string) empty($fullTextFile).')</script>'; //DEBUG
-        if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: FullTextGenerator::checkLocal: "'. (string) FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page']).')</script>'; //DEBUG
-
-
         if (!empty($fullTextFile) || FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page'])) {  //ORC-Test
             /** DEBUG **/ if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: check fulltext: true")</script>'; //DEBUG
             $markerArray['###FULLTEXT_SELECT###'] = '<a class="select switchoff" id="tx-dlf-tools-fulltext" title="" data-dic="'
