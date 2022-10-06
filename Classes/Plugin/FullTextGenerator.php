@@ -236,8 +236,8 @@ class FullTextGenerator {
     $page_id = self::getPageLocalId($doc, $page_num);              //Page number
     $image_path = $conf['fulltextImagesFolder'] . "/$page_id";     //Imagefile path
     $outputFolder_path = self::genDocLocalPath($ext_key, $doc);    //Fulltextfolder path (fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30)
-    self::writeMetsXML($doc, $outputFolder_path);                  //Write METS XML file to its fulltext results
     if (!file_exists($outputFolder_path)){ mkdir($outputFolder_path, 0777, true); }  //Create documents path if not present
+    self::writeMetsXML($doc, $outputFolder_path);                  //Write METS XML file to its fulltext results
     $output_path = "$outputFolder_path/$page_id.xml";              //Fulltextfile path
     $temp_output_path = $conf['fulltextTempFolder'] . "/$page_id"; //Fulltextfile TMP path
     $lock_folder = $conf['fulltextTempFolder'] . "/lock";          //Folder used to lock ocr command
