@@ -184,9 +184,8 @@ class FullTextGenerator {
   public static function createBookFullText($ext_key, $doc, $images_urls) {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
     for ($i=1; $i <= $doc->numPages; $i++) {
-      $delay = $i * $conf['ocrDelay'];
       if (!(self::checkLocal($ext_key, $doc, $i) || self::checkInProgress($ext_key, $doc, $i))) {
-	      self::generatePageOCRwithScript($ext_key, $conf, $doc, $ocr_script, $images_urls[$i], $i, $delay);
+	      self::generatePageOCRwithScript($ext_key, $conf, $doc, $ocr_script, $images_urls[$i], $i, $conf['ocrDelay']);
       }
     }
   }
