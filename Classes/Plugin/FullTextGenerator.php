@@ -7,6 +7,8 @@ use XMLReader;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
 
+session_start(); // Start a PHP session to temporarily hold some variables ($_SESSION["ocrEngine"]) globaly for this user only
+
 class FullTextGenerator {
   protected $conf = [];
 
@@ -134,8 +136,27 @@ class FullTextGenerator {
    */
   public static function getPageLocalPath($ext_key, $doc, $page_num) {
     $outputFolder_path = self::genDocLocalPath($ext_key, $doc);
+    $ocrEngine = self::getOCRengine($ext_key);
     $page_id = self::getPageLocalId($doc, $page_num);
-    return "$outputFolder_path/$page_id.xml";
+    return "$outputFolder_path/$ocrEngine/$page_id.xml";
+  }
+
+  /**
+   * Checks and returns the OCR-Engine //WIP
+   * 
+   * @access protected
+   *
+   * @param string ext_key
+   *
+   * @return string
+   */
+  protected static function getOCRengine($ext_key){
+    $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
+    if(is_null($_SESSION["ocrEngine"])){ //if not set, get default value
+      $_SESSION["ocrEngine"] = $conf['ocrEngine'];
+    }
+    // $_SESSION["ocrEngine"] = "tess";
+    return $_SESSION["ocrEngine"];
   }
 
   /**
@@ -226,21 +247,24 @@ class FullTextGenerator {
    */
   protected static function generatePageOCRwithScript($ext_key, $conf, $doc, $ocr_script, $image_url, $page_num, $sleep_interval = 0) {
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
-    
-    //Working dir is "/var/www/typo3/public"; //same as /var/www/html because sym link
 
-    //Parse parameter:
-    $ocr_script = "tesseract-basic.sh"; //TODO: outsource to different function -> later multiple scripts
-    $ocr_script_path = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/$ocr_script";
-    $page_id = self::getPageLocalId($doc, $page_num);              //Page number
-    $image_path = $conf['fulltextImagesFolder'] . "/$page_id";     //Imagefile path
-    $outputFolder_path = self::genDocLocalPath($ext_key, $doc);    //Fulltextfolder path (fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30)
+    //Working dir is "/var/www/typo3/public"; //same as "/var/www/html" because sym link
+
+    //Parse parameter and setup variables:
+    $ocr_scripts_folder = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts";
+    $ocr_script       = self::getOCRengine($ext_key);                 //OCR-Engine/Script set in settings (//TODO: or via UI)
+    $ocr_script_path  = "$ocr_scripts_folder/$ocr_script.sh";         //Path to OCR-Engine/Script
+    // $ocr_script_path  = "$ocr_scripts_folder/tesseract-basic.sh";  //Path to OCR-Engine/Script
+    $page_id          = self::getPageLocalId($doc, $page_num);        //Page number
+    $image_path       = $conf['fulltextImagesFolder'] . "/$page_id";  //Imagefile path
+    $document_path    = self::genDocLocalPath($ext_key, $doc);        //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
+    $outputFolder_path = "$document_path/$ocr_script";                //Fulltextfolder (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
     if (!file_exists($outputFolder_path)){ mkdir($outputFolder_path, 0777, true); }  //Create documents path if not present
-    self::writeMetsXML($doc, $outputFolder_path);                  //Write METS XML file to its fulltext results
-    $output_path = "$outputFolder_path/$page_id.xml";              //Fulltextfile path
-    $temp_output_path = $conf['fulltextTempFolder'] . "/$page_id"; //Fulltextfile TMP path
-    $lock_folder = $conf['fulltextTempFolder'] . "/lock";          //Folder used to lock ocr command
-    $image_download_command =":"; //non empty command without effect //TODO: find better solution
+    self::writeMetsXML($doc, $document_path);                         //Write original METS XML file
+    $output_path      = "$outputFolder_path/$page_id.xml";            //Fulltextfile path
+    $temp_output_path = $conf['fulltextTempFolder'] . "/$page_id";    //Fulltextfile TMP path
+    $lock_folder      = $conf['fulltextTempFolder'] . "/lock";        //Folder used to lock ocr command
+    $image_download_command =":";                                     //non empty command without effect //TODO: find better solution
     $ocr_shell_command = "";
 
     //Build OCR script command:
@@ -254,8 +278,8 @@ class FullTextGenerator {
     }
 
     // Locking command, so that only one instance of tesseract can run in one time moment
+    // TODO: use something like semaphores. That way it is posible to run multiple instances at the same time
     if ($conf['ocrLock']) {
-      //TODO eleganter, min. file statt folder
       $ocr_shell_command = "while ! mkdir \"$lock_folder\"; do sleep 3; done; $ocr_shell_command; rm -r $lock_folder;" ;
     }
 

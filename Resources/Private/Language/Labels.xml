@@ -193,7 +193,7 @@
             <label index="config.fulltextImagesFolder">Temporary folder for images, that are used for OCR</label>
             <label index="config.ocrDummy">Create dummy file</label>
             <label index="config.ocrDummyText">OCR Dummy Text</label>
-            <label index="config.ocrEngine">OCR Engine</label>
+            <label index="config.ocrEngine">Default OCR-Engine</label>
             <label index="config.ocrLanguages">OCR Languages (separated by space)</label>
             <label index="config.ocrOptions">OCR command options (separated by space)</label>
             <label index="config.ocrDelay">Delay until OCR start</label>
