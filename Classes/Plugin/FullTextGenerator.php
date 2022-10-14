@@ -269,12 +269,12 @@ class FullTextGenerator {
 
     //Build OCR script command:
     //Determine if the image should be downloaded. Than use remote URL ($image_url) or local PATH ($image_path):
-    if ($conf['dwnlTempImage']){ //download image
+    if ($conf['ocrDwnlTempImage']){ //download image
       $image_download_command = "wget $image_url -O $image_path"; //wget image and save to $image_path
-      $ocr_shell_command .= self::genShellCommand($conf['ocrDummyText'], $ocr_script_path, $image_path, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+      $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_path, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
       $ocr_shell_command .= " && rm $image_path";  // Remove used image
     } else { //do not download image, pass URL to the engine
-      $ocr_shell_command .= self::genShellCommand($conf['ocrDummyText'], $ocr_script_path, $image_url, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+      $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_url, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
     }
 
     // Locking command, so that only one instance of tesseract can run in one time moment
@@ -318,7 +318,7 @@ class FullTextGenerator {
    * 
    *  @access protected
    * 
-   *  @param string ocrDummyText
+   *  @param string ocrPlaceholderText
    *  @param string ocr_script_path
    *  @param string image_path
    *  @param string temp_output_path
@@ -329,10 +329,10 @@ class FullTextGenerator {
    * 
    *  @return string Full OCR-script shell command
    */
-  protected static function genShellCommand($ocrDummyText, $ocr_script_path, $image_path, $temp_output_path, $output_path, $page_id, $OCR_languages, $OCR_options){
+  protected static function genShellCommand($ocrPlaceholderText, $ocr_script_path, $image_path, $temp_output_path, $output_path, $page_id, $OCR_languages, $OCR_options){
     $ocr_shell_command = "";
-    if ($ocrDummyText) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
-      self::createPlaceholderFulltext($output_path, $ocrDummyText);
+    if ($ocrPlaceholderText) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
+      self::createPlaceholderFulltext($output_path, $ocrPlaceholderText);
       $ocr_shell_command = self::genOCRscriptShellCommand($ocr_script_path, $image_path, $temp_output_path, $page_id, $OCR_languages, $OCR_options);
       $ocr_shell_command .= " && mv -f $temp_output_path.xml $output_path ";
     } else { //do not create dummy xml, write direcly the final file
@@ -347,7 +347,7 @@ class FullTextGenerator {
   protected static function varOutput($conf, $page_id, $image_path, $outputFolder_path, $output_path, $temp_output_path, $lock_folder, $image_download_command, $ocr_shell_command){
     exec("pwd", $output, $retval);
     echo '<script>alert("pwd: ' .implode(" ",$output). '")</script>';
-    echo '<script>alert("0. $dwlImage: ' . $conf['dwnlTempImage'] . '")</script>';
+    echo '<script>alert("0. $dwlImage: ' . $conf['ocrDwnlTempImage'] . '")</script>';
     echo '<script>alert("1. $page_id: ' . $page_id . '")</script>';
     echo '<script>alert("2. $image_path: ' . $image_path . '")</script>';
     echo '<script>alert("3. $outputFolder_path: ' . $outputFolder_path . '")</script>';
@@ -361,7 +361,7 @@ class FullTextGenerator {
   }
 
   /**
-   * Create dummy/placeholder (WIP) file at given path with given text
+   * Create placeholder (WIP) file at given path with given text
    * 
    * @access protected
    *

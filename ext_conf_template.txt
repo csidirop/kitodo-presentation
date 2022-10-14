@@ -31,10 +31,10 @@ fulltextFolder = fileadmin/fulltextFolder
 fulltextTempFolder = fileadmin/_temp_/fulltextTempFolder
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fulltextImagesFolder
 fulltextImagesFolder = fileadmin/_temp_/imagesTempFolder
-# cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDummy
-ocrDummy=1
-# cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDummyText
-ocrDummyText=OCR is being prepared, please try to refresh the page
+# cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrPlaceholder
+ocrPlaceholder=1
+# cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrPlaceholderText
+ocrPlaceholderText=OCR is being prepared, please try to refresh the page
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrEngine
 ocrEngine=tesseract-basic
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrLanguages
@@ -42,13 +42,13 @@ ocrLanguages=um
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrOptions
 ocrOptions=alto
 # cat=FulltextOCR; type=int; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDelay
-ocrDelay=5
+ocrDelay=2
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrLock
 ocrLock=1
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDebug
 ocrDebug=0
-# cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.dwnlTempImage
-dwnlTempImage=0
+# cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDwnlTempImage
+ocrDwnlTempImage=0
 # cat=IIIF; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.indexAnnotations
 indexAnnotations = 0
 # cat=IIIF; type=int[1-2000]; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.iiifThumbnailWidth
