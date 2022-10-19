@@ -1,7 +1,5 @@
 <?php
 
-//OCR-Test: Parts Copied from KIT project.
-
 /**
  * (c) Kitodo. Key to digital objects e.V. <contact@kitodo.org>
  *
@@ -21,8 +19,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use Ubl\Iiif\Presentation\Common\Model\Resources\ManifestInterface;
 use Ubl\Iiif\Presentation\Common\Vocabulary\Motivation;
-
-use Kitodo\Dlf\Plugin\FullTextGenerator;  //OCR-Test
+use Kitodo\Dlf\Plugin\FullTextGenerator;
 
 /**
  * Plugin 'Page View' for the 'dlf' extension
@@ -177,15 +174,30 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
      * @access protected
      *
      * @param int $page: Page number
+     * @param int $mode: modes: 0 for UI (default), 1 for OCR processing
      *
      * @return array URL and MIME type of image file
      */
-    protected function getImage($page)
+    protected function getImage($page, $mode=0)
     {
         $image = [];
         // Get @USE value of METS fileGrp.
         $fileGrpsImages = GeneralUtility::trimExplode(',', $this->conf['fileGrpImages']);
-        while ($fileGrpImages = array_pop($fileGrpsImages)) {
+
+        $count = count($fileGrpsImages);
+        // set loop variables:
+        if($mode==0){ //default mode: get the image for UI
+            $i=0;
+            $j=$count;
+            $x=1;
+        } else { //OCR mode: get the image for OCR processing
+            $i=$count-1;
+            $j=0;
+            $x=-1;
+        }
+
+        for ($i; $i!=$j; $i+=$x){
+            $fileGrpImages = $fileGrpsImages[$i];
             // Get image link.
             if (!empty($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpImages])) {
                 $image['url'] = $this->doc->getFileLocation($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpImages]);
@@ -343,16 +355,14 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
         $this->init($conf);
         // Load current document.
         $this->loadDocument();
-
-        //OCR-Test:
+        //Proccess request: Do OCR on given image(s)
         if ($_POST["request"]) {
-            FullTextGenerator::createPageFullText($this->extKey, $this->doc, $this->getImage($this->piVars['page'])["url"], $this->piVars['page']);
+            FullTextGenerator::createPageFullText($this->extKey, $this->doc, $this->getImage($this->piVars['page'], 1)["url"], $this->piVars['page']);
             if($_POST["request"]["type"] == "book") {
               $images = array();
               for ($i=1; $i <= $this->doc->numPages; $i++) {
                 $images[$i] = $this->getImage($i)["url"];
               }
-      
               FullTextGenerator::createBookFullText($this->extKey, $this->doc, $images);
             }
         }
