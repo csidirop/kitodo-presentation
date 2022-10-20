@@ -261,7 +261,7 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
             //check if fulltext was already ocred on demand (and is locally present):  
             } else if (FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page'])) {                   //OCR-Test
                 /**DEBUG**/ if($this->conf['ocrDebug']) /*DEBUG*/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: checkLocal true ")</script>'; //DEBUG
-                $fulltext['url'] = FullTextGenerator::getPageLocalPath($this->extKey, $this->doc, $this->piVars['page']);   //OCR-Test
+                $fulltext['url'] = "http://" . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath($this->extKey, $this->doc, $this->piVars['page']);
                 /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: checkLocal true: ' .  $fulltext['url'] . '")</script>'; //DEBUG
             //no fulltext:
             } else {
