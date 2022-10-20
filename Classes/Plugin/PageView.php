@@ -236,16 +236,15 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
     {
         /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext ")</script>'; //DEBUG
         $fulltext = [];
-        // Get fulltext link.
-        $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);  //OCR-Test
+        $this->logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Log\LogManager::class)->getLogger(__CLASS__);
 
+        // Get fulltext link:
         $fileGrpsFulltext = GeneralUtility::trimExplode(',', $this->conf['fileGrpFulltext']);
         while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) {
-            //check if fulltext is present:
+            //check if fulltext is remote present:
             if (!empty($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpFulltext])) {
-                /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: present ")</script>'; //DEBUG
                 $fulltext['url'] = $this->doc->getFileLocation($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpFulltext]);
-                /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: "'.$fulltext['url'].')</script>'; //DEBUG
+                /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: present: "'.$fulltext['url'].')</script>'; //DEBUG
                 if ($this->conf['useInternalProxy']) {
                     // Configure @action URL for form.
                     $linkConf = [
@@ -257,10 +256,9 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
                     $fulltext['url'] = $this->cObj->typoLink_URL($linkConf);
                 }
                 $fulltext['mimetype'] = $this->doc->getFileMimeType($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpFulltext]);
-                //break;  //OCR-Test
-            //check if fulltext was already ocred on demand (and is locally present):  
-            } else if (FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page'])) {                   //OCR-Test
-                /**DEBUG**/ if($this->conf['ocrDebug']) /*DEBUG*/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: checkLocal true ")</script>'; //DEBUG
+                break;
+            //check if fulltext was already ocred on demand (and is locally present):
+            } else if (FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page'])) {
                 $fulltext['url'] = "http://" . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath($this->extKey, $this->doc, $this->piVars['page']);
                 /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: checkLocal true: ' .  $fulltext['url'] . '")</script>'; //DEBUG
             //no fulltext:
@@ -272,14 +270,8 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
         if (empty($fulltext)) {
             /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: fulltext var is emty ")</script>'; //DEBUG
             $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrps "' . $this->conf['fileGrpFulltext'] . '"');
-        } else {
-            $tmpString = "";                            //DEBUG
-            foreach($fulltext as $tmp) {                //DEBUG
-                $tmpString = $tmpString . $tmp . " | "; //DEBUG
-            }                                           //DEBUG
-            /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: fulltext: ' . $tmpString . '")</script>'; //DEBUG
         }
-
+        
         return $fulltext;
     }
 
