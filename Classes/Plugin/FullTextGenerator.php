@@ -152,11 +152,13 @@ class FullTextGenerator {
    */
   protected static function getOCRengine($ext_key){
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
-    if(is_null($_SESSION["ocrEngine"])){ //if not set, get default value
-      $_SESSION["ocrEngine"] = $conf['ocrEngine'];
+    if (!isset($_COOKIE['tx-dlf-ocrEngine'])) { //if not set, get default value
+      setcookie('tx-dlf-ocrEngine', $conf['ocrEngine'], 0, "/");
+      $_COOKIE['tx-dlf-ocrEngine'] = $conf['ocrEngine'];
+      // for debug only:
+      //echo("New: ocrEngine: '" . $_COOKIE['tx-dlf-ocrEngine'] . "' ");
     }
-    // $_SESSION["ocrEngine"] = "tess";
-    return $_SESSION["ocrEngine"];
+    return $_COOKIE['tx-dlf-ocrEngine'];
   }
 
   /**
