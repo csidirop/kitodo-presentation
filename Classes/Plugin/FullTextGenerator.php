@@ -45,15 +45,14 @@ class FullTextGenerator {
    * @access protected
    * 
    * @param \Kitodo\Dlf\Common\Document doc
-   * @param String outputFolder_path Path to the output folder
+   * @param String Path for the copy of the original METS file
    * 
    */
-  protected static function writeMetsXML($doc, $outputFolder_path) {
-    $doc_id = self::getDocLocalId($doc);
-    if(!file_exists($outputFolder_path . "/"."$doc_id.xml")){ //check if METS XML file already exists
+  protected static function writeMetsXML($doc, $xml_path) {
+    if(!file_exists($xml_path)){ //check if METS XML file already exists
       $file = self::getMetsXML($doc);
       // $file = $doc->xml->asXML(); //Alternative: Get METS XML file from doc object -> faster but slightly different header
-      $metsFile = fopen($outputFolder_path . "/"."$doc_id.xml", "w+") or die("Unable to write METS XML file!"); //create METS XML file
+      $metsFile = fopen($xml_path, "w+") or die("Unable to write METS XML file!"); //create METS XML file
       fwrite($metsFile, $file); //write METS XML file
       fclose($metsFile);
     }
@@ -86,7 +85,7 @@ class FullTextGenerator {
   }
 
   /**
-   * Returns local id of page   
+   * Returns local id of page
    * 
    * @access protected
    *
@@ -258,9 +257,10 @@ class FullTextGenerator {
     $page_id          = self::getPageLocalId($doc, $page_num);        //Page number
     $image_path       = $conf['fulltextImagesFolder'] . "/$page_id";  //Imagefile path
     $document_path    = self::genDocLocalPath($ext_key, $doc);        //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
+    $origMets_path    = $document_path."/".self::getDocLocalId($doc).".xml"; //Path to original METS (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/log59087.xml)
     $outputFolder_path = "$document_path/$ocr_script";                //Fulltextfolder (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
     if (!file_exists($outputFolder_path)){ mkdir($outputFolder_path, 0777, true); }  //Create documents path if not present
-    self::writeMetsXML($doc, $document_path);                         //Write original METS XML file
+    self::writeMetsXML($doc, $origMets_path);                         //Write original METS XML file
     $output_path      = "$outputFolder_path/$page_id.xml";            //Fulltextfile path
     $temp_output_path = $conf['fulltextTempFolder'] . "/$page_id";    //Fulltextfile TMP path
     $lock_folder      = $conf['fulltextTempFolder'] . "/lock";        //Folder used to lock ocr command
