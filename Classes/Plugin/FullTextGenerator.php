@@ -4,6 +4,9 @@ namespace Kitodo\Dlf\Plugin;
 use DOMdocument;
 use DOMattr;
 use XMLReader;
+use XMLWriter;
+use XMLReaderIterator;
+use XMLWritingIteration;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
 
@@ -45,7 +48,7 @@ class FullTextGenerator {
    * @access protected
    * 
    * @param \Kitodo\Dlf\Common\Document doc
-   * @param String Path for the copy of the original METS file
+   * @param String xml_path Path to the output folder
    * 
    */
   protected static function writeMetsXML($doc, $xml_path) {
@@ -82,6 +85,57 @@ class FullTextGenerator {
       }
     }
     return $urn;
+  }
+
+  protected static function updateMetsXML($doc, $xml_path, $alto_path, $new_xml_path) {
+    $reader = new XMLReader();
+    $reader->open($xml_path);
+
+    $writer = new XMLWriter();
+    $writer->openUri($new_xml_path);
+    
+    $iterator = new XMLWritingIteration($writer, $reader);
+
+    $writer->startDocument('1.0', 'UTF-8');
+
+    foreach ($iterator as $node) {
+      $isElement = $node->nodeType === XMLReader::ELEMENT;
+      if($isElement && $node->name === 'mets:fileSec'){
+
+        $iterator->write(); //Write current node: <mets:fileSec>
+        $node->read(); //Go inside current node: all <mets:fileGrp>
+
+        //Write new node:
+        $writer->startElement('mets:fileGrp'); // <mets:fileGrp USE="FULLTEXT">
+          $writer->writeAttribute('USE', 'FULLTEXT'); 
+
+          $writer->startElement('mets:file'); // <mets:file ID="FILE_0001_ALTO" MIMETYPE="text/xml">
+            $writer->writeAttribute('ID', 'TODO_ID');
+            $writer->writeAttribute('MIMETYPE', 'text/xml');
+
+            $writer->startElement('mets:FLocat'); // <mets:FLocat LOCTYPE="URL" xlink:href="https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/alto/1652998276_0001.xml"/>
+              $writer->writeAttribute('LOCTYPE', 'URL');
+              $writer->writeAttribute('xlink:href', 'TODO_ADD_URL');
+            $writer->endElement();
+
+          $writer->endElement();
+          
+        $writer->endElement();
+
+        // echo '<script>alert("1. name: '.$node->name.'")</script>';
+        // echo '<script>alert("2. localName: '.$node->localName.'")</script>';
+        // echo '<script>alert("3. prefix: '.$node->prefix.'")</script>';
+        // echo '<script>alert("4. namespaceURI: '.$node->namespaceURI.'")</script>';
+        // echo '<script>alert("5. xmlLang: '.$node->xmlLang.'")</script>';
+        // echo '<script>alert("6. readString(): '.$node->readString().'")</script>';
+        // echo '<script>alert("7. baseURI: '.$node->baseURI.'")</script>';
+        // echo '<script>alert("8. readInnerXml(): '.$node->readInnerXml().'")</script>';
+        // echo '<script>alert("9. getAttribute(): '.$node->getAttribute("USE").'")</script>';
+
+      }
+      $iterator->write();
+    }
+    $writer->endDocument();
   }
 
   /**
@@ -257,7 +311,7 @@ class FullTextGenerator {
     $page_id          = self::getPageLocalId($doc, $page_num);        //Page number
     $image_path       = $conf['fulltextImagesFolder'] . "/$page_id";  //Imagefile path
     $document_path    = self::genDocLocalPath($ext_key, $doc);        //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
-    $origMets_path    = $document_path."/".self::getDocLocalId($doc).".xml"; //Path to original METS (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/log59087.xml)
+    $origMets_path    = $document_path."/".self::getDocLocalId($doc).".xml"; //Path to original METS
     $outputFolder_path = "$document_path/$ocr_script";                //Fulltextfolder (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
     if (!file_exists($outputFolder_path)){ mkdir($outputFolder_path, 0777, true); }  //Create documents path if not present
     self::writeMetsXML($doc, $origMets_path);                         //Write original METS XML file
@@ -293,6 +347,9 @@ class FullTextGenerator {
     if($retval!=0){ //if exitcode != 0 -> script not successful
       echo '<script>alert(" Status '.$retval.' \n Error: '.implode(" ",$output).'")</script>';
     }
+                      //doc,  xml_path,       alto_path,    new_xml_path
+    self::updateMetsXML($doc, $origMets_path, $output_path, $outputFolder_path."/".self::getDocLocalId($doc).".xml");
+
   }
 
   /** 
