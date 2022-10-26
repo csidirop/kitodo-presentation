@@ -121,17 +121,6 @@ class FullTextGenerator {
           $writer->endElement();
           
         $writer->endElement();
-
-        // echo '<script>alert("1. name: '.$node->name.'")</script>';
-        // echo '<script>alert("2. localName: '.$node->localName.'")</script>';
-        // echo '<script>alert("3. prefix: '.$node->prefix.'")</script>';
-        // echo '<script>alert("4. namespaceURI: '.$node->namespaceURI.'")</script>';
-        // echo '<script>alert("5. xmlLang: '.$node->xmlLang.'")</script>';
-        // echo '<script>alert("6. readString(): '.$node->readString().'")</script>';
-        // echo '<script>alert("7. baseURI: '.$node->baseURI.'")</script>';
-        // echo '<script>alert("8. readInnerXml(): '.$node->readInnerXml().'")</script>';
-        // echo '<script>alert("9. getAttribute(): '.$node->getAttribute("USE").'")</script>';
-
       }
       $iterator->write();
     }
