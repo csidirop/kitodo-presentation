@@ -7,6 +7,7 @@ use XMLReader;
 use XMLWriter;
 use XMLReaderIterator;
 use XMLWritingIteration;
+use DateTimeImmutable;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
 
@@ -88,6 +89,7 @@ class FullTextGenerator {
   }
 
   protected static function updateMetsXML($doc, $xml_path, $alto_path, $new_xml_path) {
+    //Set up XML reader and writer:
     $reader = new XMLReader();
     $reader->open($xml_path);
 
@@ -98,6 +100,13 @@ class FullTextGenerator {
 
     $writer->startDocument('1.0', 'UTF-8');
 
+    //prepare some variables:
+    $datetime = new DateTimeImmutable ();
+    $datestamp = $datetime->format(DateTimeImmutable::ATOM); //Time in format: "Y-m-d\TH:i:sP" eg "2022-10-26T14:11:21+00:00"
+
+    $alto_id = substr($alto_path, strrpos($alto_path, '/')+1);
+
+    //Add ALTO entry to <mets:fileGrp USE="FULLTEXT">
     foreach ($iterator as $node) {
       $isElement = $node->nodeType === XMLReader::ELEMENT;
       if($isElement && $node->name === 'mets:fileSec'){
@@ -108,18 +117,15 @@ class FullTextGenerator {
         //Write new node:
         $writer->startElement('mets:fileGrp'); // <mets:fileGrp USE="FULLTEXT">
           $writer->writeAttribute('USE', 'FULLTEXT'); 
-
-          $writer->startElement('mets:file'); // <mets:file ID="FILE_0001_ALTO" MIMETYPE="text/xml">
-            $writer->writeAttribute('ID', 'TODO_ID');
+          $writer->startElement('mets:file'); // <mets:file ID="ALTO_log59088_431.xml" MIMETYPE="text/xml" CREATED="2022-10-26T14:28:16+00:00">
+            $writer->writeAttribute('ID', "ALTO_$alto_id");
             $writer->writeAttribute('MIMETYPE', 'text/xml');
-
+            $writer->writeAttribute('CREATED', $datestamp);
             $writer->startElement('mets:FLocat'); // <mets:FLocat LOCTYPE="URL" xlink:href="https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/alto/1652998276_0001.xml"/>
               $writer->writeAttribute('LOCTYPE', 'URL');
-              $writer->writeAttribute('xlink:href', 'TODO_ADD_URL');
+              $writer->writeAttribute('xlink:href', "http://".$_SERVER['HTTP_HOST']."/".$alto_path);
             $writer->endElement();
-
           $writer->endElement();
-          
         $writer->endElement();
       }
       $iterator->write();
