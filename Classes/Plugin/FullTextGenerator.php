@@ -103,6 +103,7 @@ class FullTextGenerator {
     $datestamp = $datetime->format(DateTimeImmutable::ATOM); //Time in format: "Y-m-d\TH:i:sP" eg "2022-10-26T14:11:21+00:00"
     $alto_filename = substr($alto_path, strrpos($alto_path, '/')+1); //log59088_491.xml
     $alto_id = substr($alto_filename, 0, strlen($alto_filename)-4); //log59088_491
+    $page_num = substr($alto_id, strrpos($alto_id, '_')+1);
 
     //Add ALTO entry to <mets:fileGrp USE="FULLTEXT">
     foreach ($iterator as $node) {
@@ -131,6 +132,20 @@ class FullTextGenerator {
         }
         $writer->setIndent(false);
       }
+
+      //Update <mets:structMap TYPE="PHYSICAL"> entry:
+      if($isElement && ($node->name === 'mets:div') && ($node->getAttribute("TYPE") === 'page') && ($node->getAttribute("ORDER") === $page_num)){
+        $iterator->write(); //Write current node: <mets:div> TYPE="page"
+        $node->read(); //Go inside current node: <mets:div> TYPE="page" -> at level <mets:fptr>
+
+        $writer->setIndentString('  ');
+        $writer->setIndent(true); //do not write all elements in one line
+        $writer->startElement('mets:fptr');
+        $writer->writeAttribute('FILEID', "ALTO_$alto_id");
+        $writer->endElement();
+        $writer->setIndent(false);
+      }
+
       $iterator->write(); //Write current node
     }
     $writer->endDocument();
