@@ -88,16 +88,13 @@ class FullTextGenerator {
     return $urn;
   }
 
-  protected static function updateMetsXML($doc, $xml_path, $alto_path, $new_xml_path) {
+  protected static function updateMetsXML($doc, $xml_path, $alto_path, $new_xml_path, $ocr_script) {
     //Set up XML reader and writer:
     $reader = new XMLReader();
     $reader->open($xml_path);
-
     $writer = new XMLWriter();
     $writer->openUri($new_xml_path);
-    
     $iterator = new XMLWritingIteration($writer, $reader);
-
     $writer->startDocument('1.0', 'UTF-8');
 
     //prepare some variables:
@@ -115,18 +112,22 @@ class FullTextGenerator {
         $node->read(); //Go inside current node: all <mets:fileGrp>
 
         //Write new node:
+        $writer->setIndentString('  ');
+        $writer->setIndent(true); //do not write all elements in one line
         $writer->startElement('mets:fileGrp'); // <mets:fileGrp USE="FULLTEXT">
           $writer->writeAttribute('USE', 'FULLTEXT'); 
-          $writer->startElement('mets:file'); // <mets:file ID="ALTO_log59088_431.xml" MIMETYPE="text/xml" CREATED="2022-10-26T14:28:16+00:00">
+          $writer->startElement('mets:file'); // <mets:file ID="ALTO_log59088_431.xml" MIMETYPE="text/xml" CREATED="2022-10-26T14:28:16+00:00" SOFTWARE="DFG-Viewer-5-OCR-tesseract-basic">
             $writer->writeAttribute('ID', "ALTO_$alto_id");
             $writer->writeAttribute('MIMETYPE', 'text/xml');
             $writer->writeAttribute('CREATED', $datestamp);
-            $writer->startElement('mets:FLocat'); // <mets:FLocat LOCTYPE="URL" xlink:href="https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/alto/1652998276_0001.xml"/>
+            $writer->writeAttribute('SOFTWARE', "DFG-Viewer-5-OCR-$ocr_script");
+            $writer->startElement('mets:FLocat'); // <mets:FLocat LOCTYPE="URL" xlink:href="https://digi.bib.uni-mannheim.de/fileadmin/digi/log59088/alto/log59088_431.xml"/>
               $writer->writeAttribute('LOCTYPE', 'URL');
               $writer->writeAttribute('xlink:href', "http://".$_SERVER['HTTP_HOST']."/".$alto_path);
             $writer->endElement();
           $writer->endElement();
         $writer->endElement();
+        $writer->setIndent(false);
       }
       $iterator->write();
     }
@@ -343,7 +344,7 @@ class FullTextGenerator {
       echo '<script>alert(" Status '.$retval.' \n Error: '.implode(" ",$output).'")</script>';
     }
                       //doc,  xml_path,       alto_path,    new_xml_path
-    self::updateMetsXML($doc, $origMets_path, $output_path, $outputFolder_path."/".self::getDocLocalId($doc).".xml");
+    self::updateMetsXML($doc, $origMets_path, $output_path, $outputFolder_path."/".self::getDocLocalId($doc).".xml", $ocr_script);
 
   }
 
