@@ -93,45 +93,61 @@ class FullTextGenerator {
     $reader = new XMLReader();
     $reader->open($xml_path);
     $writer = new XMLWriter();
-    $writer->openUri($new_xml_path);
+    $writer->openUri($new_xml_path."-tmp"); //in case $xml_path == $new_xml_path add "-tmp"
     $iterator = new XMLWritingIteration($writer, $reader);
     $writer->startDocument('1.0', 'UTF-8');
 
     //prepare some variables:
+    $fulltextPresent = $xml_path===$new_xml_path;
     $datetime = new DateTimeImmutable ();
     $datestamp = $datetime->format(DateTimeImmutable::ATOM); //Time in format: "Y-m-d\TH:i:sP" eg "2022-10-26T14:11:21+00:00"
-
-    $alto_id = substr($alto_path, strrpos($alto_path, '/')+1);
+    $alto_filename = substr($alto_path, strrpos($alto_path, '/')+1); //log59088_491.xml
+    $alto_id = substr($alto_filename, 0, strlen($alto_filename)-4); //log59088_491
 
     //Add ALTO entry to <mets:fileGrp USE="FULLTEXT">
     foreach ($iterator as $node) {
       $isElement = $node->nodeType === XMLReader::ELEMENT;
       if($isElement && $node->name === 'mets:fileSec'){
-
         $iterator->write(); //Write current node: <mets:fileSec>
-        $node->read(); //Go inside current node: all <mets:fileGrp>
+        $node->read(); //Go inside current node: <mets:fileSec> -> at level <mets:fileGrp>
 
-        //Write new node:
         $writer->setIndentString('  ');
         $writer->setIndent(true); //do not write all elements in one line
-        $writer->startElement('mets:fileGrp'); // <mets:fileGrp USE="FULLTEXT">
-          $writer->writeAttribute('USE', 'FULLTEXT'); 
-          $writer->startElement('mets:file'); // <mets:file ID="ALTO_log59088_431.xml" MIMETYPE="text/xml" CREATED="2022-10-26T14:28:16+00:00" SOFTWARE="DFG-Viewer-5-OCR-tesseract-basic">
-            $writer->writeAttribute('ID', "ALTO_$alto_id");
-            $writer->writeAttribute('MIMETYPE', 'text/xml');
-            $writer->writeAttribute('CREATED', $datestamp);
-            $writer->writeAttribute('SOFTWARE', "DFG-Viewer-5-OCR-$ocr_script");
-            $writer->startElement('mets:FLocat'); // <mets:FLocat LOCTYPE="URL" xlink:href="https://digi.bib.uni-mannheim.de/fileadmin/digi/log59088/alto/log59088_431.xml"/>
-              $writer->writeAttribute('LOCTYPE', 'URL');
-              $writer->writeAttribute('xlink:href', "http://".$_SERVER['HTTP_HOST']."/".$alto_path);
-            $writer->endElement();
+
+        if($fulltextPresent){ //A FULLTEXT element already exists
+          $node->read(); //Go inside current node: all <mets:fileGrp>
+          if($isElement && $node->getAttribute("USE") === 'FULLTEXT'){ // Check if attribute is FULLTEXT
+            $iterator->write(); //Write current node:<mets:fileGrp USE="FULLTEXT">
+            $node->read(); //Go inside current node: <mets:fileGrp> -> at level <mets:file>
+            //Update node:
+            self::updateMetsNode($writer, $alto_path, $alto_id, $datestamp, $ocr_script);
+          }
+        } else { //A FULLTEXT element already does not exists: create one
+          //Write new node:
+          $writer->startElement('mets:fileGrp'); // <mets:fileGrp USE="FULLTEXT">
+            $writer->writeAttribute('USE', 'FULLTEXT'); 
+            self::updateMetsNode($writer, $alto_path, $alto_id, $datestamp, $ocr_script);
           $writer->endElement();
-        $writer->endElement();
+        }
         $writer->setIndent(false);
       }
-      $iterator->write();
+      $iterator->write(); //Write current node
     }
     $writer->endDocument();
+    rename($new_xml_path."-tmp", $new_xml_path);
+  }
+
+  protected static function updateMetsNode($writer, $alto_path, $alto_id, $datestamp, $ocr_script) {
+    $writer->startElement('mets:file'); // <mets:file ID="ALTO_log59088_431.xml" MIMETYPE="text/xml" CREATED="2022-10-26T14:28:16+00:00" SOFTWARE="DFG-Viewer-5-OCR-tesseract-basic">
+      $writer->writeAttribute('ID', "ALTO_$alto_id");
+      $writer->writeAttribute('MIMETYPE', 'text/xml');
+      $writer->writeAttribute('CREATED', $datestamp);
+      $writer->writeAttribute('SOFTWARE', "DFG-Viewer-5-OCR-$ocr_script");
+      $writer->startElement('mets:FLocat'); // <mets:FLocat LOCTYPE="URL" xlink:href="https://digi.bib.uni-mannheim.de/fileadmin/digi/log59088/alto/log59088_431.xml"/>
+        $writer->writeAttribute('LOCTYPE', 'URL');
+        $writer->writeAttribute('xlink:href', "http://".$_SERVER['HTTP_HOST']."/".$alto_path);
+      $writer->endElement();
+    $writer->endElement();
   }
 
   /**
@@ -307,8 +323,9 @@ class FullTextGenerator {
     $page_id          = self::getPageLocalId($doc, $page_num);        //Page number
     $image_path       = $conf['fulltextImagesFolder'] . "/$page_id";  //Imagefile path
     $document_path    = self::genDocLocalPath($ext_key, $doc);        //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
-    $origMets_path    = $document_path."/".self::getDocLocalId($doc).".xml"; //Path to original METS
     $outputFolder_path = "$document_path/$ocr_script";                //Fulltextfolder (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
+    $origMets_path    = $document_path."/".self::getDocLocalId($doc).".xml"; //Path to original METS
+    $newMets_path     = $outputFolder_path."/".self::getDocLocalId($doc).".xml"; //Path to updated METS
     if (!file_exists($outputFolder_path)){ mkdir($outputFolder_path, 0777, true); }  //Create documents path if not present
     self::writeMetsXML($doc, $origMets_path);                         //Write original METS XML file
     $output_path      = "$outputFolder_path/$page_id.xml";            //Fulltextfile path
@@ -343,9 +360,12 @@ class FullTextGenerator {
     if($retval!=0){ //if exitcode != 0 -> script not successful
       echo '<script>alert(" Status '.$retval.' \n Error: '.implode(" ",$output).'")</script>';
     }
-                      //doc,  xml_path,       alto_path,    new_xml_path
-    self::updateMetsXML($doc, $origMets_path, $output_path, $outputFolder_path."/".self::getDocLocalId($doc).".xml", $ocr_script);
 
+    if (file_exists($newMets_path)){ // there is already an updated METS
+      self::updateMetsXML($doc, $newMets_path, $output_path, $newMets_path, $ocr_script);
+    } else { // there is no updated METS
+      self::updateMetsXML($doc, $origMets_path, $output_path, $newMets_path, $ocr_script);
+    }
   }
 
   /** 
