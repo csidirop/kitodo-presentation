@@ -186,13 +186,13 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
 
         $count = count($fileGrpsImages);
         // set loop variables:
-        if($mode==0){ //default mode: get the image for UI
-            $i=0;
-            $j=$count;
-            $x=1;
-        } else { //OCR mode: get the image for OCR processing
+        if($mode==0){ //default mode: get the lowest image for UI
+            $i=0;       // loop variable: start
+            $j=$count;  // loop variable: end
+            $x=1;       // loop variable: increment
+        } else { //OCR mode: get the highest image for OCR processing
             $i=$count-1;
-            $j=0;
+            $j=-1; //-1 because we want to include the last element (see loop condition !=)
             $x=-1;
         }
 
