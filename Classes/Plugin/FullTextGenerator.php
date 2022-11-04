@@ -76,6 +76,8 @@ class FullTextGenerator {
     while ($reader->read()) {
       if(($reader->name=="mods:identifier") && ($reader->getAttribute("type") === 'urn') && !empty($reader->readString())){ //if XML key is 'mods:identifier' and attribute is 'type'
         $urn = $reader->readString();
+      } else if (($reader->name=="mods:recordIdentifier") && ($reader->getAttribute("source") === 'urn') && !empty($reader->readString())){ //if XML key is 'mods:recordIdentifier' and attribute is 'source'
+        $urn = $reader->readString();
       }
     }
     return $urn;
