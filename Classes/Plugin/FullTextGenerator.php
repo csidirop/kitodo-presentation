@@ -61,7 +61,7 @@ class FullTextGenerator {
   /**
    * Get the URN of the document by reparsing the METS XML.
    * 
-   * Unfortunately the URN is not stored consistently by PResentation with different METS XML files.
+   * Unfortunately the URN is not stored consistently in different METS XML files so its not by Presentation.
    * 
    * @access protected
    * 
@@ -71,14 +71,11 @@ class FullTextGenerator {
    */
   protected static function getDocURN($doc) {
     $reader = new XMLReader();
-    $reader->open("$doc->uid"); //open Mets XML
+    $reader->open("$doc->uid"); //open METS XML
     $urn;
     while ($reader->read()) {
-      if($reader->name=="mods:identifier" && substr($reader->readInnerXml(),0,3)=='urn'){ //if XML key is mods:identifier and value starts with 'urn'
-        $urn = $reader->readInnerXml();
-        //Help: no way to check for attribute like type='urn'
-        //echo '<script>alert("'.$reader->name.' | '.$reader->localName.' | '.$reader->prefix.' | '.$reader->$namespaceURI.' | '.$reader->xmlLang.' | '.$reader->getAttribute('urn').' | '.$reader->readString().' | '.$reader->$baseURI.' | '.$reader->readInnerXml().'")</script>'; //DEBUG
-        //                    //mods:identifier  |   identifier           |   mods              |   -                        |  |                   |                                  | urn:nbn:de:bsz:180-digosi-30 |                    |  urn:nbn:de:bsz:180-digosi-30
+      if(($reader->name=="mods:identifier") && ($reader->getAttribute("type") === 'urn') && !empty($reader->readString())){ //if XML key is 'mods:identifier' and attribute is 'type'
+        $urn = $reader->readString();
       }
     }
     return $urn;
