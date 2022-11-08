@@ -78,6 +78,8 @@ class FullTextGenerator {
         $urn = $reader->readString();
       } else if (($reader->name=="mods:recordIdentifier") && ($reader->getAttribute("source") === 'urn') && !empty($reader->readString())){ //if XML key is 'mods:recordIdentifier' and attribute 'source' is 'urn'
         $urn = $reader->readString();
+      } else if (($reader->name=="mets:div") && (substr($reader->getAttribute("CONTENTIDS"),0,3) === 'urn') && !empty($reader->readString())){ //if XML key is under '<mets:structMap TYPE="LOGICAL">' with '"mets:div' and attribute is 'CONTENTIDS' and starts with 'urn'
+        $urn = $reader->getAttribute("CONTENTIDS");
       }
     }
     return $urn;
