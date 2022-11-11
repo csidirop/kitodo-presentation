@@ -9,6 +9,7 @@ use XMLReaderIterator;
 use XMLWritingIteration;
 use DateTimeImmutable;
 
+use Kitodo\Dlf\Common\Document;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
 
@@ -27,14 +28,18 @@ class FullTextXMLtools {
    * Get the URN of the document by reparsing the METS XML.
    * 
    * Unfortunately the URN is not stored consistently in different METS XML files so its not by Presentation.
+   * The URN is parsed from the METS XML file from this locations:
+   *   'mods:identifier'/'identifier'
+   *   'mods:recordIdentifier'
+   *   '"mets:div'
    * 
    * @access protected
    * 
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param Document doc
    * 
    * @return string The document's URN or null if not found.
    */
-  public static function getDocURN($doc) {
+  public static function getDocURN(Document $doc):string {
     $reader = new XMLReader();
     $reader->open("$doc->uid"); //open METS XML
     $urn;
@@ -58,11 +63,11 @@ class FullTextXMLtools {
    * 
    * @access protected
    * 
-   * @param \Kitodo\Dlf\Common\Document doc
-   * @param String xml_path Path to the output folder
+   * @param Document doc
+   * @param string xml_path Path to the output folder
    * 
    */
-  public static function writeMetsXML($doc, $xml_path) {
+  public static function writeMetsXML(Document $doc, string $xml_path):void {
     if(!file_exists($xml_path)){ //check if METS XML file already exists
       $file = self::getMetsXML($doc);
       // $file = $doc->xml->asXML(); //Alternative: Get METS XML file from doc object -> faster but slightly different header
@@ -77,11 +82,11 @@ class FullTextXMLtools {
    * 
    * @access protected
    * 
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param Document doc
    * 
    * @return string METS XML content
    */
-  protected static function getMetsXML($doc) {
+  protected static function getMetsXML(Document $doc):string {
     return file_get_contents($doc->uid);
   }
 
@@ -90,14 +95,13 @@ class FullTextXMLtools {
    * 
    *  @access protected
    * 
-   *  @param \Kitodo\Dlf\Common\Document doc
-   *  @param String xml_path Path to the original METS XML
-   *  @param String alto_path Path to the ALTO XML
-   *  @param String new_xml_path Path to the updated METS XML
-   *  @param String ocr_script Name of the ocr generation script
+   *  @param string xml_path Path to the original METS XML
+   *  @param string alto_path Path to the ALTO XML
+   *  @param string new_xml_path Path to the updated METS XML
+   *  @param string ocr_script Name of the ocr generation script
    * 
    */
-  public static function updateMetsXML($xml_path, $alto_path, $new_xml_path, $ocr_script) {
+  public static function updateMetsXML(string $xml_path, string $alto_path, string $new_xml_path, string $ocr_script):void {
     //Set up XML reader and writer:
     $reader = new XMLReader();
     $reader->open($xml_path);
@@ -161,7 +165,7 @@ class FullTextXMLtools {
     rename($new_xml_path."-tmp", $new_xml_path);
   }
 
-  protected static function updateMetsNode($writer, $alto_path, $alto_id, $datestamp, $ocr_script) {
+  protected static function updateMetsNode(XMLWriter $writer, string $alto_path, string $alto_id, string $datestamp, string $ocr_script):void {
     $writer->startElement('mets:file'); // <mets:file ID="ALTO_log59088_431.xml" MIMETYPE="text/xml" CREATED="2022-10-26T14:28:16+00:00" SOFTWARE="DFG-Viewer-5-OCR-tesseract-basic">
       $writer->writeAttribute('ID', "ALTO_$alto_id");
       $writer->writeAttribute('MIMETYPE', 'text/xml');
@@ -184,7 +188,7 @@ class FullTextXMLtools {
    *
    * @return void
    */
-  public static function createPlaceholderFulltext($path, $text) {
+  public static function createPlaceholderFulltext(string $path, string $text):void {
     $dom = new DOMdocument();
 
     $root = $dom->createelement("alto");

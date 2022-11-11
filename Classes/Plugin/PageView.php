@@ -25,6 +25,8 @@ use Kitodo\Dlf\Plugin\FullTextGenerator;
  * Plugin 'Page View' for the 'dlf' extension
  *
  * @author Sebastian Meyer <sebastian.meyer@slub-dresden.de>
+ * @author Christos Sidiropoulos <christos.sidiropoulos@uni-mannheim.de>
+ * 
  * @package TYPO3
  * @subpackage dlf
  * @access public

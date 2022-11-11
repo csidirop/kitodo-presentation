@@ -2,6 +2,7 @@
 
 namespace Kitodo\Dlf\Plugin;
 
+use Kitodo\Dlf\Common\Document;
 use Kitodo\Dlf\Plugin\FullTextXMLtools;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
@@ -25,11 +26,11 @@ class FullTextGenerator {
    * 
    * @access protected
    *
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param Document doc
    *
    * @return string
    */
-  protected static function getDocLocalId($doc) {
+  protected static function getDocLocalId(Document $doc):string {
     return $doc->toplevelId;
   }
 
@@ -38,12 +39,12 @@ class FullTextGenerator {
    * 
    * @access protected
    *
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param Document doc
    * @param int page_num
    *
    * @return string
    */
-  protected static function getPageLocalId($doc, $page_num) {
+  protected static function getPageLocalId(Document $doc, int $page_num):string {
     $doc_id = self::getDocLocalId($doc);
     return "{$doc_id}_$page_num";
   }
@@ -53,11 +54,12 @@ class FullTextGenerator {
    * 
    * @access protected
    *
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param string ext_key
+   * @param Document doc
    *
    * @return string path to documents specific fulltext folder
    */
-  protected static function genDocLocalPath($ext_key, $doc) {
+  protected static function genDocLocalPath(string $ext_key, Document $doc):string {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genDocLocalPath: '.$conf['fulltextFolder'].'")</script>'; //DEBUG
 
@@ -77,12 +79,12 @@ class FullTextGenerator {
    * @access public
    *
    * @param string ext_key
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param Document doc
    * @param int page_num
    *
    * @return string
    */
-  public static function getPageLocalPath($ext_key, $doc, $page_num) {
+  public static function getPageLocalPath(string $ext_key, Document $doc, int $page_num):string {
     $outputFolder_path = self::genDocLocalPath($ext_key, $doc);
     $ocrEngine = self::getOCRengine($ext_key);
     $page_id = self::getPageLocalId($doc, $page_num);
@@ -98,7 +100,7 @@ class FullTextGenerator {
    *
    * @return string
    */
-  protected static function getOCRengine($ext_key){
+  protected static function getOCRengine(string $ext_key): string{
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
     if(is_null($_SESSION["ocrEngine"])){ //if not set, get default value
       $_SESSION["ocrEngine"] = $conf['ocrEngine'];
@@ -113,12 +115,12 @@ class FullTextGenerator {
    * @access public
    *
    * @param string ext_key
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param Document doc
    * @param int page_num
    *
    * @return bool
    */
-  public static function checkLocal($ext_key, $doc, $page_num) {
+  public static function checkLocal(string $ext_key, Document $doc, int $page_num):bool {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
     return file_exists(self::getPageLocalPath($ext_key, $doc, $page_num));
   }
@@ -129,12 +131,12 @@ class FullTextGenerator {
    * @access public
    *
    * @param string ext_key
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param Document doc
    * @param int page_num
    *
    * @return bool
    */
-  public static function checkInProgress($ext_key, $doc, $page_num) {
+  public static function checkInProgress(string $ext_key, Document $doc, int $page_num):bool {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
     return file_exists($conf['fulltextTempFolder'] . '/' . self::getPageLocalId($doc, $page_num) . ".xml");
   }
@@ -145,12 +147,12 @@ class FullTextGenerator {
    * @access public
    *
    * @param string ext_key
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param Document doc
    * @param array images_urls
    *
    * @return void
    */
-  public static function createBookFullText($ext_key, $doc, $images_urls) {
+  public static function createBookFullText(string $ext_key, Document $doc, array $images_urls):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
     for ($i=1; $i <= $doc->numPages; $i++) {
       if (!(self::checkLocal($ext_key, $doc, $i) || self::checkInProgress($ext_key, $doc, $i))) {
@@ -160,20 +162,23 @@ class FullTextGenerator {
   }
 
   /**
+   *  Create fulltext for given page from document
    * 
    * @access protected
    *
    * @param string ext_key
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param Document doc
    * @param int page_num
    *
    * @return bool
    */
-  public static function createPageFullText($ext_key, $doc, $image_url, $page_num) {
+  public static function createPageFullText(string $ext_key, Document $doc, string $image_url, int $page_num):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
 
+    $ocr_script = "TODO"; //TODO: get script
+
     if (!(self::checkLocal($ext_key, $doc, $page_num) || self::checkInProgress($ext_key, $doc, $page_num))) {
-      return self::generatePageOCRwithScript($ext_key, $conf, $doc, $ocr_script, $image_url, $page_num);
+      self::generatePageOCRwithScript($ext_key, $conf, $doc, $ocr_script, $image_url, $page_num);
     }
   }
 
@@ -185,7 +190,7 @@ class FullTextGenerator {
    *
    * @param string ext_key
    * @param array conf
-   * @param \Kitodo\Dlf\Common\Document doc
+   * @param Document doc
    * @param string ocr_script
    * @param string image_url
    * @param int page_num 
@@ -193,14 +198,14 @@ class FullTextGenerator {
    *
    * @return void
    */
-  protected static function generatePageOCRwithScript($ext_key, $conf, $doc, $ocr_script, $image_url, $page_num, $sleep_interval = 0) {
+  protected static function generatePageOCRwithScript(string $ext_key, array $conf, Document $doc, string $ocr_script, string $image_url, int $page_num, int $sleep_interval = 0):void {
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
 
     //Working dir is "/var/www/typo3/public"; //same as "/var/www/html" because sym link
 
     //Parse parameter and setup variables:
     $ocr_scripts_folder = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts";
-    $ocr_script       = self::getOCRengine($ext_key);                 //OCR-Engine/Script set in settings (//TODO: or via UI)
+    $ocr_script       = self::getOCRengine($ext_key);                 //OCR-Engine/Script set in settings (//TODO: or via UI) //here or passed from calling func -> remove parameter
     $ocr_script_path  = "$ocr_scripts_folder/$ocr_script.sh";         //Path to OCR-Engine/Script
     // $ocr_script_path  = "$ocr_scripts_folder/tesseract-basic.sh";  //Path to OCR-Engine/Script
     $page_id          = self::getPageLocalId($doc, $page_num);        //Page number
@@ -259,13 +264,13 @@ class FullTextGenerator {
    *  @param string ocr_script_path
    *  @param string image_path
    *  @param string output_path
-   *  @param int page_id
+   *  @param string page_id
    *  @param string OCR_languages
    *  @param string OCR_options
    * 
    *  @return string OCR-script shell command
    */
-  protected static function genOCRscriptShellCommand($ocr_script_path, $image_path, $output_path, $page_id, $OCR_languages, $OCR_options){
+  protected static function genOCRscriptShellCommand(string $ocr_script_path, string $image_path, string $output_path, string $page_id, string $OCR_languages, string $OCR_options):string{
     return "./$ocr_script_path --image_path $image_path --output_path $output_path --page_id $page_id --ocrLanguages $OCR_languages --ocrOptions $OCR_options ";
   }
 
@@ -285,7 +290,7 @@ class FullTextGenerator {
    * 
    *  @return string Full OCR-script shell command
    */
-  protected static function genShellCommand($ocrPlaceholderText, $ocr_script_path, $image_path, $temp_output_path, $output_path, $page_id, $OCR_languages, $OCR_options){
+  protected static function genShellCommand(string $ocrPlaceholderText, string $ocr_script_path, string $image_path, string $temp_output_path, string $output_path, string $page_id, string $OCR_languages, string $OCR_options):string{
     $ocr_shell_command = "";
     if ($ocrPlaceholderText) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
       FullTextXMLtools::createPlaceholderFulltext($output_path, $ocrPlaceholderText);
@@ -299,7 +304,7 @@ class FullTextGenerator {
 
   /** 
    * DEBUG: echo debuf alerts to show the values of all vars
-  */
+   */
   protected static function varOutput($conf, $page_id, $image_path, $outputFolder_path, $output_path, $temp_output_path, $lock_folder, $image_download_command, $ocr_shell_command){
     exec("pwd", $output, $retval);
     echo '<script>alert("pwd: ' .implode(" ",$output). '")</script>';
