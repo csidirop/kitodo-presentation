@@ -356,9 +356,9 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
 
     /**
      * Parses the json with all active OCR Engines.
-     * 
+     *
      * @access protected
-     * 
+     *
      * @param string $ocrEnginesPath: Path to the JSON containing all active OCR engines
      * @return void
      */
@@ -381,7 +381,7 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
     {
         $this->init($conf);
         $this->loadDocument(); // Load current document
-        $this->parseOCRengines("typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/ocrEngines.json");
+        $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']);
         //Proccess request: Do OCR on given image(s):
         if ($_POST["request"]) {
             $this->generateFullText();

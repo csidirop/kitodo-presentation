@@ -193,6 +193,7 @@
             <label index="config.ocrPlaceholder">Create a blank ALTO file as a placeholder</label>
             <label index="config.ocrPlaceholderText">Defines the text of the ALTO placeholder file</label>
             <label index="config.ocrEngine">Default OCR-Engine</label>
+            <label index="config.ocrEngines">Path to JSON with all active OCR Engines: Relative path from "/var/www/typo3/public/"</label>
             <label index="config.ocrLanguages">OCR Languages (separated by space)</label>
             <label index="config.ocrOptions">OCR command options (as output formats) (separated by space)</label>
             <label index="config.ocrDelay">Delay until OCR start (in seconds)</label>
@@ -417,6 +418,7 @@
             <label index="config.ocrPlaceholder">Erstelle eine leere ALTO Datei als Platzhalter</label>
             <label index="config.ocrPlaceholderText">Definiert den Text der ALTO Platzhalter Datei</label>
             <label index="config.ocrEngine">Standardmäßige OCR-Engine</label>
+            <label index="config.ocrEngines">Pfad zum JSON mit allen aktiven OCR Engines: Relativer Pfad von "/var/www/typo3/public/" aus.</label>
             <label index="config.ocrLanguages">OCR Sprachen (durch Leerzeichen getrennt)</label>
             <label index="config.ocrOptions">OCR Aufrufoptionen (wie Ausgabeformate) (durch Leerzeichen getrennt)</label>
             <label index="config.ocrDelay">Verzögerung bis zum Start der OCR (in Sekunden)</label>

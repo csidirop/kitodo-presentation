@@ -1,0 +1,25 @@
+{
+    "ocrEngines": [
+        {
+            "name": "Tesseract",
+            "de": "Tesseract1",
+            "en": "Tesseract1",
+            "class": "tesseract",
+            "data": "tesseract-basic.sh"
+        },
+        {
+            "name": "Tesseract2",
+            "de": "Tesseract2 (de)",
+            "en": "Tesseract2 (en)",
+            "class": "tesseract",
+            "data": "tesseract-basic.sh"
+        }, 
+        {
+            "name": "Tesseract3",
+            "de": "Tesseract3 (de)",
+            "en": "Tesseract3 (en)",
+            "class": "tesseract",
+            "data": "tesseract-basic.sh"
+        }
+    ]
+}

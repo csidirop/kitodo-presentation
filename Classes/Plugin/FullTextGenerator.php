@@ -7,8 +7,6 @@ use Kitodo\Dlf\Plugin\FullTextXMLtools;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
 
-session_start(); // Start a PHP session to temporarily hold some variables ($_SESSION["ocrEngine"]) globaly for this user only
-
 /**
  * Plugin 'FullText Generator' for the 'dlf' extension
  * Generates fulltext ALTO files from METS XML files and writes them to localy beside the updated METS XML file.
@@ -102,11 +100,10 @@ class FullTextGenerator {
    */
   protected static function getOCRengine(string $ext_key): string{
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
-    if(is_null($_SESSION["ocrEngine"])){ //if not set, get default value
-      $_SESSION["ocrEngine"] = $conf['ocrEngine'];
+    if(is_null($_COOKIE['tx-dlf-ocrEngine'])){ //if not set, get default value
+      return $conf['ocrEngine'];
     }
-    // $_SESSION["ocrEngine"] = "tess";
-    return $_SESSION["ocrEngine"];
+    return $_COOKIE['tx-dlf-ocrEngine'];
   }
 
   /**
