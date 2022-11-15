@@ -121,7 +121,6 @@ class FullTextGenerator {
    * @return bool
    */
   public static function checkLocal(string $ext_key, Document $doc, int $page_num):bool {
-    $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
     return file_exists(self::getPageLocalPath($ext_key, $doc, $page_num));
   }
 
@@ -154,15 +153,16 @@ class FullTextGenerator {
    */
   public static function createBookFullText(string $ext_key, Document $doc, array $images_urls):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
-    for ($i=1; $i <= $doc->numPages; $i++) {
-      if (!(self::checkLocal($ext_key, $doc, $i) || self::checkInProgress($ext_key, $doc, $i))) {
-	      self::generatePageOCRwithScript($ext_key, $conf, $doc, $ocr_script, $images_urls[$i], $i, $conf['ocrDelay']);
+
+    for ($page_num=1; $page_num <= $doc->numPages; $page_num++) {
+      if (!(self::checkLocal($ext_key, $doc, $page_num) || self::checkInProgress($ext_key, $doc, $page_num))) {
+	      self::generatePageOCR($ext_key, $conf, $doc, $images_urls[$page_num], $page_num, $conf['ocrDelay']);
       }
     }
   }
 
   /**
-   *  Create fulltext for given page from document
+   * Create fulltext for given page from document
    * 
    * @access protected
    *
@@ -175,10 +175,8 @@ class FullTextGenerator {
   public static function createPageFullText(string $ext_key, Document $doc, string $image_url, int $page_num):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
 
-    $ocr_script = "TODO"; //TODO: get script
-
     if (!(self::checkLocal($ext_key, $doc, $page_num) || self::checkInProgress($ext_key, $doc, $page_num))) {
-      self::generatePageOCRwithScript($ext_key, $conf, $doc, $ocr_script, $image_url, $page_num);
+      self::generatePageOCR($ext_key, $conf, $doc, $image_url, $page_num, $conf['ocrDelay']);
     }
   }
 
@@ -191,23 +189,21 @@ class FullTextGenerator {
    * @param string ext_key
    * @param array conf
    * @param Document doc
-   * @param string ocr_script
    * @param string image_url
    * @param int page_num 
    * @param int sleep_interval
    *
    * @return void
    */
-  protected static function generatePageOCRwithScript(string $ext_key, array $conf, Document $doc, string $ocr_script, string $image_url, int $page_num, int $sleep_interval = 0):void {
+  protected static function generatePageOCR(string $ext_key, array $conf, Document $doc, string $image_url, int $page_num, int $sleep_interval = 0):void {
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
 
     //Working dir is "/var/www/typo3/public"; //same as "/var/www/html" because sym link
 
     //Parse parameter and setup variables:
     $ocr_scripts_folder = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts";
-    $ocr_script       = self::getOCRengine($ext_key);                 //OCR-Engine/Script set in settings (//TODO: or via UI) //here or passed from calling func -> remove parameter
+    $ocr_script       = self::getOCRengine($ext_key);                 //OCR-Engine/Script set in settings
     $ocr_script_path  = "$ocr_scripts_folder/$ocr_script.sh";         //Path to OCR-Engine/Script
-    // $ocr_script_path  = "$ocr_scripts_folder/tesseract-basic.sh";  //Path to OCR-Engine/Script
     $page_id          = self::getPageLocalId($doc, $page_num);        //Page number
     $image_path       = $conf['fulltextImagesFolder'] . "/$page_id";  //Imagefile path
     $document_path    = self::genDocLocalPath($ext_key, $doc);        //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
@@ -270,7 +266,7 @@ class FullTextGenerator {
    * 
    *  @return string OCR-script shell command
    */
-  protected static function genOCRscriptShellCommand(string $ocr_script_path, string $image_path, string $output_path, string $page_id, string $OCR_languages, string $OCR_options):string{
+  protected static function genOCRshellCommand(string $ocr_script_path, string $image_path, string $output_path, string $page_id, string $OCR_languages, string $OCR_options):string{
     return "./$ocr_script_path --image_path $image_path --output_path $output_path --page_id $page_id --ocrLanguages $OCR_languages --ocrOptions $OCR_options ";
   }
 
@@ -294,10 +290,10 @@ class FullTextGenerator {
     $ocr_shell_command = "";
     if ($ocrPlaceholderText) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
       FullTextXMLtools::createPlaceholderFulltext($output_path, $ocrPlaceholderText);
-      $ocr_shell_command = self::genOCRscriptShellCommand($ocr_script_path, $image_path, $temp_output_path, $page_id, $OCR_languages, $OCR_options);
+      $ocr_shell_command = self::genOCRshellCommand($ocr_script_path, $image_path, $temp_output_path, $page_id, $OCR_languages, $OCR_options);
       $ocr_shell_command .= " && mv -f $temp_output_path.xml $output_path ";
     } else { //do not create dummy xml, write direcly the final file
-      $ocr_shell_command = self::genOCRscriptShellCommand($ocr_script_path, $image_path, $output_path, $page_id, $OCR_languages, $OCR_options);
+      $ocr_shell_command = self::genOCRshellCommand($ocr_script_path, $image_path, $output_path, $page_id, $OCR_languages, $OCR_options);
     }
     return $ocr_shell_command;
   }

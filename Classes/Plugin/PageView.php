@@ -180,7 +180,7 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
      *
      * @return array URL and MIME type of image file
      */
-    protected function getImage($page, $mode=0)
+    protected function getImage(int $page, int $mode=0) : array
     {
         $image = [];
         // Get @USE value of METS fileGrp.
@@ -335,6 +335,25 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
     }
 
     /**
+     * Generates page or book fulltexts via FullTextGenerator.php
+     * 
+     * @access protected
+     * 
+     * @return void
+     */
+    protected function generateFullText():void {
+        FullTextGenerator::createPageFullText($this->extKey, $this->doc, $this->getImage($this->piVars['page'], 1)["url"], $this->piVars['page']);
+        if($_POST["request"]["type"] == "book") {
+            //collect all images urls:
+            $images = array();
+            for ($i=1; $i <= $this->doc->numPages; $i++) {
+                $images[$i] = $this->getImage($i, 1)["url"];
+            }
+            FullTextGenerator::createBookFullText($this->extKey, $this->doc, $images);
+        }
+    }
+
+    /**
      * The main method of the PlugIn
      *
      * @access public
@@ -347,24 +366,13 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
     public function main($content, $conf)
     {
         $this->init($conf);
-        // Load current document.
-        $this->loadDocument();
-        //Proccess request: Do OCR on given image(s)
+        $this->loadDocument(); // Load current document
+        //Proccess request: Do OCR on given image(s):
         if ($_POST["request"]) {
-            FullTextGenerator::createPageFullText($this->extKey, $this->doc, $this->getImage($this->piVars['page'], 1)["url"], $this->piVars['page']);
-            if($_POST["request"]["type"] == "book") {
-              $images = array();
-              for ($i=1; $i <= $this->doc->numPages; $i++) {
-                $images[$i] = $this->getImage($i)["url"];
-              }
-              FullTextGenerator::createBookFullText($this->extKey, $this->doc, $images);
-            }
+            $this->generateFullText();
         }
 
-        if (
-            $this->doc === null
-            || $this->doc->numPages < 1
-        ) {
+        if ($this->doc === null || $this->doc->numPages < 1) {
             // Quit without doing anything if required variables are not set.
             return $content;
         } else {
