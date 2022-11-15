@@ -39,10 +39,10 @@ class FullTextXMLtools {
    * 
    * @return string The document's URN or null if not found.
    */
-  public static function getDocURN(Document $doc):string {
+  public static function getDocURN(Document $doc):?string {
     $reader = new XMLReader();
     $reader->open("$doc->uid"); //open METS XML
-    $urn;
+    $urn = null;
     while ($reader->read()) {
       if((($reader->name=="mods:identifier")||($reader->name=="identifier")) && ($reader->getAttribute("type") === 'urn') && !empty($reader->readString())){ //if XML key is 'mods:identifier'/'identifier' and attribute 'type' is 'urn'
         $urn = $reader->readString();
