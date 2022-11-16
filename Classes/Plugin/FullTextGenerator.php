@@ -4,6 +4,7 @@ namespace Kitodo\Dlf\Plugin;
 
 use Kitodo\Dlf\Common\Document;
 use Kitodo\Dlf\Plugin\FullTextXMLtools;
+use Kitodo\Dlf\Plugin\PageView;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
 
@@ -84,26 +85,9 @@ class FullTextGenerator {
    */
   public static function getPageLocalPath(string $ext_key, Document $doc, int $page_num):string {
     $outputFolder_path = self::genDocLocalPath($ext_key, $doc);
-    $ocrEngine = self::getOCRengine($ext_key);
+    $ocrEngine = PageView::getOCRengine($ext_key);
     $page_id = self::getPageLocalId($doc, $page_num);
     return "$outputFolder_path/$ocrEngine/$page_id.xml";
-  }
-
-  /**
-   * Checks and returns the OCR-Engine //WIP
-   * 
-   * @access protected
-   *
-   * @param string ext_key
-   *
-   * @return string
-   */
-  protected static function getOCRengine(string $ext_key): string{
-    $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
-    if(is_null($_COOKIE['tx-dlf-ocrEngine'])){ //if not set, get default value
-      return $conf['ocrEngine'];
-    }
-    return $_COOKIE['tx-dlf-ocrEngine'];
   }
 
   /**
@@ -145,15 +129,16 @@ class FullTextGenerator {
    * @param string ext_key
    * @param Document doc
    * @param array images_urls
+   * @param string $ocrEngine
    *
    * @return void
    */
-  public static function createBookFullText(string $ext_key, Document $doc, array $images_urls):void {
+  public static function createBookFullText(string $ext_key, Document $doc, array $images_urls, string $ocrEngine):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
 
     for ($page_num=1; $page_num <= $doc->numPages; $page_num++) {
       if (!(self::checkLocal($ext_key, $doc, $page_num) || self::checkInProgress($ext_key, $doc, $page_num))) {
-	      self::generatePageOCR($ext_key, $conf, $doc, $images_urls[$page_num], $page_num, $conf['ocrDelay']);
+	      self::generatePageOCR($ext_key, $conf, $doc, $images_urls[$page_num], $page_num, $conf['ocrDelay'], $ocrEngine);
       }
     }
   }
@@ -166,14 +151,15 @@ class FullTextGenerator {
    * @param string ext_key
    * @param Document doc
    * @param int page_num
+   * @param string $ocrEngine
    *
    * @return bool
    */
-  public static function createPageFullText(string $ext_key, Document $doc, string $image_url, int $page_num):void {
+  public static function createPageFullText(string $ext_key, Document $doc, string $image_url, int $page_num, string $ocrEngine):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
 
     if (!(self::checkLocal($ext_key, $doc, $page_num) || self::checkInProgress($ext_key, $doc, $page_num))) {
-      self::generatePageOCR($ext_key, $conf, $doc, $image_url, $page_num, $conf['ocrDelay']);
+      self::generatePageOCR($ext_key, $conf, $doc, $image_url, $page_num, $conf['ocrDelay'], $ocrEngine);
     }
   }
 
@@ -189,18 +175,18 @@ class FullTextGenerator {
    * @param string image_url
    * @param int page_num 
    * @param int sleep_interval
+   * @param string $ocrEngine
    *
    * @return void
    */
-  protected static function generatePageOCR(string $ext_key, array $conf, Document $doc, string $image_url, int $page_num, int $sleep_interval = 0):void {
+  protected static function generatePageOCR(string $ext_key, array $conf, Document $doc, string $image_url, int $page_num, int $sleep_interval = 0, string $ocrEngine):void {
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
 
     //Working dir is "/var/www/typo3/public"; //same as "/var/www/html" because sym link
 
     //Parse parameter and setup variables:
     $ocr_scripts_folder = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts";
-    $ocr_script       = self::getOCRengine($ext_key);                 //OCR-Engine/Script set in settings
-    $ocr_script_path  = "$ocr_scripts_folder/$ocr_script.sh";         //Path to OCR-Engine/Script
+    $ocr_script_path  = "$ocr_scripts_folder/$ocrEngine.sh";          //Path to OCR-Engine/Script
     $page_id          = self::getPageLocalId($doc, $page_num);        //Page number
     $image_path       = $conf['fulltextImagesFolder'] . "/$page_id";  //Imagefile path
     $document_path    = self::genDocLocalPath($ext_key, $doc);        //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)

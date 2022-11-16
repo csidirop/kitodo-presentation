@@ -69,6 +69,13 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
     protected $annotationContainers = [];
 
     /**
+     * Holds the parsed active OCR engines
+     * @var array
+     * @access protected
+     */
+    protected static $ocrEngines = [];
+
+    /**
      * Adds Viewer javascript
      *
      * @access protected
@@ -343,7 +350,7 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
      * @return void
      */
     protected function generateFullText():void {
-        FullTextGenerator::createPageFullText($this->extKey, $this->doc, $this->getImage($this->piVars['page'], 1)["url"], $this->piVars['page']);
+        FullTextGenerator::createPageFullText($this->extKey, $this->doc, $this->getImage($this->piVars['page'], 1)["url"], $this->piVars['page'], self::getOCRengine($this->extKey));
         if($_POST["request"]["type"] == "book") {
             //collect all images urls:
             $images = array();
@@ -354,6 +361,29 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
         }
     }
 
+  /**
+   * Checks and returns the OCR-Engine
+   * 
+   * @access public
+   * 
+   * @param string $extKey
+   *
+   * @return string
+   */
+  public static function getOCRengine(string $extKey):string {
+    $conf = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
+    $ocrEngine = '';
+
+    if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && str_contains(self::$ocrEngines, $_COOKIE['tx-dlf-ocrEngine'])){
+        $ocrEngine = $_COOKIE['tx-dlf-ocrEngine'];
+    } else { 
+        $GLOBALS['BE_USER']->simplelog("OCR Engine wrong: ".$_COOKIE["tx-dlf-ocrEngine"], "dlf", 2); //write log
+        $ocrEngine = "default" .$conf['ocrEngine'] ; //get default default value
+    }
+
+    return $ocrEngine;
+  }
+
     /**
      * Parses the json with all active OCR Engines.
      *
@@ -363,8 +393,8 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
      * @return void
      */
     protected function parseOCRengines(string $ocrEnginesPath):void{
-        $ocrEngines = file_get_contents($ocrEnginesPath);
-        $success = setcookie('tx-dlf-ocrEngines', $ocrEngines, 0, ['samesite' => 'none']);
+        self::$ocrEngines = file_get_contents($ocrEnginesPath);
+        setcookie('tx-dlf-ocrEngines', self::$ocrEngines, 0, ['samesite' => 'none']);
     }
 
     /**
