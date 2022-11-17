@@ -394,7 +394,7 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
      */
     protected function parseOCRengines(string $ocrEnginesPath):void{
         self::$ocrEngines = file_get_contents($ocrEnginesPath);
-        setcookie('tx-dlf-ocrEngines', self::$ocrEngines, 0, ['samesite' => 'none']);
+        setcookie('tx-dlf-ocrEngines', self::$ocrEngines, ['SameSite' => 'lax']);
     }
 
     /**
