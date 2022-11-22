@@ -12,14 +12,14 @@
             "de": "Tesseract2 (de)",
             "en": "Tesseract2 (en)",
             "class": "tesseract",
-            "data": "tesseract-basic"
+            "data": "tesseract2-basic"
         }, 
         {
-            "name": "Tesseract3",
-            "de": "Tesseract3 (de)",
-            "en": "Tesseract3 (en)",
-            "class": "tesseract",
-            "data": "tesseract-basic"
+            "name": "OCRD",
+            "de": "OCRD (de)",
+            "en": "OCRD (en)",
+            "class": "OCRD",
+            "data": "OCRD-basic"
         }
     ]
 }
