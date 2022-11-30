@@ -190,6 +190,7 @@
             <label index="config.fulltextFolder">Directory for the generated OCR fulltexts</label>
             <label index="config.fulltextTempFolder">Temporary directory for OCR fulltexts in progress</label>
             <label index="config.fulltextImagesFolder">Temporary directory for the images needed for processing (not needed if 'ocrDwnlTempImage' is set)</label>
+            <label index="config.fulltextLockFolder">Temporary directory which holds the locks for locking the OCR in progress</label>
             <label index="config.ocrPlaceholder">Create a blank ALTO file as a placeholder</label>
             <label index="config.ocrPlaceholderText">Defines the text of the ALTO placeholder file</label>
             <label index="config.ocrEngine">Default OCR-Engine</label>
@@ -413,6 +414,7 @@
             <label index="config.fulltextFolder">Verzeichnis für die erzeugten Volltexte</label>
             <label index="config.fulltextTempFolder">Temporäres Verzeichnis für die in Bearbeitung befindlichen Volltexte</label>
             <label index="config.fulltextImagesFolder">Temporäres Verzeichnis für die zur Bearbeitung benötigten Bilder (wird nicht benötigt, falls 'ocrDwnlTempImage' gesetzt)</label>
+            <label index="config.fulltextLockFolder">Temporäres Verzeichnis, das die Locks zum Sperren der laufenden OCR enthält</label>
             <label index="config.ocrDwnlTempImage">Bilder für lokale OCR-Engines (wie Tesseract) herunterladen</label>
             <label index="config.ocrPlaceholder">Erstelle eine leere ALTO Datei als Platzhalter</label>
             <label index="config.ocrPlaceholderText">Definiert den Text der ALTO Platzhalter Datei</label>

@@ -28,9 +28,11 @@ fileGrpAudio = AUDIO
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fulltextFolder
 fulltextFolder = fileadmin/fulltextFolder
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fulltextTempFolder
-fulltextTempFolder = fileadmin/_temp_/fulltextTempFolder
+fulltextTempFolder = fileadmin/_temp_/ocrTempFolder/fulltext
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fulltextImagesFolder
-fulltextImagesFolder = fileadmin/_temp_/imagesTempFolder
+fulltextImagesFolder = fileadmin/_temp_/ocrTempFolder/images
+# cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fulltextLockFolder
+fulltextLockFolder = fileadmin/_temp_/ocrTempFolder/lock
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrPlaceholder
 ocrPlaceholder=1
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrPlaceholderText

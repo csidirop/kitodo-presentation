@@ -214,7 +214,8 @@ class FullTextGenerator {
     FullTextXMLtools::writeMetsXML($doc, $origMets_path);             //Write original METS XML file
     $output_path      = "$outputFolder_path/$page_id.xml";            //Fulltextfile path
     $temp_output_path = $conf['fulltextTempFolder'] . "/$page_id";    //Fulltextfile TMP path
-    $lock_folder      = $conf['fulltextTempFolder'] . "/lock";        //Folder used to lock ocr command
+    $lockFolder       = $conf['fulltextLockFolder'] . "/";            //Folder used to store locks
+    $lockFile         = $lockFolder . hash("md5", $image_url);        //File used to lock OCR command
     $image_download_command =":";                                     //non empty command without effect //TODO: find better solution
     $ocr_shell_command = "";
 
@@ -228,25 +229,24 @@ class FullTextGenerator {
       $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_url, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
     }
 
-    // Locking command, so that only one instance of tesseract can run in one time moment
+    // Locking command, so that only a limited number of an OCR-Engines can run in one time
     // TODO: use something like semaphores. That way it is posible to run multiple instances at the same time
     if ($conf['ocrLock']) {
-      while(file_exists($lock_folder)) {
+      while(file_exists($lockFile)) { //if and as long as there is the lockelement, wait ...
         session_write_close(); //close session to allow other accesses (otherwise no new site can be loaded as long as the lock is active)
         sleep(1);
         session_start();
       }
-      mkdir($lock_folder, 0777, true);
+      fopen($lockFile, "w") ; //wite lock
     }
 
-    //Debug:
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocr_shell_command.'")</script>'; //DEBUG
 
     //Execute shell commands:
     exec("($image_download_command && sleep $sleep_interval && $ocr_shell_command)", $output, $retval);
 
-    //Remove lock folder
-    rmdir($lock_folder);
+    //Remove lock:
+    unlink($lockFile);
 
     //Send alert if something went wrong //TODO: later write to log?
     if($retval!=0){ //if exitcode != 0 -> script not successful
