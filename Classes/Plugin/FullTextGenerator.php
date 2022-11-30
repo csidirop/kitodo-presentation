@@ -231,7 +231,10 @@ class FullTextGenerator {
     // Locking command, so that only one instance of tesseract can run in one time moment
     // TODO: use something like semaphores. That way it is posible to run multiple instances at the same time
     if ($conf['ocrLock']) {
-      $ocr_shell_command = "while ! mkdir \"$lock_folder\"; do sleep 3; done; $ocr_shell_command; rm -r $lock_folder;" ;
+      while(file_exists($lock_folder)) {
+        sleep(1);
+      }
+      mkdir($lock_folder, 0777, true);
     }
 
     //Debug:
@@ -239,6 +242,9 @@ class FullTextGenerator {
 
     //Execute shell commands:
     exec("($image_download_command && sleep $sleep_interval && $ocr_shell_command)", $output, $retval);
+
+    //Remove lock folder
+    rmdir($lock_folder);
 
     //Send alert if something went wrong //TODO: later write to log?
     if($retval!=0){ //if exitcode != 0 -> script not successful
