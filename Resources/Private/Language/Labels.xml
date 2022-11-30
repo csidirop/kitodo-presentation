@@ -198,6 +198,7 @@
             <label index="config.ocrOptions">OCR command options (as output formats) (separated by space)</label>
             <label index="config.ocrDelay">Delay until OCR start (in seconds)</label>
             <label index="config.ocrLock">Make run only one instance of OCR at time</label>
+            <label index="config.ocrThreads">Max. number of OCR processes running simultaneously</label>
             <label index="config.ocrDebug">Show interupting debugging alerts for backend</label>
             <label index="config.ocrDwnlTempImage">Download images localy for local OCR engines (like tesseract)</label>
             <label index="config.indexAnnotations">Handle IIIF annotations with motivation "painting" as fulltext?: Handling annotations as fulltexts means they are indexed (default is "FALSE")</label>
@@ -423,6 +424,7 @@
             <label index="config.ocrOptions">OCR Aufrufoptionen (wie Ausgabeformate) (durch Leerzeichen getrennt)</label>
             <label index="config.ocrDelay">Verzögerung bis zum Start der OCR (in Sekunden)</label>
             <label index="config.ocrLock">Nur eine Instanz von OCR zur gleichen Zeit ausführen lassen</label>
+            <label index="config.ocrThreads">Anzahl der max. gleichzeitig laufenden OCR Prozesse</label>
             <label index="config.ocrDebug">Unterbrechende Debugging-Warnungen für das Backend anzeigen</label>
             <label index="config.indexAnnotations">IIIF-Annotationen mit Motivation "painting" als Volltext behandeln?: Als Volltext behandelte Annotationen werden im Suchindex indexiert (Standard ist "FALSE")</label>
             <label index="config.iiifThumbnailWidth">Maximale Thumbnail-Breite für IIIF-Images: Gilt nur für Bilder ohne Thumbnail-Angaben (Standard ist "150")</label>

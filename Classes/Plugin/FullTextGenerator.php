@@ -231,13 +231,15 @@ class FullTextGenerator {
 
     // Locking command, so that only a limited number of an OCR-Engines can run in one time
     // TODO: use something like semaphores. That way it is posible to run multiple instances at the same time
-    if ($conf['ocrLock']) {
-      while(file_exists($lockFile)) { //if and as long as there is the lockelement, wait ...
+    if (!file_exists($lockFile)) { // If no lock on image url, go on
+      fopen($lockFile, "w") ; //write lock
+      while( (count(scandir($lockFolder))-2) > $conf['ocrThreads']) { //wait as long as there more locks written as set in options
         session_write_close(); //close session to allow other accesses (otherwise no new site can be loaded as long as the lock is active)
         sleep(1);
         session_start();
       }
-      fopen($lockFile, "w") ; //wite lock
+    } else { //else there is already OCR running for this image, so return
+      return;
     }
 
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocr_shell_command.'")</script>'; //DEBUG
