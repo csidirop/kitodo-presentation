@@ -232,7 +232,9 @@ class FullTextGenerator {
     // TODO: use something like semaphores. That way it is posible to run multiple instances at the same time
     if ($conf['ocrLock']) {
       while(file_exists($lock_folder)) {
+        session_write_close(); //close session to allow other accesses (otherwise no new site can be loaded as long as the lock is active)
         sleep(1);
+        session_start();
       }
       mkdir($lock_folder, 0777, true);
     }
