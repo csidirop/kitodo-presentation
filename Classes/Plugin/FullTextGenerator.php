@@ -229,17 +229,18 @@ class FullTextGenerator {
       $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_url, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
     }
 
-    // Locking command, so that only a limited number of an OCR-Engines can run in one time
-    // TODO: use something like semaphores. That way it is posible to run multiple instances at the same time
-    if (!file_exists($lockFile)) { // If no lock on image url, go on
-      fopen($lockFile, "w") ; //write lock
-      while( (count(scandir($lockFolder))-2) > $conf['ocrThreads']) { //wait as long as there more locks written as set in options
-        session_write_close(); //close session to allow other accesses (otherwise no new site can be loaded as long as the lock is active)
-        sleep(1);
-        session_start();
+    // Locking command, so that only a limited number of an OCR-Engines can run at the same time
+    if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
+      if (!file_exists($lockFile)) { // If no lock on image url, go on
+        fopen($lockFile, "w") ; //write lock
+        while(count(scandir($lockFolder))-2 > (int) $conf['ocrThreads']) { //wait as long as there more locks written as set in options
+          session_write_close(); //close session to allow other accesses (otherwise no new site can be loaded as long as the lock is active)
+          sleep(1);
+          session_start();
+        }
+      } else { //there is already OCR running for this image, so return -> this will show the gen placeholder fulltext till the OCR is completed
+        return;
       }
-    } else { //else there is already OCR running for this image, so return
-      return;
     }
 
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocr_shell_command.'")</script>'; //DEBUG
@@ -248,7 +249,9 @@ class FullTextGenerator {
     exec("($image_download_command && sleep $sleep_interval && $ocr_shell_command)", $output, $retval);
 
     //Remove lock:
-    unlink($lockFile);
+    if ($conf['ocrLock']) {
+      unlink($lockFile);
+    }
 
     //Send alert if something went wrong //TODO: later write to log?
     if($retval!=0){ //if exitcode != 0 -> script not successful
