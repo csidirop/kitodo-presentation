@@ -219,16 +219,6 @@ class FullTextGenerator {
     $image_download_command =":";                                     //non empty command without effect //TODO: find better solution
     $ocr_shell_command = "";
 
-    //Build OCR script command:
-    //Determine if the image should be downloaded. Than use remote URL ($image_url) or local PATH ($image_path):
-    if ($conf['ocrDwnlTempImage']){ //download image
-      $image_download_command = "wget $image_url -O $image_path"; //wget image and save to $image_path
-      $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_path, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
-      $ocr_shell_command .= " && rm $image_path";  // Remove used image
-    } else { //do not download image, pass URL to the engine
-      $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_url, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
-    }
-
     // Locking command, so that only a limited number of an OCR-Engines can run at the same time
     if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
       if (!file_exists($lockFile)) { // If no lock on image url, go on
@@ -241,6 +231,16 @@ class FullTextGenerator {
       } else { //there is already OCR running for this image, so return -> this will show the gen placeholder fulltext till the OCR is completed
         return;
       }
+    }
+
+    //Build OCR script command:
+    //Determine if the image should be downloaded. Than use remote URL ($image_url) or local PATH ($image_path):
+    if ($conf['ocrDwnlTempImage']){ //download image
+      $image_download_command = "wget $image_url -O $image_path"; //wget image and save to $image_path
+      $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_path, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+      $ocr_shell_command .= " && rm $image_path";  // Remove used image
+    } else { //do not download image, pass URL to the engine
+      $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_url, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
     }
 
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocr_shell_command.'")</script>'; //DEBUG
