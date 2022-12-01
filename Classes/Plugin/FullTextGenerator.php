@@ -246,16 +246,32 @@ class FullTextGenerator {
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocr_shell_command.'")</script>'; //DEBUG
 
     //Execute shell commands:
-    exec("($image_download_command && sleep $sleep_interval && $ocr_shell_command)", $output, $retval);
+    exec("$image_download_command && sleep $sleep_interval && $ocr_shell_command", $output, $retval);
+
+    //Errorhandling, when OCR script failed:
+    if($retval!=0){ //if exitcode != 0 -> script not successful
+      //!. write to log:
+      $errorMsg = "OCR script failed with status: \"$retval\" \n Error: \"" . implode(" ",$output) ."\"";
+      $errorMsg .= "\nOn \"$ocr_script\", with image: \"$image_url\" and page: $page_num";
+      $GLOBALS['BE_USER']->writelog(4, 0, 2, 0, "$errorMsg", null); //write error to log
+      //Errorflags: 0 = message, 1 = error (user problem), 2 = System Error (which should not happen), 3 = security notice (admin)
+      
+      //2. Give feedback to user:
+      echo '<script>alert("There was an error with your OCR job. Try again later or with an other OCR engine.")</script>';
+      
+      //3. remove placeholder:
+      if ($conf['ocrPlaceholder']) {
+        unlink($output_path);
+      }
+
+      //4. Reload page: (without action query part)
+      $url=substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'], '&tx__%5Baction%5D='));
+      header("Refresh:0; url=$url&no_cache=1");
+    }
 
     //Remove lock:
     if ($conf['ocrLock']) {
       unlink($lockFile);
-    }
-
-    //Send alert if something went wrong //TODO: later write to log?
-    if($retval!=0){ //if exitcode != 0 -> script not successful
-      echo '<script>alert(" Status '.$retval.' \n Error: '.implode(" ",$output).'")</script>';
     }
 
     if (file_exists($newMets_path)){ // there is already an updated METS
