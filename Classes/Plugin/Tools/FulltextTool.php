@@ -1,7 +1,5 @@
 <?php
 
-//OCR-Test: Parts Copied from KIT project.
-
 /**
  * (c) Kitodo. Key to digital objects e.V. <contact@kitodo.org>
  *
@@ -15,10 +13,9 @@
 namespace Kitodo\Dlf\Plugin\Tools;
 
 use Kitodo\Dlf\Common\Helper;
+use Kitodo\Dlf\Plugin\FullTextGenerator; //OCR-On-Demand
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
-use Kitodo\Dlf\Plugin\FullTextGenerator; //OCR-Test
-use TYPO3\CMS\Core\Log\LogLevel;         //ORC-Test
 
 /**
  * Fulltext tool for the plugin 'Toolbox' of the 'dlf' extension
@@ -87,8 +84,7 @@ class FulltextTool extends \Kitodo\Dlf\Common\AbstractPlugin
             }
         }
 
-        if (!empty($fullTextFile) || FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page'])) {  //ORC-Test
-            /** DEBUG **/ if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: check fulltext: true")</script>'; //DEBUG
+        if (!empty($fullTextFile) || FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page'])) { //OCR-On-Demand
             $markerArray['###FULLTEXT_SELECT###'] = '<a class="select switchoff" id="tx-dlf-tools-fulltext" title="" data-dic="'
             . 'fulltext:' . htmlspecialchars($this->pi_getLL('fulltext', ''))
             . ';fulltext-on:' . htmlspecialchars($this->pi_getLL('fulltext-on', ''))
@@ -97,7 +93,6 @@ class FulltextTool extends \Kitodo\Dlf\Common\AbstractPlugin
             . ';full-text-scroll-element:' . $this->conf['fullTextScrollElement']
             . '">&nbsp;</a>';
         } else {
-            /** DEBUG **/ if($this->conf['ocrDebug']) echo '<script>alert("FulltextTool: check fulltext: false")</script>'; //DEBUG
             $markerArray['###FULLTEXT_SELECT###'] = '<span class="no-fulltext">' . htmlspecialchars($this->pi_getLL('fulltext-not-available', '')) . '</span>';
         }
         $content .= $this->templateService->substituteMarkerArray($this->template, $markerArray);
