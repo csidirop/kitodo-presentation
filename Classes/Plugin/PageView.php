@@ -398,6 +398,19 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
     }
 
     /**
+     * This function is a workaround to circumvent TYPO3 disturbing caching.
+     * It clears the stored page cache (for presentations viewer only!) on calling.
+     * 
+     * @access protected
+     * 
+     * @return void
+     */
+    protected function clearPageCache():void{
+        $objectManager = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
+        $objectManager->get(\TYPO3\CMS\Extbase\Service\CacheService::class)->clearPageCache($GLOBALS['TSFE']->id);
+    }
+
+    /**
      * The main method of the PlugIn
      *
      * @access public
@@ -412,6 +425,7 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
         $this->init($conf);
         $this->loadDocument(); // Load current document
         $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']);
+        $this->clearPageCache();
         //Proccess request: Do OCR on given image(s):
         if ($_POST["request"]) {
             $this->generateFullText();
