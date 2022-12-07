@@ -190,6 +190,7 @@
             <label index="config.fulltextFolder">Directory for the generated OCR fulltexts</label>
             <label index="config.fulltextTempFolder">Temporary directory for OCR fulltexts in progress</label>
             <label index="config.fulltextImagesFolder">Temporary directory for the images needed for processing (not needed if 'ocrDwnlTempImage' is set)</label>
+            <label index="config.fulltextLockFolder">Temporary directory which holds the locks for locking the OCR in progress</label>
             <label index="config.ocrPlaceholder">Create a blank ALTO file as a placeholder</label>
             <label index="config.ocrPlaceholderText">Defines the text of the ALTO placeholder file</label>
             <label index="config.ocrEngine">Default OCR-Engine</label>
@@ -198,6 +199,7 @@
             <label index="config.ocrOptions">OCR command options (as output formats) (separated by space)</label>
             <label index="config.ocrDelay">Delay until OCR start (in seconds)</label>
             <label index="config.ocrLock">Make run only one instance of OCR at time</label>
+            <label index="config.ocrThreads">Max. number of OCR processes running simultaneously</label>
             <label index="config.ocrDebug">Show interupting debugging alerts for backend</label>
             <label index="config.ocrDwnlTempImage">Download images localy for local OCR engines (like tesseract)</label>
             <label index="config.indexAnnotations">Handle IIIF annotations with motivation "painting" as fulltext?: Handling annotations as fulltexts means they are indexed (default is "FALSE")</label>
@@ -414,6 +416,7 @@
             <label index="config.fulltextFolder">Verzeichnis für die erzeugten Volltexte</label>
             <label index="config.fulltextTempFolder">Temporäres Verzeichnis für die in Bearbeitung befindlichen Volltexte</label>
             <label index="config.fulltextImagesFolder">Temporäres Verzeichnis für die zur Bearbeitung benötigten Bilder (wird nicht benötigt, falls 'ocrDwnlTempImage' gesetzt)</label>
+            <label index="config.fulltextLockFolder">Temporäres Verzeichnis, das die Locks zum Sperren der laufenden OCR enthält</label>
             <label index="config.ocrDwnlTempImage">Bilder für lokale OCR-Engines (wie Tesseract) herunterladen</label>
             <label index="config.ocrPlaceholder">Erstelle eine leere ALTO Datei als Platzhalter</label>
             <label index="config.ocrPlaceholderText">Definiert den Text der ALTO Platzhalter Datei</label>
@@ -423,6 +426,7 @@
             <label index="config.ocrOptions">OCR Aufrufoptionen (wie Ausgabeformate) (durch Leerzeichen getrennt)</label>
             <label index="config.ocrDelay">Verzögerung bis zum Start der OCR (in Sekunden)</label>
             <label index="config.ocrLock">Nur eine Instanz von OCR zur gleichen Zeit ausführen lassen</label>
+            <label index="config.ocrThreads">Anzahl der max. gleichzeitig laufenden OCR Prozesse</label>
             <label index="config.ocrDebug">Unterbrechende Debugging-Warnungen für das Backend anzeigen</label>
             <label index="config.indexAnnotations">IIIF-Annotationen mit Motivation "painting" als Volltext behandeln?: Als Volltext behandelte Annotationen werden im Suchindex indexiert (Standard ist "FALSE")</label>
             <label index="config.iiifThumbnailWidth">Maximale Thumbnail-Breite für IIIF-Images: Gilt nur für Bilder ohne Thumbnail-Angaben (Standard ist "150")</label>

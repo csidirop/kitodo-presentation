@@ -197,9 +197,24 @@ class FullTextGenerator {
     FullTextXMLtools::writeMetsXML($doc, $origMets_path);             //Write original METS XML file
     $output_path      = "$outputFolder_path/$page_id.xml";            //Fulltextfile path
     $temp_output_path = $conf['fulltextTempFolder'] . "/$page_id";    //Fulltextfile TMP path
-    $lock_folder      = $conf['fulltextTempFolder'] . "/lock";        //Folder used to lock ocr command
+    $lockFolder       = $conf['fulltextLockFolder'] . "/";            //Folder used to store locks
+    $lockFile         = $lockFolder . hash("md5", $image_url);        //File used to lock OCR command
     $image_download_command =":";                                     //non empty command without effect //TODO: find better solution
     $ocr_shell_command = "";
+
+    // Locking command, so that only a limited number of an OCR-Engines can run at the same time
+    if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
+      if (!file_exists($lockFile)) { // If no lock on image url, go on
+        fopen($lockFile, "w") ; //write lock
+        while(count(scandir($lockFolder))-2 > (int) $conf['ocrThreads']) { //wait as long as there more locks written as set in options
+          session_write_close(); //close session to allow other accesses (otherwise no new site can be loaded as long as the lock is active)
+          sleep(1);
+          session_start();
+        }
+      } else { //there is already OCR running for this image, so return -> this will show the gen placeholder fulltext till the OCR is completed
+        return;
+      }
+    }
 
     //Build OCR script command:
     //Determine if the image should be downloaded. Than use remote URL ($image_url) or local PATH ($image_path):
@@ -211,21 +226,35 @@ class FullTextGenerator {
       $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_url, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
     }
 
-    // Locking command, so that only one instance of tesseract can run in one time moment
-    // TODO: use something like semaphores. That way it is posible to run multiple instances at the same time
-    if ($conf['ocrLock']) {
-      $ocr_shell_command = "while ! mkdir \"$lock_folder\"; do sleep 3; done; $ocr_shell_command; rm -r $lock_folder;" ;
-    }
-
-    //Debug:
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocr_shell_command.'")</script>'; //DEBUG
 
     //Execute shell commands:
-    exec("($image_download_command && sleep $sleep_interval && $ocr_shell_command)", $output, $retval);
+    exec("$image_download_command && sleep $sleep_interval && $ocr_shell_command", $output, $retval);
 
-    //Send alert if something went wrong //TODO: later write to log?
+    //Errorhandling, when OCR script failed:
     if($retval!=0){ //if exitcode != 0 -> script not successful
-      echo '<script>alert(" Status '.$retval.' \n Error: '.implode(" ",$output).'")</script>';
+      //!. write to log:
+      $errorMsg = "OCR script failed with status: \"$retval\" \n Error: \"" . implode(" ",$output) ."\"";
+      $errorMsg .= "\nOn \"$ocrEngine\", with image: \"$image_url\" and page: $page_num";
+      $GLOBALS['BE_USER']->writelog(4, 0, 2, 0, "$errorMsg", null); //write error to log
+      //Errorflags: 0 = message, 1 = error (user problem), 2 = System Error (which should not happen), 3 = security notice (admin)
+      
+      //2. Give feedback to user:
+      echo '<script>alert("There was an error with your OCR job. Try again later or with an other OCR engine.")</script>';
+      
+      //3. remove placeholder:
+      if ($conf['ocrPlaceholder']) {
+        unlink($output_path);
+      }
+
+      //4. Reload page: (without action query part)
+      $url=substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'], '&tx__%5Baction%5D='));
+      header("Refresh:0; url=$url&no_cache=1");
+    }
+
+    //Remove lock:
+    if ($conf['ocrLock']) {
+      unlink($lockFile);
     }
 
     if (file_exists($newMets_path)){ // there is already an updated METS
