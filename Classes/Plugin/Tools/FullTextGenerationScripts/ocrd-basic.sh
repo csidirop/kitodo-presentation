@@ -13,8 +13,11 @@ function usage() {
 
 # Test fuction, for manually testing the script
 function test() {
-	ssh ${ocrd-kitodo} wget -P /data/production-test/images/ "https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/max/1652998276_0001.jpg" && for_production.sh --proc-id 1 --lang deu --script Fraktur "production-test"
-	ssh ${ocrd-kitodo}:"/data/production-test/ocr/alto/502592915_0011.xml" "."
+	ocrdkitodo=ocrd-manager-UBMA
+	ssh ${ocrdkitodo} wget -P /data/production-test-from-docker/images/ "https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/max/1652998276_0001.jpg"
+	ssh ${ocrdkitodo} for_production.sh --proc-id 1 --lang deu --script Fraktur "production-test-from-docker"
+	scp ${ocrdkitodo}:"/data/production-test-from-docker/ocr/alto/1652998276_0001.xml" "."
+	ssh ${ocrdkitodo} rm -r "/data/production-test-from-docker/"
 	exit 0;
 }
 
@@ -42,14 +45,21 @@ fi
 # Parse URL or Path and run OCR:
 regex='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]' #Regex for URL validation ( https://stackoverflow.com/a/3184819 )
 if [[ (${image_path} =~ $regex) || (-f ${image_path}) ]] ; then # If image_path is a valid URL or a local file
-	echo "Running OCRD-OCR: tesseract $image_path $output_path -l $ocrLanguages $ocrOptions"
-	jobname="test";
+	jobname=$(cksum <<< ${image_path} | cut -f 1 -d ' ') # speudorandom unique jobname
+	filename=$(basename ${image_path}) # extract filename from url
+	ocrdkitodo=ocrd-manager-UBMA #TODO fix: get it from system #OCRD kitodo/manager hostname
+	echo "Running OCRD-OCR: with image $image_path outputpath $output_path on ${ocrdkitodo} in job ${jobname}"
 	# start job:
-	ssh ${ocrd-kitodo} wget -P "/data/${jobname}/images/" "${image_path}" && for_production.sh --proc-id 1 --lang deu --script Fraktur "${jobname}"
+	echo "1: starting: wget"
+	ssh ${ocrdkitodo} wget -P "/data/${jobname}/images/" "${image_path}"
+	echo "1: starting: script"
+	ssh ${ocrdkitodo} for_production.sh --proc-id 1 --lang deu --script Fraktur "${jobname}"
 	# get fulltexts:
-	scp ${ocrd-kitodo}:"/data/${jobname}/ocr/alto/${filename}.xml" "${output_path}"
+	echo "2: scp"
+	scp ${ocrdkitodo}:"/data/${jobname}/ocr/alto/${filename::-4}.xml" "${output_path}.xml"
 	# clean dir:
-	ssh ${ocrd-kitodo} rm -r "/data/${jobname}/"
+	ssh ${ocrdkitodo} rm -r "/data/${jobname}/"
+	echo "3: fin"
 	exit 0
 else
 	echo "File not found: ${image_path}"

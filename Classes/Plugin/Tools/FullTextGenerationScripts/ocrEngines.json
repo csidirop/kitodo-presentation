@@ -13,13 +13,13 @@
             "en": "Tesseract2 (en)",
             "class": "tesseract",
             "data": "tesseract2-basic"
-        }, 
+        },
         {
             "name": "OCRD",
             "de": "OCRD (de)",
             "en": "OCRD (en)",
             "class": "OCRD",
-            "data": "OCRD-basic"
+            "data": "ocrd-basic"
         }
     ]
 }
