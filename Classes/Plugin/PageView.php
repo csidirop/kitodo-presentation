@@ -251,8 +251,8 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
         // Get fulltext link:
         $fileGrpsFulltext = GeneralUtility::trimExplode(',', $this->conf['fileGrpFulltext']);
         while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) {
-            //check if fulltext is remote present:
-            if (!empty($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpFulltext])) {
+            //check if and where fulltext is present:
+            if (!empty($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpFulltext])) { //fulltext is remote present
                 $fulltext['url'] = $this->doc->getFileLocation($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpFulltext]);
                 /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: present: "'.$fulltext['url'].')</script>'; //DEBUG
                 if ($this->conf['useInternalProxy']) {
@@ -267,12 +267,17 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
                 }
                 $fulltext['mimetype'] = $this->doc->getFileMimeType($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpFulltext]);
                 break;
-            //check if fulltext was already ocred on demand (and is locally present):
-            } else if (FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page'])) {
-                $fulltext['url'] = "http://" . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath($this->extKey, $this->doc, $this->piVars['page']);
+            } else if (FullTextGenerator::checkLocal($this->extKey, $this->doc, $this->piVars['page'])) { //fulltext is locally present
+                //check server protocol (https://stackoverflow.com/a/14270161):
+                if ( isset($_SERVER['HTTPS'])  &&  ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
+                    ||  isset($_SERVER['HTTP_X_FORWARDED_PROTO'])  &&  $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+                    $protocol = 'https://';
+                } else {
+                    $protocol = 'http://';
+                }
+                $fulltext['url'] = $protocol . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath($this->extKey, $this->doc, $this->piVars['page']);
                 /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: checkLocal true: ' .  $fulltext['url'] . '")</script>'; //DEBUG
-            //no fulltext:
-            } else {
+            } else { //no fulltext present
                 /**DEBUG**/ if($this->conf['ocrDebug']) echo '<script>alert("PageView.getFulltext: checkLocal false ")</script>'; //DEBUG
                 $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
             }
