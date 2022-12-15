@@ -236,7 +236,7 @@ class FullTextGenerator {
       //!. write to log:
       $errorMsg = "OCR script failed with status: \"$retval\" \n Error: \"" . implode(" ",$output) ."\"";
       $errorMsg .= "\nOn \"$ocrEngine\", with image: \"$image_url\" and page: $page_num";
-      $GLOBALS['BE_USER']->writelog(4, 0, 2, 0, "$errorMsg", null); //write error to log
+      //$GLOBALS['BE_USER']->writelog(4, 0, 2, 0, "$errorMsg", null); //write error to log
       //Errorflags: 0 = message, 1 = error (user problem), 2 = System Error (which should not happen), 3 = security notice (admin)
       
       //2. Give feedback to user:
