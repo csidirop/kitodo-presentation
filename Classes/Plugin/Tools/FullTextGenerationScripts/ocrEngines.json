@@ -2,17 +2,10 @@
     "ocrEngines": [
         {
             "name": "Tesseract",
-            "de": "Tesseract1",
-            "en": "Tesseract1",
+            "de": "Tesseract",
+            "en": "Tesseract",
             "class": "tesseract",
             "data": "tesseract-basic"
-        },
-        {
-            "name": "Tesseract2",
-            "de": "Tesseract2 (de)",
-            "en": "Tesseract2 (en)",
-            "class": "tesseract",
-            "data": "tesseract2-basic"
         },
         {
             "name": "OCRD",
