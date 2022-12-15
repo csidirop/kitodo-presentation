@@ -70,10 +70,10 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
 
     /**
      * Holds the parsed active OCR engines
-     * @var array
+     * @var string
      * @access protected
      */
-    protected static $ocrEngines = [];
+    protected static $ocrEngines = "";
 
     /**
      * Adds Viewer javascript
@@ -376,7 +376,7 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
 
     if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && str_contains(self::$ocrEngines, $_COOKIE['tx-dlf-ocrEngine'])){
         $ocrEngine = $_COOKIE['tx-dlf-ocrEngine'];
-    } else { 
+    } else {
         $GLOBALS['BE_USER']->simplelog("OCR Engine wrong: ".$_COOKIE["tx-dlf-ocrEngine"], "dlf", 2); //write log
         $ocrEngine = "default" .$conf['ocrEngine'] ; //get default default value
     }
