@@ -366,28 +366,28 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
         }
     }
 
-  /**
-   * Checks and returns the OCR-Engine
-   * 
-   * @access public
-   * 
-   * @param string $extKey
-   *
-   * @return string
-   */
-  public static function getOCRengine(string $extKey):string {
-    $conf = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
-    $ocrEngine = '';
+    /**
+     * Checks and returns the OCR-Engine
+     * 
+     * @access public
+     * 
+     * @param string $extKey
+     *
+     * @return string
+     */
+    public static function getOCRengine(string $extKey):string {
+        $conf = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
+        $ocrEngine = '';
 
-    if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && str_contains(self::$ocrEngines, $_COOKIE['tx-dlf-ocrEngine'])){
-        $ocrEngine = $_COOKIE['tx-dlf-ocrEngine'];
-    } else {
-        //$GLOBALS['BE_USER']->simplelog("OCR Engine wrong: ".$_COOKIE["tx-dlf-ocrEngine"], "dlf", 2); //write log
-        $ocrEngine = "default" .$conf['ocrEngine'] ; //get default default value
+        if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && str_contains(self::$ocrEngines, $_COOKIE['tx-dlf-ocrEngine'])){
+            $ocrEngine = $_COOKIE['tx-dlf-ocrEngine'];
+        } else {
+            //$GLOBALS['BE_USER']->simplelog("OCR Engine wrong: ".$_COOKIE["tx-dlf-ocrEngine"], "dlf", 2); //write log
+            $ocrEngine = "default" .$conf['ocrEngine'] ; //get default default value
+        }
+
+        return $ocrEngine;
     }
-
-    return $ocrEngine;
-  }
 
     /**
      * Parses the json with all active OCR Engines.
