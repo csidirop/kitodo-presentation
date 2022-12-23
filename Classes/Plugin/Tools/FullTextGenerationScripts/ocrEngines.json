@@ -13,6 +13,13 @@
             "en": "OCRD (en)",
             "class": "OCRD",
             "data": "ocrd-basic"
+        },
+        {
+            "name": "Kraken",
+            "de": "Kraken (de)",
+            "en": "Kraken (en)",
+            "class": "kraken",
+            "data": "kraken-basic"
         }
     ]
 }
