@@ -86,7 +86,7 @@ class BasketController extends AbstractController
     }
 
     /**
-     * Different actions which depends on the choosen action (form)
+     * Different actions which depends on the chosen action (form)
      *
      * @return void
      */
@@ -217,7 +217,7 @@ class BasketController extends AbstractController
 
             $basket = $this->basketRepository->findOneBySessionId($sessionId);
         }
-        // session doesnt exists
+        // session does not exist
         if ($basket === null) {
             // create new basket in db
             $basket = GeneralUtility::makeInstance(Basket::class);
@@ -358,7 +358,7 @@ class BasketController extends AbstractController
      * @param array $_piVars: piVars
      * @param Basket $basket: basket object
      *
-     * @return array Basket data and Javascript output
+     * @return array Basket data and JavaScript output
      */
     protected function addToBasket($_piVars, $basket)
     {
@@ -390,10 +390,7 @@ class BasketController extends AbstractController
             }
             // get document instance to load further information
             $this->loadDocument(['id' => $documentItem['id']]);
-            if (
-                $this->document === null
-                || $this->document->getDoc() === null
-            ) {
+            if ($this->isDocMissing()) {
                 // Quit without doing anything if required variables are not set.
                 return;
             }

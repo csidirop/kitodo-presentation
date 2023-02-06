@@ -54,12 +54,9 @@ class ToolboxController extends AbstractController
      */
     public function annotationtool()
     {
-        if (
-            $this->document === null
-            || $this->document->getDoc()->numPages < 1
-        ) {
+        if ($this->isDocMissingOrEmpty()) {
             // Quit without doing anything if required variables are not set.
-            return;
+            return '';
         } else {
             if (!empty($this->requestData['logicalPage'])) {
                 $this->requestData['page'] = $this->document->getDoc()->getPhysicalPage($this->requestData['logicalPage']);
@@ -97,12 +94,11 @@ class ToolboxController extends AbstractController
     public function fulltextdownloadtool()
     {
         if (
-            $this->document === null
-            || $this->document->getDoc()->numPages < 1
+            $this->isDocMissingOrEmpty()
             || empty($this->extConf['fileGrpFulltext'])
         ) {
             // Quit without doing anything if required variables are not set.
-            return;
+            return '';
         } else {
             if (!empty($this->requestData['logicalPage'])) {
                 $this->requestData['page'] = $this->document->getDoc()->getPhysicalPage($this->requestData['logicalPage']);
@@ -143,12 +139,11 @@ class ToolboxController extends AbstractController
     public function fulltexttool()
     {
         if (
-            $this->document === null
-            || $this->document->getDoc()->numPages < 1
+            $this->isDocMissingOrEmpty()
             || empty($this->extConf['fileGrpFulltext'])
         ) {
             // Quit without doing anything if required variables are not set.
-            return;
+            return '';
         } else {
             if (!empty($this->requestData['logicalPage'])) {
                 $this->requestData['page'] = $this->document->getDoc()->getPhysicalPage($this->requestData['logicalPage']);
@@ -189,12 +184,11 @@ class ToolboxController extends AbstractController
     public function imagedownloadtool()
     {
         if (
-            $this->document === null
-            || $this->document->getDoc()->numPages < 1
+            $this->isDocMissingOrEmpty()
             || empty($this->settings['fileGrpsImageDownload'])
         ) {
             // Quit without doing anything if required variables are not set.
-            return;
+            return '';
         } else {
             if (!empty($this->requestData['logicalPage'])) {
                 $this->requestData['page'] = $this->document->getDoc()->getPhysicalPage($this->requestData['logicalPage']);
@@ -281,13 +275,11 @@ class ToolboxController extends AbstractController
     public function pdfdownloadtool()
     {
         if (
-            $this->document === null
-            || $this->document->getDoc() === null
-            || $this->document->getDoc()->numPages < 1
+            $this->isDocMissingOrEmpty()
             || empty($this->extConf['fileGrpDownload'])
         ) {
             // Quit without doing anything if required variables are not set.
-            return;
+            return '';
         } else {
             if (!empty($this->requestData['logicalPage'])) {
                 $this->requestData['page'] = $this->document->getDoc()->getPhysicalPage($this->requestData['logicalPage']);
@@ -396,13 +388,12 @@ class ToolboxController extends AbstractController
     public function searchindocumenttool()
     {
         if (
-            $this->document === null
-            || $this->document->getDoc()->numPages < 1
+            $this->isDocMissingOrEmpty()
             || empty($this->extConf['fileGrpFulltext'])
             || empty($this->settings['solrcore'])
         ) {
             // Quit without doing anything if required variables are not set.
-            return;
+            return '';
         } else {
             if (!empty($this->requestData['logicalPage'])) {
                 $this->requestData['page'] = $this->document->getDoc()->getPhysicalPage($this->requestData['logicalPage']);

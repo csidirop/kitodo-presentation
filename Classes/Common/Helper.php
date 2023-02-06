@@ -21,6 +21,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
+use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 
 /**
  * Helper class for the 'dlf' extension
@@ -121,7 +122,7 @@ class Helper
                 if ($checksum == 10) {
                     $checksum = 'X';
                 }
-                if (!preg_match('/[0-9]{8}[0-9X]{1}/i', $id)) {
+                if (!preg_match('/\d{8}[\dX]{1}/i', $id)) {
                     return false;
                 } elseif (strtoupper(substr($id, -1, 1)) != $checksum) {
                     return false;
@@ -131,7 +132,7 @@ class Helper
                 if ($checksum == 10) {
                     $checksum = 'X';
                 }
-                if (!preg_match('/[0-9]{8}-[0-9X]{1}/i', $id)) {
+                if (!preg_match('/\d{8}-[\dX]{1}/i', $id)) {
                     return false;
                 } elseif (strtoupper(substr($id, -1, 1)) != $checksum) {
                     return false;
@@ -139,7 +140,7 @@ class Helper
                 break;
             case 'SWD':
                 $checksum = 11 - $checksum;
-                if (!preg_match('/[0-9]{8}-[0-9]{1}/i', $id)) {
+                if (!preg_match('/\d{8}-\d{1}/i', $id)) {
                     return false;
                 } elseif ($checksum == 10) {
                     return self::checkIdentifier(($digits + 1) . substr($id, -2, 2), 'SWD');
@@ -152,7 +153,7 @@ class Helper
                 if ($checksum == 10) {
                     $checksum = 'X';
                 }
-                if (!preg_match('/[0-9]{8}-[0-9X]{1}/i', $id)) {
+                if (!preg_match('/\d{8}-[\dX]{1}/i', $id)) {
                     return false;
                 } elseif (strtoupper(substr($id, -1, 1)) != $checksum) {
                     return false;
@@ -348,7 +349,7 @@ class Helper
         // Convert to lowercase.
         $string = strtolower($string);
         // Remove non-alphanumeric characters.
-        $string = preg_replace('/[^a-z0-9_\s-]/', '', $string);
+        $string = preg_replace('/[^a-z\d_\s-]/', '', $string);
         // Remove multiple dashes or whitespaces.
         $string = preg_replace('/[\s-]+/', ' ', $string);
         // Convert whitespaces and underscore to dash.
@@ -393,40 +394,48 @@ class Helper
         $uid = max(intval($uid), 0);
         if (
             !$uid
+            // NOTE: Only use tables that don't have too many entries!
             || !in_array($table, ['tx_dlf_collections', 'tx_dlf_libraries', 'tx_dlf_metadata', 'tx_dlf_structures', 'tx_dlf_solrcores'])
         ) {
             self::log('Invalid UID "' . $uid . '" or table "' . $table . '"', LOG_SEVERITY_ERROR);
             return '';
         }
 
-        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
-            ->getQueryBuilderForTable($table);
+        $makeCacheKey = function ($pid, $uid) {
+            return $pid . '.' . $uid;
+        };
 
-        $where = '';
-        // Should we check for a specific PID, too?
-        if ($pid !== -1) {
-            $pid = max(intval($pid), 0);
-            $where = $queryBuilder->expr()->eq($table . '.pid', $pid);
+        static $cache = [];
+        if (!isset($cache[$table])) {
+            $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
+                ->getQueryBuilderForTable($table);
+
+            $result = $queryBuilder
+                ->select(
+                    $table . '.index_name AS index_name',
+                    $table . '.uid AS uid',
+                    $table . '.pid AS pid',
+                )
+                ->from($table)
+                ->execute();
+
+            $cache[$table] = [];
+
+            while ($row = $result->fetch()) {
+                $cache[$table][$makeCacheKey($row['pid'], $row['uid'])]
+                    = $cache[$table][$makeCacheKey(-1, $row['uid'])]
+                    = $row['index_name'];
+            }
         }
 
-        // Get index_name from database.
-        $result = $queryBuilder
-            ->select($table . '.index_name AS index_name')
-            ->from($table)
-            ->where(
-                $queryBuilder->expr()->eq($table . '.uid', $uid),
-                $where,
-                self::whereExpression($table)
-            )
-            ->setMaxResults(1)
-            ->execute();
+        $cacheKey = $makeCacheKey($pid, $uid);
+        $result = $cache[$table][$cacheKey] ?? '';
 
-        if ($resArray = $result->fetch()) {
-            return $resArray['index_name'];
-        } else {
+        if ($result === '') {
             self::log('No "index_name" with UID ' . $uid . ' and PID ' . $pid . ' found in table "' . $table . '"', LOG_SEVERITY_WARNING);
-            return '';
         }
+
+        return $result;
     }
 
     /**
@@ -443,29 +452,14 @@ class Helper
         // Analyze code and set appropriate ISO table.
         $isoCode = strtolower(trim($code));
         if (preg_match('/^[a-z]{3}$/', $isoCode)) {
-            $file = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath(self::$extKey) . 'Resources/Private/Data/iso-639-2b.xml';
+            $file = 'EXT:dlf/Resources/Private/Data/iso-639-2b.xml';
         } elseif (preg_match('/^[a-z]{2}$/', $isoCode)) {
-            $file = \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::extPath(self::$extKey) . 'Resources/Private/Data/iso-639-1.xml';
+            $file = 'EXT:dlf/Resources/Private/Data/iso-639-1.xml';
         } else {
             // No ISO code, return unchanged.
             return $code;
         }
-        $languageService = GeneralUtility::makeInstance(LanguageService::class);
-        // Load ISO table and get localized full name of language.
-        if (\TYPO3_MODE === 'FE') {
-            $iso639 = $languageService->includeLLFile($file);
-            if (!empty($iso639['default'][$isoCode])) {
-                $lang = $languageService->getLLL($isoCode, $iso639);
-            }
-        } elseif (\TYPO3_MODE === 'BE') {
-            $iso639 = $languageService->includeLLFile($file, false, true);
-            if (!empty($iso639['default'][$isoCode])) {
-                $lang = $languageService->getLLL($isoCode, $iso639);
-            }
-        } else {
-            self::log('Unexpected TYPO3_MODE "' . \TYPO3_MODE . '"', LOG_SEVERITY_ERROR);
-            return $code;
-        }
+        $lang = LocalizationUtility::translate('LLL:' . $file . ':' . $code);
         if (!empty($lang)) {
             return $lang;
         } else {
@@ -483,6 +477,8 @@ class Helper
      */
     public static function getDocumentStructures($pid = -1)
     {
+        // TODO: Against redundancy with getIndexNameFromUid
+
         $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
         $queryBuilder = $connectionPool->getQueryBuilderForTable('tx_dlf_structures');
 
@@ -565,7 +561,7 @@ class Helper
             ':' => 17,
         ];
         $urn = strtolower($base . $id);
-        if (preg_match('/[^a-z0-9:-]/', $urn)) {
+        if (preg_match('/[^a-z\d:-]/', $urn)) {
             self::log('Invalid chars in given parameters', LOG_SEVERITY_WARNING);
             return '';
         }

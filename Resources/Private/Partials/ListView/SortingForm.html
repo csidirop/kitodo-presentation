@@ -18,11 +18,13 @@
         <f:variable name="allDocuments" value="{documents->f:count()}" />
         <f:variable name="numDocuments" value="{pageOffset + settings.list.paginate.itemsPerPage}" />
 
-        <p class="tx-dlf-sortinfo">
-            <f:translate
-                key="listview.count"
-                arguments="{0:'{pageOffset + 1}', 1:'{f:if(condition: \'{numDocuments} > {allDocuments}\', then: \'{allDocuments}\', else: \'{numDocuments}\')}', 2:'{allDocuments}'}" />
-        </p>
+        <f:if condition="{allDocuments} > 0">
+            <p class="tx-dlf-sortinfo">
+                <f:translate
+                    key="listview.count"
+                    arguments="{0:'{pageOffset + 1}', 1:'{f:if(condition: \'{numDocuments} > {allDocuments}\', then: \'{allDocuments}\', else: \'{numDocuments}\')}', 2:'{allDocuments}'}" />
+            </p>
+        </f:if>
 
         <f:form section="showResults" action="{action}" controller="{Controller}" name="searchParameter" method="post" class="tx-dlf-search-form">
             <div>
@@ -52,9 +54,12 @@
 
                 </f:form.select>
                 <f:form.hidden property="collection" value="{lastSearch.collection}" />
-                <f:form.hidden property="collections" value="{settings.collections}" />
                 <f:form.hidden property="query" value="{lastSearch.query}" />
                 <f:form.hidden property="fulltext" value="{lastSearch.fulltext}" />
+                <f:if condition="{lastSearch.dateFrom} || {lastSearch.dateTo}">
+                    <f:form.hidden property="dateFrom" value="{lastSearch.dateFrom}" />
+                    <f:form.hidden property="dateTo" value="{lastSearch.dateTo}" />
+                </f:if>
             </div>
         </f:form>
     </f:if>

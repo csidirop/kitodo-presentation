@@ -12,6 +12,7 @@
 namespace Kitodo\Dlf\Controller;
 
 use Kitodo\Dlf\Common\Helper;
+use Kitodo\Dlf\Common\MetsDocument;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -34,6 +35,102 @@ class TableOfContentsController extends AbstractController
     protected $activeEntries = [];
 
     /**
+     * The main method of the plugin
+     *
+     * @return void
+     */
+    public function mainAction()
+    {
+        // Load current document.
+        $this->loadDocument($this->requestData);
+        if ($this->isDocMissing()) {
+            // Quit without doing anything if required variables are not set.
+            return;
+        } else {
+            if (!empty($this->requestData['logicalPage'])) {
+                $this->requestData['page'] = $this->document->getDoc()->getPhysicalPage($this->requestData['logicalPage']);
+                // The logical page parameter should not appear again
+                unset($this->requestData['logicalPage']);
+            }
+
+            $this->view->assign('toc', $this->makeMenuArray());
+        }
+    }
+
+    /**
+     * This builds a menu array for HMENU
+     *
+     * @access protected
+     * @return array HMENU array
+     */
+    protected function makeMenuArray()
+    {
+        // Set default values for page if not set.
+        // $this->requestData['page'] may be integer or string (physical structure @ID)
+        if (
+            (int) $this->requestData['page'] > 0
+            || empty($this->requestData['page'])
+        ) {
+            $this->requestData['page'] = MathUtility::forceIntegerInRange((int) $this->requestData['page'], 1, $this->document->getDoc()->numPages, 1);
+        } else {
+            $this->requestData['page'] = array_search($this->requestData['page'], $this->document->getDoc()->physicalStructure);
+        }
+        $this->requestData['double'] = MathUtility::forceIntegerInRange($this->requestData['double'], 0, 1, 0);
+        $menuArray = [];
+        // Does the document have physical elements or is it an external file?
+        if (
+            !empty($this->document->getDoc()->physicalStructure)
+            || !MathUtility::canBeInterpretedAsInteger($this->requestData['id'])
+        ) {
+            // Get all logical units the current page or track is a part of.
+            if (
+                !empty($this->requestData['page'])
+                && !empty($this->document->getDoc()->physicalStructure)
+            ) {
+                $this->activeEntries = array_merge((array) $this->document->getDoc()->smLinks['p2l'][$this->document->getDoc()->physicalStructure[0]],
+                    (array) $this->document->getDoc()->smLinks['p2l'][$this->document->getDoc()->physicalStructure[$this->requestData['page']]]);
+                if (
+                    !empty($this->requestData['double'])
+                    && $this->requestData['page'] < $this->document->getDoc()->numPages
+                ) {
+                    $this->activeEntries = array_merge($this->activeEntries,
+                        (array) $this->document->getDoc()->smLinks['p2l'][$this->document->getDoc()->physicalStructure[$this->requestData['page'] + 1]]);
+                }
+            }
+            // Go through table of contents and create all menu entries.
+            foreach ($this->document->getDoc()->tableOfContents as $entry) {
+                $menuArray[] = $this->getMenuEntry($entry, true);
+            }
+        } else {
+            // Go through table of contents and create top-level menu entries.
+            foreach ($this->document->getDoc()->tableOfContents as $entry) {
+                $menuArray[] = $this->getMenuEntry($entry, false);
+            }
+            // Build table of contents from database.
+            $result = $this->documentRepository->getTableOfContentsFromDb($this->document->getUid(), $this->document->getPid(), $this->settings);
+
+            $allResults = $result->fetchAll();
+
+            if (count($allResults) > 0) {
+                $menuArray[0]['ITEM_STATE'] = 'CURIFSUB';
+                $menuArray[0]['_SUB_MENU'] = [];
+                foreach ($allResults as $resArray) {
+                    $entry = [
+                        'label' => !empty($resArray['mets_label']) ? $resArray['mets_label'] : $resArray['title'],
+                        'type' => $resArray['type'],
+                        'volume' => $resArray['volume'],
+                        'orderlabel' => $resArray['mets_orderlabel'],
+                        'pagination' => '',
+                        'targetUid' => $resArray['uid']
+                    ];
+                    $menuArray[0]['_SUB_MENU'][] = $this->getMenuEntry($entry, false);
+                }
+            }
+        }
+        return $menuArray;
+    }
+
+    /**
      * This builds an array for one menu entry
      *
      * @access protected
@@ -45,6 +142,8 @@ class TableOfContentsController extends AbstractController
      */
     protected function getMenuEntry(array $entry, $recursive = false)
     {
+        $entry = $this->resolveMenuEntry($entry);
+
         $entryArray = [];
         // Set "title", "volume", "type" and "pagination" from $entry array.
         $entryArray['title'] = !empty($entry['label']) ? $entry['label'] : $entry['orderlabel'];
@@ -127,102 +226,29 @@ class TableOfContentsController extends AbstractController
     }
 
     /**
-     * The main method of the plugin
+     * If $entry references an external METS file (as mptr),
+     * try to resolve its database UID and return an updated $entry.
      *
-     * @return void
-     */
-    public function mainAction()
-    {
-        $this->view->assign('toc', $this->makeMenuArray());
-    }
-
-    /**
-     * This builds a menu array for HMENU
+     * This is so that when linking from a child document back to its parent,
+     * that link is via UID, so that subsequently the parent's TOC is built from database.
      *
-     * @access public
-     * @return array HMENU array
+     * @param array $entry
+     * @return array
      */
-    public function makeMenuArray()
+    protected function resolveMenuEntry($entry)
     {
-        // Load current document.
-        $this->loadDocument($this->requestData);
+        // If the menu entry points to the parent document,
+        // resolve to the parent UID set on indexation.
+        $doc = $this->document->getDoc();
         if (
-            $this->document === null
-            || $this->document->getDoc() === null
+            $doc instanceof MetsDocument
+            && $entry['points'] === $doc->parentHref
+            && !empty($this->document->getPartof())
         ) {
-            // Quit without doing anything if required variables are not set.
-            return [];
-        } else {
-            if (!empty($this->requestData['logicalPage'])) {
-                $this->requestData['page'] = $this->document->getDoc()->getPhysicalPage($this->requestData['logicalPage']);
-                // The logical page parameter should not appear again
-                unset($this->requestData['logicalPage']);
-            }
-            // Set default values for page if not set.
-            // $this->piVars['page'] may be integer or string (physical structure @ID)
-            if (
-                (int) $this->requestData['page'] > 0
-                || empty($this->requestData['page'])
-            ) {
-                $this->requestData['page'] = MathUtility::forceIntegerInRange((int) $this->requestData['page'],
-                    1, $this->document->getDoc()->numPages, 1);
-            } else {
-                $this->requestData['page'] = array_search($this->requestData['page'], $this->document->getDoc()->physicalStructure);
-            }
-            $this->requestData['double'] = MathUtility::forceIntegerInRange($this->requestData['double'],
-                0, 1, 0);
+            unset($entry['points']);
+            $entry['targetUid'] = $this->document->getPartof();
         }
-        $menuArray = [];
-        // Does the document have physical elements or is it an external file?
-        if (
-            !empty($this->document->getDoc()->physicalStructure)
-            || !MathUtility::canBeInterpretedAsInteger($this->requestData['id'])
-        ) {
-            // Get all logical units the current page or track is a part of.
-            if (
-                !empty($this->requestData['page'])
-                && !empty($this->document->getDoc()->physicalStructure)
-            ) {
-                $this->activeEntries = array_merge((array) $this->document->getDoc()->smLinks['p2l'][$this->document->getDoc()->physicalStructure[0]],
-                    (array) $this->document->getDoc()->smLinks['p2l'][$this->document->getDoc()->physicalStructure[$this->requestData['page']]]);
-                if (
-                    !empty($this->requestData['double'])
-                    && $this->requestData['page'] < $this->document->getDoc()->numPages
-                ) {
-                    $this->activeEntries = array_merge($this->activeEntries,
-                        (array) $this->document->getDoc()->smLinks['p2l'][$this->document->getDoc()->physicalStructure[$this->requestData['page'] + 1]]);
-                }
-            }
-            // Go through table of contents and create all menu entries.
-            foreach ($this->document->getDoc()->tableOfContents as $entry) {
-                $menuArray[] = $this->getMenuEntry($entry, true);
-            }
-        } else {
-            // Go through table of contents and create top-level menu entries.
-            foreach ($this->document->getDoc()->tableOfContents as $entry) {
-                $menuArray[] = $this->getMenuEntry($entry, false);
-            }
-            // Build table of contents from database.
-            $result = $this->documentRepository->getTableOfContentsFromDb($this->document->getUid(), $this->document->getPid(), $this->settings);
 
-            $allResults = $result->fetchAll();
-
-            if (count($allResults) > 0) {
-                $menuArray[0]['ITEM_STATE'] = 'CURIFSUB';
-                $menuArray[0]['_SUB_MENU'] = [];
-                foreach ($allResults as $resArray) {
-                    $entry = [
-                        'label' => !empty($resArray['mets_label']) ? $resArray['mets_label'] : $resArray['title'],
-                        'type' => $resArray['type'],
-                        'volume' => $resArray['volume'],
-                        'orderlabel' => $resArray['mets_orderlabel'],
-                        'pagination' => '',
-                        'targetUid' => $resArray['uid']
-                    ];
-                    $menuArray[0]['_SUB_MENU'][] = $this->getMenuEntry($entry, false);
-                }
-            }
-        }
-        return $menuArray;
+        return $entry;
     }
 }

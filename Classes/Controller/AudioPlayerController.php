@@ -57,7 +57,7 @@ class AudioplayerController extends AbstractController
                         url:  "' . $this->audio['url'] . '"
                     },
                     parentElId: "tx-dlf-audio",
-                    swfPath: "' . PathUtility::stripPathSitePrefix(ExtensionManagementUtility::extPath('dlf')) . 'Resources/Public/Javascript/jPlayer/jquery.jplayer.swf"
+                    swfPath: "' . PathUtility::stripPathSitePrefix(ExtensionManagementUtility::extPath('dlf')) . 'Resources/Public/JavaScript/jPlayer/jquery.jplayer.swf"
                 });
             });
         ';
@@ -76,13 +76,9 @@ class AudioplayerController extends AbstractController
     {
         // Load current document.
         $this->loadDocument($this->requestData);
-        if (
-            $this->document === null
-            || $this->document->getDoc() === null
-            || $this->document->getDoc()->numPages < 1
-        ) {
+        if ($this->isDocMissingOrEmpty()) {
             // Quit without doing anything if required variables are not set.
-            return;
+            return '';
         } else {
             // Set default values if not set.
             // $this->requestData['page'] may be integer or string (physical structure @ID)
@@ -111,7 +107,7 @@ class AudioplayerController extends AbstractController
             $this->addPlayerJS();
         } else {
             // Quit without doing anything if required variables are not set.
-            return;
+            return '';
         }
     }
 }

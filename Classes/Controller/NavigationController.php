@@ -26,6 +26,29 @@ use TYPO3\CMS\Core\Utility\MathUtility;
 class NavigationController extends AbstractController
 {
     /**
+     * Method to get the page select values and use them with chash
+     * @param \Kitodo\Dlf\Domain\Model\PageSelectForm|NULL $pageSelectForm
+     * @return void
+     */
+    public function pageSelectAction(\Kitodo\Dlf\Domain\Model\PageSelectForm $pageSelectForm = NULL) {
+        if ($pageSelectForm) {
+            $uriBuilder = $this->getControllerContext()->getUriBuilder();
+            $uri = $uriBuilder->reset()
+                ->setArguments(
+                    [
+                        'tx_dlf' => [
+                            'id' => $pageSelectForm->getId(),
+                            'page' => $pageSelectForm->getPage(),
+                            'double' => $pageSelectForm->getDouble()
+                        ]
+                    ]
+                )
+                ->uriFor('main');
+            $this->redirectToUri($uri);
+        }
+    }
+
+    /**
      * The main method of the plugin
      *
      * @return void
@@ -34,12 +57,9 @@ class NavigationController extends AbstractController
     {
         // Load current document.
         $this->loadDocument($this->requestData);
-        if (
-            $this->document === null
-            || $this->document->getDoc() === null
-        ) {
+        if ($this->isDocMissing()) {
             // Quit without doing anything if required variables are not set.
-            return;
+            return '';
         } else {
             // Set default values if not set.
             if ($this->document->getDoc()->numPages > 0) {
@@ -71,6 +91,26 @@ class NavigationController extends AbstractController
         $this->view->assign('pageSteps', $pageSteps);
         $this->view->assign('numPages', $this->document->getDoc()->numPages);
         $this->view->assign('viewData', $this->viewData);
+
+        if ($GLOBALS['TSFE']->fe_user->getKey('ses', 'search')) {
+            $lastSearchArguments = [];
+            $searchSessionParameters = $GLOBALS['TSFE']->fe_user->getKey('ses', 'search');
+            $widgetPage = $GLOBALS['TSFE']->fe_user->getKey('ses', 'widgetPage');
+
+            if ($searchSessionParameters) {
+                $lastSearchArguments = [
+                    'tx_dlf_listview' => [
+                        'searchParameter' => $searchSessionParameters
+                    ]
+                ];
+            }
+            if ($widgetPage) {
+                $lastSearchArguments['tx_dlf_listview']['@widget_0'] = $widgetPage;
+            }
+
+            // save last search parameter to generate a link back to the search list
+            $this->view->assign('lastSearchParams', $lastSearchArguments);
+        }
 
         $pageOptions = [];
         for ($i = 1; $i <= $this->document->getDoc()->numPages; $i++) {

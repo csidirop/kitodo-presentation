@@ -93,7 +93,7 @@ class SearchController extends AbstractController
         // Quit without doing anything if required variables are not set.
         if (empty($this->settings['solrcore'])) {
             $this->logger->warning('Incomplete plugin configuration');
-            return;
+            return '';
         }
 
         // if search was triggered, get search parameters from POST variables
@@ -104,6 +104,20 @@ class SearchController extends AbstractController
         if (isset($listRequestData['searchParameter']) && is_array($listRequestData['searchParameter'])) {
             $this->searchParams = array_merge($this->searchParams ? : [], $listRequestData['searchParameter']);
             $listViewSearch = true;
+            $GLOBALS['TSFE']->fe_user->setKey('ses', 'search', $this->searchParams);
+        }
+
+        // sanitize date search input
+        if(empty($this->searchParams['dateFrom']) && !empty($this->searchParams['dateTo'])) {
+            $this->searchParams['dateFrom'] = '*';
+        }
+        if(empty($this->searchParams['dateTo']) && !empty($this->searchParams['dateFrom'])) {
+            $this->searchParams['dateTo'] = 'NOW';
+        }
+        if($this->searchParams['dateFrom'] > $this->searchParams['dateTo']) {
+            $tmpDate = $this->searchParams['dateFrom'];
+            $this->searchParams['dateFrom'] = $this->searchParams['dateTo'];
+            $this->searchParams['dateTo'] = $tmpDate;
         }
 
         // Pagination of Results: Pass the currentPage to the fluid template to calculate current index of search result.
@@ -131,15 +145,15 @@ class SearchController extends AbstractController
             $listedMetadata = $this->metadataRepository->findByIsListed(true);
 
             $solrResults = [];
+            $numResults = 0;
             // Do not execute the Solr search if used together with ListView plugin.
             if (!$listViewSearch) {
                 $solrResults = $this->documentRepository->findSolrByCollection(null, $this->settings, $this->searchParams, $listedMetadata);
+                $numResults = $solrResults->getNumFound();
             }
 
-            $documents = $solrResults['documents'] ? : [];
-            $this->view->assign('documents', $documents);
-            $rawResults = $solrResults['solrResults']['documents'] ? : [];
-            $this->view->assign('numResults', count($rawResults));
+            $this->view->assign('documents', $solrResults);
+            $this->view->assign('numResults', $numResults);
             $this->view->assign('widgetPage', $widgetPage);
             $this->view->assign('lastSearch', $this->searchParams);
             $this->view->assign('listedMetadata', $listedMetadata);
@@ -241,6 +255,52 @@ class SearchController extends AbstractController
             }
         }
 
+        // if collections are given, we prepare the collection query string
+        // extract collections from collection parameter
+        $collection = null;
+        if ($this->searchParams['collection']) {
+            foreach(explode(',', $this->searchParams['collection']) as $collectionEntry) {
+                $collection[] = $this->collectionRepository->findByUid($collectionEntry);
+            }
+            
+        }
+        if ($collection) {
+            $collectionsQueryString = '';
+            $virtualCollectionsQueryString = '';
+            foreach ($collection as $collectionEntry) {
+                // check for virtual collections query string
+                if($collectionEntry->getIndexSearch()) {
+                    $virtualCollectionsQueryString .= empty($virtualCollectionsQueryString) ? '(' . $collectionEntry->getIndexSearch() . ')' : ' OR ('. $collectionEntry->getIndexSearch() . ')' ;
+                }
+                else {
+                    $collectionsQueryString .= empty($collectionsQueryString) ? '"' . $collectionEntry->getIndexName() . '"' : ' OR "' . $collectionEntry->getIndexName() . '"';
+                }
+            }
+            
+            // distinguish between simple collection browsing and actual searching within the collection(s)
+            if(!empty($collectionsQueryString)) {
+                if(empty($searchParams['query'])) {
+                    $collectionsQueryString = '(collection_faceting:(' . $collectionsQueryString . ') AND toplevel:true AND partof:0)';
+                } else {
+                    $collectionsQueryString = '(collection_faceting:(' . $collectionsQueryString . '))';
+                }
+            }
+
+            // virtual collections might query documents that are neither toplevel:true nor partof:0 and need to be searched separatly
+            if(!empty($virtualCollectionsQueryString)) {
+                $virtualCollectionsQueryString = '(' . $virtualCollectionsQueryString . ')';
+            }
+
+            // combine both querystrings into a single filterquery via OR if both are given, otherwise pass either of those
+            $search['params']['filterquery'][]['query'] = implode(" OR ", array_filter([$collectionsQueryString, $virtualCollectionsQueryString]));
+        }
+
+        // add filter query for date search
+        if (!empty($this->searchParams['dateFrom']) && !empty($this->searchParams['dateTo'])) {
+            // combine dateFrom and dateTo into filterquery as range search
+            $search['params']['filterquery'][]['query'] = '{!join from=' . $fields['uid'] . ' to=' . $fields['uid'] . '}' . $fields['date'] . ':[' . $this->searchParams['dateFrom'] . ' TO ' . $this->searchParams['dateTo'] . ']';
+        }
+
         // Add extended search query.
         if (
             !empty($searchParams['extQuery'])
@@ -280,6 +340,7 @@ class SearchController extends AbstractController
         foreach (array_keys($facets) as $field) {
             $search['params']['component']['facetset']['facet'][] = [
                 'type' => 'field',
+                'mincount' => '1',
                 'key' => $field,
                 'field' => $field,
                 'limit' => $this->settings['limitFacets'],
@@ -300,7 +361,7 @@ class SearchController extends AbstractController
         $facetCollectionArray = [];
 
         // replace everything expect numbers and comma
-        $facetCollections = preg_replace('/[^0-9,]/', '', $this->settings['facetCollections']);
+        $facetCollections = preg_replace('/[^\d,]/', '', $this->settings['facetCollections']);
 
         if (!empty($facetCollections)) {
             $collections = $this->collectionRepository->findCollectionsBySettings(['collections' => $facetCollections]);
@@ -315,7 +376,7 @@ class SearchController extends AbstractController
         if ($facet) {
             foreach ($facet as $field => $values) {
                 $entryArray = [];
-                $entryArray['field'] = substr($field, 0, strpos($field, '_'));
+                $entryArray['field'] = substr($field, 0, strpos($field, '_faceting'));
                 $entryArray['count'] = 0;
                 $entryArray['_OVERRIDE_HREF'] = '';
                 $entryArray['ITEM_STATE'] = 'NO';

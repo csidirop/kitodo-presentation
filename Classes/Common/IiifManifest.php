@@ -219,7 +219,7 @@ final class IiifManifest extends Doc
     protected $useGrps = [];
 
     /**
-     * IiifManifest also populates the physical stucture array entries for matching
+     * IiifManifest also populates the physical structure array entries for matching
      * 'fileGrp's. To do that, the configuration has to be loaded; afterwards configured
      * 'fileGrp's for thumbnails, downloads, audio, fulltext and the 'fileGrp's for images
      * can be requested with this method.
@@ -452,7 +452,7 @@ final class IiifManifest extends Doc
             if (!$recursive) {
                 $details = $this->getLogicalStructureInfo($logUnits[0]);
             } else {
-                // cache the ranges - they might occure multiple times in the structures "tree" - with full data as well as referenced as id
+                // cache the ranges - they might occur multiple times in the structures "tree" - with full data as well as referenced as id
                 $processedStructures = [];
                 foreach ($logUnits as $logUnit) {
                     if (array_search($logUnit->getId(), $processedStructures) == false) {
@@ -632,6 +632,7 @@ final class IiifManifest extends Doc
             'type' => [],
             'volume' => [],
             'volume_sorting' => [],
+            'date' => [],
             'license' => [],
             'terms' => [],
             'restrictions' => [],
@@ -710,6 +711,10 @@ final class IiifManifest extends Doc
                     $metadata[$resArray['index_name'] . '_sorting'][0] = $metadata[$resArray['index_name']][0];
                 }
             }
+        }
+        // Set date to empty string if not present.
+        if (empty($metadata['date'][0])) {
+            $metadata['date'][0] = '';
         }
         return $metadata;
     }
