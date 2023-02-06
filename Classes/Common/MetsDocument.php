@@ -750,6 +750,17 @@ final class MetsDocument extends Doc
     }
 
     /**
+     * Return an array which holds the logical units.
+     * @see \Kitodo\Dlf\Common\Document::logicalUnits
+     * 
+     * @access public
+     * @return string An array which holds the logical units 
+     */
+    public function getLogicalUnits(){
+        return $this->logicalUnits;
+    }
+
+    /**
      * {@inheritDoc}
      * @see \Kitodo\Dlf\Common\Doc::init()
      */

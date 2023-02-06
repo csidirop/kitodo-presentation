@@ -47,6 +47,12 @@ dlfViewerImageManipulationControl = function(options) {
      */
     this.toolContainerEl_ = dlfUtils.exists(options.toolContainer) ? options.toolContainer : $(this.dic['parentContainer'])[0];
 
+    /**
+     * @type {HTMLCanvasElement}
+     *
+     */
+    this.canvas_ = this.baseMap_.getTargetElement().querySelector('canvas');
+
     //
     // Append open/close behavior to toolbox
     //

@@ -1,5 +1,5 @@
 {
-  "name": "kitodo/presentation",
+  "name": "csidirop/presentation",
   "description": "Base plugins, modules, services and API of the Digital Library Framework. It is part of the community-based Kitodo Digitization Suite.",
   "type": "typo3-cms-extension",
   "homepage": "https://www.kitodo.org",
@@ -17,6 +17,12 @@
       "email": "sebastian.meyer@slub-dresden.de",
       "homepage": "https://www.slub-dresden.de",
       "role": "maintainer"
+    },
+    {
+      "name": "Christos Sidiropoulos",
+      "email": "christos.sidiropoulos@bib.uni-mannheim.de",
+      "homepage": "https://www.bib.uni-mannheim.de",
+      "role": "developer"
     }
   ],
   "support": {
@@ -37,7 +43,8 @@
     "typo3/cms-tstemplate": "^9.5.31|^10.4.34",
     "caseyamcl/phpoaipmh": "^3.3",
     "ubl/php-iiif-prezi-reader": "0.3.0",
-    "solarium/solarium": "^5.2"
+    "solarium/solarium": "^5.2",
+    "hakre/xmlreaderiterator": "dev-master"
   },
   "require-dev": {
     "spatie/phpunit-watcher": "^1.23",
