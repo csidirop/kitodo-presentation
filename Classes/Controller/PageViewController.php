@@ -12,6 +12,7 @@
 namespace Kitodo\Dlf\Controller;
 
 use Kitodo\Dlf\Common\IiifManifest;
+use Kitodo\Dlf\Plugin\FullTextGenerator;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Core\Database\Connection;
@@ -121,10 +122,12 @@ class PageViewController extends AbstractController
     protected function getFulltext($page)
     {
         $fulltext = [];
-        // Get fulltext link.
+        // Get fulltext link:
         $fileGrpsFulltext = GeneralUtility::trimExplode(',', $this->extConf['fileGrpFulltext']);
+
         while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) {
-            if (!empty($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext])) {
+            //check if and where fulltext is present:
+            if (!empty($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext])) { //fulltext is remote present
                 $fulltext['url'] = $this->document->getDoc()->getFileLocation($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
                 if ($this->settings['useInternalProxy']) {
                     // Configure @action URL for form.
@@ -142,7 +145,16 @@ class PageViewController extends AbstractController
                 }
                 $fulltext['mimetype'] = $this->document->getDoc()->getFileMimeType($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
                 break;
-            } else {
+            } else if (FullTextGenerator::checkLocal('dlf', $this->document->getDoc(), $page)) { //fulltext is locally present
+                //check server protocol (https://stackoverflow.com/a/14270161):
+                if ( isset($_SERVER['HTTPS'])  &&  ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
+                    ||  isset($_SERVER['HTTP_X_FORWARDED_PROTO'])  &&  $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+                    $protocol = 'https://';
+                } else {
+                    $protocol = 'http://';
+                }
+                $fulltext['url'] = $protocol . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath('dlf', $this->document->getDoc(), $page);
+            } else { //no fulltext present
                 $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
             }
         }
