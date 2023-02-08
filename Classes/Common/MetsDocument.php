@@ -834,7 +834,7 @@ final class MetsDocument extends Doc
      * {@inheritDoc}
      * @see Doc::getDocument()
      */
-    protected function getDocument()
+    public function getDocument()
     {
         return $this->mets;
     }
