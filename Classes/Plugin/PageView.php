@@ -194,20 +194,13 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
         // Get @USE value of METS fileGrp.
         $fileGrpsImages = GeneralUtility::trimExplode(',', $this->conf['fileGrpImages']);
 
-        $count = count($fileGrpsImages);
-        // set loop variables:
-        if($mode==0){ //default mode: get the lowest image for UI
-            $i=0;       // loop variable: start
-            $j=$count;  // loop variable: end
-            $x=1;       // loop variable: increment
-        } else { //OCR mode: get the highest image for OCR processing
-            $i=$count-1;
-            $j=-1; //-1 because we want to include the last element (see loop condition !=)
-            $x=-1;
+        // better images for fulltextgeneration
+        // worse images for displaying
+        if($mode==0){
+            $fileGrpsImages = array_reverse($fileGrpsImages);
         }
 
-        for ($i; $i!=$j; $i+=$x){
-            $fileGrpImages = $fileGrpsImages[$i];
+        while ($fileGrpImages = array_pop($fileGrpsImages)) {
             // Get image link.
             if (!empty($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpImages])) {
                 $image['url'] = $this->doc->getFileLocation($this->doc->physicalStructureInfo[$this->doc->physicalStructure[$page]]['files'][$fileGrpImages]);
@@ -230,6 +223,7 @@ class PageView extends \Kitodo\Dlf\Common\AbstractPlugin
         if (empty($image)) {
             $this->logger->warning('No image file found for page "' . $page . '" in fileGrps "' . $this->conf['fileGrpImages'] . '"');
         }
+        // echo '<script>alert("mode: '.$mode.' url: '.$image['url'].'")</script>'; 
         return $image;
     }
 
