@@ -354,7 +354,7 @@ abstract class Doc
      * @return \SimpleXMLElement|IiifResourceInterface An PHP object representation of
      * the current document. SimpleXMLElement for METS, IiifResourceInterface for IIIF
      */
-    public abstract function getDocument();
+    protected abstract function getDocument();
 
     /**
      * This gets the location of a downloadable file for a physical page or track

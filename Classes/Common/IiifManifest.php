@@ -174,7 +174,7 @@ final class IiifManifest extends Doc
      * {@inheritDoc}
      * @see Doc::getDocument()
      */
-    public function getDocument()
+    protected function getDocument()
     {
         return $this->iiif;
     }
