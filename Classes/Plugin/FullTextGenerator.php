@@ -4,9 +4,8 @@ namespace Kitodo\Dlf\Plugin;
 
 use Kitodo\Dlf\Common\Doc;
 use Kitodo\Dlf\Plugin\FullTextXMLtools;
-use Kitodo\Dlf\Plugin\PageView;
+use Kitodo\Dlf\Controller\PageViewController;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Log\LogLevel;
 
 /**
  * Plugin 'FullText Generator' for the 'dlf' extension
@@ -67,8 +66,9 @@ class FullTextGenerator {
       $outputFolder_path = $conf['fulltextFolder'] . "/" . str_replace("urn/","URN/",str_replace("-", "/", str_replace(":", "/", $urn))); // -> URN/nbn/de/bsz/180/digosi/30
     } else { //no urn was present
       $outputFolder_path = $conf['fulltextFolder'] . "/noURN/" . sha1($doc->uid); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757
+      //TODO: `$doc->uid` not working anymore: a) bring it back b) find other solution
     }
-    
+
     return $outputFolder_path;
   }
 
@@ -85,7 +85,7 @@ class FullTextGenerator {
    */
   public static function getPageLocalPath(string $ext_key, Doc $doc, int $page_num):string {
     $outputFolder_path = self::genDocLocalPath($ext_key, $doc);
-    $ocrEngine = PageView::getOCRengine($ext_key);
+    $ocrEngine = PageViewController::getOCRengine($ext_key);
     $page_id = self::getPageLocalId($doc, $page_num);
     return "$outputFolder_path/$ocrEngine/$page_id.xml";
   }
@@ -102,7 +102,6 @@ class FullTextGenerator {
    * @return bool
    */
   public static function checkLocal(string $ext_key, Doc $doc, int $page_num):bool {
-    echo '<script>alert("Path: '.self::getPageLocalPath($ext_key, $doc, $page_num).'")</script>';
     return file_exists(self::getPageLocalPath($ext_key, $doc, $page_num));
   }
 

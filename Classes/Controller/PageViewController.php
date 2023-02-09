@@ -14,6 +14,7 @@ namespace Kitodo\Dlf\Controller;
 use Kitodo\Dlf\Common\Doc;
 use Kitodo\Dlf\Common\IiifManifest;
 use Kitodo\Dlf\Plugin\FullTextGenerator;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Core\Database\Connection;
@@ -63,6 +64,13 @@ class PageViewController extends AbstractController
     protected $annotationContainers = [];
 
     /**
+     * Holds the parsed active OCR engines
+     * @var string
+     * @access protected
+     */
+    protected static $ocrEngines = "";
+
+    /**
      * The main method of the plugin
      *
      * @return void
@@ -71,6 +79,7 @@ class PageViewController extends AbstractController
     {
         // Load current document.
         $this->loadDocument($this->requestData);
+        $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']);
         if ($this->isDocMissingOrEmpty()) {
             // Quit without doing anything if required variables are not set.
             return '';
@@ -292,5 +301,40 @@ class PageViewController extends AbstractController
             $this->logger->warning('No image file found for page "' . $page . '" in fileGrps "' . $this->extConf['fileGrpImages'] . '"');
         }
         return $image;
+    }
+
+    /**
+     * Parses the json with all active OCR Engines.
+     *
+     * @access protected
+     *
+     * @param string $ocrEnginesPath: Path to the JSON containing all active OCR engines
+     * 
+     * @return void
+     */
+    protected function parseOCRengines(string $ocrEnginesPath):void{
+        self::$ocrEngines = file_get_contents($ocrEnginesPath);
+        setcookie('tx-dlf-ocrEngines', self::$ocrEngines, ['SameSite' => 'lax']);
+    }
+
+    /**
+     * Checks and returns the OCR-Engine
+     * 
+     * @access public
+     * 
+     * @param string $extKey
+     *
+     * @return string The selected OCR engine
+     */
+    public static function getOCRengine(string $extKey):string {
+        $conf = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
+        $ocrEngine = '';
+
+        if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && str_contains(self::$ocrEngines, $_COOKIE['tx-dlf-ocrEngine'])){
+            $ocrEngine = $_COOKIE['tx-dlf-ocrEngine'];
+        } else {
+            $ocrEngine = $conf['ocrEngine'] ; //get default default value
+        }
+        return $ocrEngine;
     }
 }
