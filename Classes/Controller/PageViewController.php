@@ -80,6 +80,7 @@ class PageViewController extends AbstractController
         // Load current document.
         $this->loadDocument($this->requestData);
         $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']);
+        $this->clearPageCache();
         //Proccess request: Do OCR on given image(s):
         if ($_POST["request"]) {
             $this->generateFullText();
@@ -361,5 +362,18 @@ class PageViewController extends AbstractController
             }
             FullTextGenerator::createBookFullText(Doc::$extKey, $this->document->getDoc(), $images, self::getOCRengine(Doc::$extKey));
         }
+    }
+
+    /**
+     * This function is a workaround to circumvent TYPO3s disturbing caching.
+     * It clears the stored page cache (for presentations viewer only!) on calling.
+     * 
+     * @access protected
+     * 
+     * @return void
+     */
+    protected function clearPageCache():void{
+        $objectManager = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
+        $objectManager->get(\TYPO3\CMS\Extbase\Service\CacheService::class)->clearPageCache($GLOBALS['TSFE']->id);
     }
 }
