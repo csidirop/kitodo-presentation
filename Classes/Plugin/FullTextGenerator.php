@@ -248,8 +248,8 @@ class FullTextGenerator {
       }
 
       //4. Reload page: (without action query part)
-      $url=substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'], '&tx__%5Baction%5D='));
-      header("Refresh:0; url=$url&no_cache=1");
+      $url="/viewer?tx_dlf[id]=".$GLOBALS["_GET"]['tx_dlf']["id"]."&tx_dlf[page]=".$GLOBALS["_GET"]['tx_dlf']["page"]."&no_cache=1";
+      header("Refresh:0; url=$url");
     }
 
     //Remove lock:
