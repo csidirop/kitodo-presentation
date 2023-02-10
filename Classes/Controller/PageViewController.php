@@ -80,6 +80,11 @@ class PageViewController extends AbstractController
         // Load current document.
         $this->loadDocument($this->requestData);
         $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']);
+        //Proccess request: Do OCR on given image(s):
+        if ($_POST["request"]) {
+            $this->generateFullText();
+        }
+
         if ($this->isDocMissingOrEmpty()) {
             // Quit without doing anything if required variables are not set.
             return '';
@@ -337,5 +342,24 @@ class PageViewController extends AbstractController
             $ocrEngine = $conf['ocrEngine'] ; //get default default value
         }
         return $ocrEngine;
+    }
+
+    /**
+     * Generates page or book fulltexts via FullTextGenerator.php
+     * 
+     * @access protected
+     * 
+     * @return void
+     */
+    protected function generateFullText():void {
+        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document->getDoc(), $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], self::getOCRengine(Doc::$extKey));
+        if($_POST["request"]["type"] == "book") {
+            //collect all image urls:
+            $images = array();
+            for ($i=1; $i <= $this->document->getDoc()->numPages; $i++) {
+                $images[$i] = $this->getImage($i)["url"];
+            }
+            FullTextGenerator::createBookFullText(Doc::$extKey, $this->document->getDoc(), $images, self::getOCRengine(Doc::$extKey));
+        }
     }
 }
