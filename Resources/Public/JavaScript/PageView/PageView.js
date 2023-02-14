@@ -1,5 +1,3 @@
-//OCR-Test: Copied from KIT project.
-
 /**
  * (c) Kitodo. Key to digital objects e.V. <contact@kitodo.org>
  *
@@ -306,14 +304,11 @@ dlfViewer.prototype.addCustomControls = function() {
                 fulltextControl.deactivate();
             });
     } else {
-        // /**DEBUG**/ alert("PageView.addCustomControls: if1: false");
         $('#tx-dlf-tools-fulltext').remove();
         // $('.fulltext').remove(); //?? //OCR-Test
     }
 
     if (this.annotationContainers[0] !== undefined && this.annotationContainers[0].annotationContainers !== undefined && this.annotationContainers[0].annotationContainers.length > 0 && this.images.length === 1) {
-    // if(true){ //DEBUG: force fulltext/annotations show
-        // /**DEBUG**/ alert("PageView.addCustomControls: if2: true");
         // Adds annotation behavior only if there are annotations available and view is single page
         annotationControl = new DlfAnnotationControl(this.map, this.images[0], this.annotationContainers[0]);
         if (fulltextControl !== undefined) {
@@ -321,12 +316,10 @@ dlfViewer.prototype.addCustomControls = function() {
             $(annotationControl).on("activate-annotations", $.proxy(fulltextControl.deactivate, fulltextControl));
         }
     } else {
-        // /*DEBUG*/ alert("PageView.addCustomControls: if2: false");
         $('#tx-dlf-tools-annotations').remove();
     }
 
     // Add image manipulation tool if container is added.
-    //
     if ($('#tx-dlf-tools-imagetools').length > 0) {
 
         // should be called if cors is enabled
@@ -337,19 +330,13 @@ dlfViewer.prototype.addCustomControls = function() {
 
         // bind behavior of both together
         if (fulltextControl !== undefined) {
-            // /**DEBUG**/ alert("PageView.addCustomControls: if3a: true");
-
             $(imageManipulationControl).on("activate-imagemanipulation", $.proxy(fulltextControl.deactivate, fulltextControl));
             $(fulltextControl).on("activate-fulltext", $.proxy(imageManipulationControl.deactivate, imageManipulationControl));
         } else {
-        // /**DEBUG**/ alert("PageView.addCustomControls: if3a: false");
         }
         if (annotationControl !== undefined) {
-            // /**DEBUG**/ alert("PageView.addCustomControls: if3b: true");
             $(imageManipulationControl).on("activate-imagemanipulation", $.proxy(annotationControl.deactivate, annotationControl));
             $(annotationControl).on("activate-annotations", $.proxy(imageManipulationControl.deactivate, imageManipulationControl));
-        } else {
-            // /**DEBUG**/ alert("PageView.addCustomControls: if3b: false");
         } 
 
         // set on object scope

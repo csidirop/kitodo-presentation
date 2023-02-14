@@ -11,7 +11,10 @@
 
 namespace Kitodo\Dlf\Controller;
 
+use Kitodo\Dlf\Common\Doc;
 use Kitodo\Dlf\Common\IiifManifest;
+use Kitodo\Dlf\Plugin\FullTextGenerator;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Core\Database\Connection;
@@ -61,6 +64,13 @@ class PageViewController extends AbstractController
     protected $annotationContainers = [];
 
     /**
+     * Holds the parsed active OCR engines
+     * @var string
+     * @access protected
+     */
+    protected static $ocrEngines = "";
+
+    /**
      * The main method of the plugin
      *
      * @return void
@@ -69,6 +79,13 @@ class PageViewController extends AbstractController
     {
         // Load current document.
         $this->loadDocument($this->requestData);
+        $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']);
+        $this->clearPageCache();
+        //Proccess request: Do OCR on given image(s):
+        if ($_POST["request"]) {
+            $this->generateFullText();
+        }
+
         if ($this->isDocMissingOrEmpty()) {
             // Quit without doing anything if required variables are not set.
             return '';
@@ -121,10 +138,12 @@ class PageViewController extends AbstractController
     protected function getFulltext($page)
     {
         $fulltext = [];
-        // Get fulltext link.
+        // Get fulltext link:
         $fileGrpsFulltext = GeneralUtility::trimExplode(',', $this->extConf['fileGrpFulltext']);
+
         while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) {
-            if (!empty($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext])) {
+            //check if and where fulltext is present:
+            if (!empty($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext])) { //fulltext is remote present
                 $fulltext['url'] = $this->document->getDoc()->getFileLocation($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
                 if ($this->settings['useInternalProxy']) {
                     // Configure @action URL for form.
@@ -142,7 +161,17 @@ class PageViewController extends AbstractController
                 }
                 $fulltext['mimetype'] = $this->document->getDoc()->getFileMimeType($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
                 break;
-            } else {
+            } else if (FullTextGenerator::checkLocal(Doc::$extKey, $this->document->getDoc(), $page)) { //fulltext is locally present
+                //check server protocol (https://stackoverflow.com/a/14270161):
+                if ( isset($_SERVER['HTTPS'])  &&  ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
+                    ||  isset($_SERVER['HTTP_X_FORWARDED_PROTO'])  &&  $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+                    $protocol = 'https://';
+                } else {
+                    $protocol = 'http://';
+                }
+                $fulltext['url'] = $protocol . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document->getDoc(), $page);
+                $fulltext['mimetype'] = "text/xml";
+            } else { //no fulltext present
                 $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
             }
         }
@@ -279,5 +308,72 @@ class PageViewController extends AbstractController
             $this->logger->warning('No image file found for page "' . $page . '" in fileGrps "' . $this->extConf['fileGrpImages'] . '"');
         }
         return $image;
+    }
+
+    /**
+     * Parses the json with all active OCR Engines.
+     *
+     * @access protected
+     *
+     * @param string $ocrEnginesPath: Path to the JSON containing all active OCR engines
+     * 
+     * @return void
+     */
+    protected function parseOCRengines(string $ocrEnginesPath):void{
+        self::$ocrEngines = file_get_contents($ocrEnginesPath);
+        setcookie('tx-dlf-ocrEngines', self::$ocrEngines, ['SameSite' => 'lax']);
+    }
+
+    /**
+     * Checks and returns the OCR-Engine
+     * 
+     * @access public
+     * 
+     * @param string $extKey
+     *
+     * @return string The selected OCR engine
+     */
+    public static function getOCRengine(string $extKey):string {
+        $conf = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
+        $ocrEngine = '';
+
+        if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && str_contains(self::$ocrEngines, $_COOKIE['tx-dlf-ocrEngine'])){
+            $ocrEngine = $_COOKIE['tx-dlf-ocrEngine'];
+        } else {
+            $ocrEngine = $conf['ocrEngine'] ; //get default default value
+        }
+        return $ocrEngine;
+    }
+
+    /**
+     * Generates page or book fulltexts via FullTextGenerator.php
+     * 
+     * @access protected
+     * 
+     * @return void
+     */
+    protected function generateFullText():void {
+        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document->getDoc(), $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], self::getOCRengine(Doc::$extKey));
+        if($_POST["request"]["type"] == "book") {
+            //collect all image urls:
+            $images = array();
+            for ($i=1; $i <= $this->document->getDoc()->numPages; $i++) {
+                $images[$i] = $this->getImage($i)["url"];
+            }
+            FullTextGenerator::createBookFullText(Doc::$extKey, $this->document->getDoc(), $images, self::getOCRengine(Doc::$extKey));
+        }
+    }
+
+    /**
+     * This function is a workaround to circumvent TYPO3s disturbing caching.
+     * It clears the stored page cache (for presentations viewer only!) on calling.
+     * 
+     * @access protected
+     * 
+     * @return void
+     */
+    protected function clearPageCache():void{
+        $objectManager = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
+        $objectManager->get(\TYPO3\CMS\Extbase\Service\CacheService::class)->clearPageCache($GLOBALS['TSFE']->id);
     }
 }

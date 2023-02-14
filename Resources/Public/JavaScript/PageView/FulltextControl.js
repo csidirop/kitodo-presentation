@@ -439,9 +439,6 @@ dlfViewerFullTextControl.prototype.scrollToText = function(element, fullTextScro
  * Activate Fulltext Features: Shows sidebar and with fulltext
  */
 dlfViewerFullTextControl.prototype.activate = function() {
-
-    /*DEBUG*/ //alert("FullTextControl.activate:"); //DEBUG
-    
     var controlEl = $('#tx-dlf-tools-fulltext');
 
     this.showFulltext(this.textblockFeatures_);
@@ -460,8 +457,6 @@ dlfViewerFullTextControl.prototype.activate = function() {
  * Deactivate Fulltext Features
  */
 dlfViewerFullTextControl.prototype.deactivate = function() {
-    /**DEBUG**/ //alert("FullTextControl.deactivate");
-
     var controlEl = $('#tx-dlf-tools-fulltext');
 
     // deactivate fulltext

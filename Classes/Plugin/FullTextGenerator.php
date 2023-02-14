@@ -2,11 +2,10 @@
 
 namespace Kitodo\Dlf\Plugin;
 
-use Kitodo\Dlf\Common\Document;
+use Kitodo\Dlf\Common\Doc;
 use Kitodo\Dlf\Plugin\FullTextXMLtools;
-use Kitodo\Dlf\Plugin\PageView;
+use Kitodo\Dlf\Controller\PageViewController;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Log\LogLevel;
 
 /**
  * Plugin 'FullText Generator' for the 'dlf' extension
@@ -25,11 +24,11 @@ class FullTextGenerator {
    * 
    * @access protected
    *
-   * @param Document doc
+   * @param Doc doc
    *
    * @return string
    */
-  protected static function getDocLocalId(Document $doc):string {
+  protected static function getDocLocalId(Doc $doc):string {
     return $doc->toplevelId;
   }
 
@@ -38,12 +37,12 @@ class FullTextGenerator {
    * 
    * @access protected
    *
-   * @param Document doc
+   * @param Doc doc
    * @param int page_num
    *
    * @return string
    */
-  protected static function getPageLocalId(Document $doc, int $page_num):string {
+  protected static function getPageLocalId(Doc $doc, int $page_num):string {
     $doc_id = self::getDocLocalId($doc);
     return "{$doc_id}_$page_num";
   }
@@ -54,11 +53,11 @@ class FullTextGenerator {
    * @access protected
    *
    * @param string ext_key
-   * @param Document doc
+   * @param Doc doc
    *
    * @return string path to documents specific fulltext folder
    */
-  protected static function genDocLocalPath(string $ext_key, Document $doc):string {
+  protected static function genDocLocalPath(string $ext_key, Doc $doc):string {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genDocLocalPath: '.$conf['fulltextFolder'].'")</script>'; //DEBUG
 
@@ -67,8 +66,9 @@ class FullTextGenerator {
       $outputFolder_path = $conf['fulltextFolder'] . "/" . str_replace("urn/","URN/",str_replace("-", "/", str_replace(":", "/", $urn))); // -> URN/nbn/de/bsz/180/digosi/30
     } else { //no urn was present
       $outputFolder_path = $conf['fulltextFolder'] . "/noURN/" . sha1($doc->uid); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757
+      //TODO: `$doc->uid` not working anymore: a) bring it back b) find other solution
     }
-    
+
     return $outputFolder_path;
   }
 
@@ -78,14 +78,14 @@ class FullTextGenerator {
    * @access public
    *
    * @param string ext_key
-   * @param Document doc
+   * @param Doc doc
    * @param int page_num
    *
    * @return string
    */
-  public static function getPageLocalPath(string $ext_key, Document $doc, int $page_num):string {
+  public static function getPageLocalPath(string $ext_key, Doc $doc, int $page_num):string {
     $outputFolder_path = self::genDocLocalPath($ext_key, $doc);
-    $ocrEngine = PageView::getOCRengine($ext_key);
+    $ocrEngine = PageViewController::getOCRengine($ext_key);
     $page_id = self::getPageLocalId($doc, $page_num);
     return "$outputFolder_path/$ocrEngine/$page_id.xml";
   }
@@ -96,12 +96,12 @@ class FullTextGenerator {
    * @access public
    *
    * @param string ext_key
-   * @param Document doc
+   * @param Doc doc
    * @param int page_num
    *
    * @return bool
    */
-  public static function checkLocal(string $ext_key, Document $doc, int $page_num):bool {
+  public static function checkLocal(string $ext_key, Doc $doc, int $page_num):bool {
     return file_exists(self::getPageLocalPath($ext_key, $doc, $page_num));
   }
 
@@ -111,12 +111,12 @@ class FullTextGenerator {
    * @access public
    *
    * @param string ext_key
-   * @param Document doc
+   * @param Doc doc
    * @param int page_num
    *
    * @return bool
    */
-  public static function checkInProgress(string $ext_key, Document $doc, int $page_num):bool {
+  public static function checkInProgress(string $ext_key, Doc $doc, int $page_num):bool {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
     return file_exists($conf['fulltextTempFolder'] . '/' . self::getPageLocalId($doc, $page_num) . ".xml");
   }
@@ -127,13 +127,13 @@ class FullTextGenerator {
    * @access public
    *
    * @param string ext_key
-   * @param Document doc
+   * @param Doc doc
    * @param array images_urls
    * @param string $ocrEngine
    *
    * @return void
    */
-  public static function createBookFullText(string $ext_key, Document $doc, array $images_urls, string $ocrEngine):void {
+  public static function createBookFullText(string $ext_key, Doc $doc, array $images_urls, string $ocrEngine):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
 
     for ($page_num=1; $page_num <= $doc->numPages; $page_num++) {
@@ -149,13 +149,13 @@ class FullTextGenerator {
    * @access protected
    *
    * @param string ext_key
-   * @param Document doc
+   * @param Doc doc
    * @param int page_num
    * @param string $ocrEngine
    *
    * @return bool
    */
-  public static function createPageFullText(string $ext_key, Document $doc, string $image_url, int $page_num, string $ocrEngine):void {
+  public static function createPageFullText(string $ext_key, Doc $doc, string $image_url, int $page_num, string $ocrEngine):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($ext_key);
 
     if (!(self::checkLocal($ext_key, $doc, $page_num) || self::checkInProgress($ext_key, $doc, $page_num))) {
@@ -171,7 +171,7 @@ class FullTextGenerator {
    *
    * @param string ext_key
    * @param array conf
-   * @param Document doc
+   * @param Doc doc
    * @param string image_url
    * @param int page_num 
    * @param int sleep_interval
@@ -179,7 +179,7 @@ class FullTextGenerator {
    *
    * @return void
    */
-  protected static function generatePageOCR(string $ext_key, array $conf, Document $doc, string $image_url, int $page_num, int $sleep_interval = 0, string $ocrEngine):void {
+  protected static function generatePageOCR(string $ext_key, array $conf, Doc $doc, string $image_url, int $page_num, int $sleep_interval = 0, string $ocrEngine):void {
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
 
     //Working dir is "/var/www/typo3/public"; //same as "/var/www/html" because sym link
@@ -248,8 +248,8 @@ class FullTextGenerator {
       }
 
       //4. Reload page: (without action query part)
-      $url=substr($_SERVER['REQUEST_URI'], 0, strrpos($_SERVER['REQUEST_URI'], '&tx__%5Baction%5D='));
-      header("Refresh:0; url=$url&no_cache=1");
+      $url="/viewer?tx_dlf[id]=".$GLOBALS["_GET"]['tx_dlf']["id"]."&tx_dlf[page]=".$GLOBALS["_GET"]['tx_dlf']["page"]."&no_cache=1";
+      header("Refresh:0; url=$url");
     }
 
     //Remove lock:

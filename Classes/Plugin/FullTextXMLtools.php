@@ -9,7 +9,7 @@ use XMLReaderIterator;
 use XMLWritingIteration;
 use DateTimeImmutable;
 
-use Kitodo\Dlf\Common\Document;
+use Kitodo\Dlf\Common\Doc;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
 
@@ -35,13 +35,14 @@ class FullTextXMLtools {
    * 
    * @access protected
    * 
-   * @param Document doc
+   * @param Doc doc
    * 
    * @return string The document's URN or null if not found.
    */
-  public static function getDocURN(Document $doc):?string {
+  public static function getDocURN(Doc $doc):?string {
+    // Load METS from memory and run through with XMLReader:
     $reader = new XMLReader();
-    $reader->open("$doc->uid"); //open METS XML
+    $reader->XML($doc->__toString());
     $urn = null;
     while ($reader->read()) {
       if((($reader->name=="mods:identifier")||($reader->name=="identifier")) && ($reader->getAttribute("type") === 'urn') && !empty($reader->readString())){ //if XML key is 'mods:identifier'/'identifier' and attribute 'type' is 'urn'
@@ -55,6 +56,7 @@ class FullTextXMLtools {
         break;
       }
     }
+    $reader->close();
     return $urn;
   }
 
@@ -63,11 +65,11 @@ class FullTextXMLtools {
    * 
    * @access protected
    * 
-   * @param Document doc
+   * @param Doc doc
    * @param string xml_path Path to the output folder
    * 
    */
-  public static function writeMetsXML(Document $doc, string $xml_path):void {
+  public static function writeMetsXML(Doc $doc, string $xml_path):void {
     if(!file_exists($xml_path)){ //check if METS XML file already exists
       $file = self::getMetsXML($doc);
       // $file = $doc->xml->asXML(); //Alternative: Get METS XML file from doc object -> faster but slightly different header
@@ -82,11 +84,11 @@ class FullTextXMLtools {
    * 
    * @access protected
    * 
-   * @param Document doc
+   * @param Doc doc
    * 
    * @return string METS XML content
    */
-  protected static function getMetsXML(Document $doc):string {
+  protected static function getMetsXML(Doc $doc):string {
     return file_get_contents($doc->uid);
   }
 
