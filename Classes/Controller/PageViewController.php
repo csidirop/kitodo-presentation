@@ -170,7 +170,7 @@ class PageViewController extends AbstractController
                     $protocol = 'http://';
                 }
                 $fulltext['url'] = $protocol . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document->getDoc(), $page);
-                $fulltext['mimetype'] = $this->document->getDoc()->getFileMimeType($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
+                $fulltext['mimetype'] = "text/xml";
             } else { //no fulltext present
                 $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
             }
