@@ -12,6 +12,7 @@
 namespace Kitodo\Dlf\Controller;
 
 use Kitodo\Dlf\Common\Helper;
+use Kitodo\Dlf\Plugin\FullTextGenerator;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -168,7 +169,7 @@ class ToolboxController extends AbstractController
                 break;
             }
         }
-        if (!empty($fullTextFile)) {
+        if (!empty($fullTextFile) || FullTextGenerator::checkLocal(\Kitodo\Dlf\Common\Doc::$extKey, $this->document->getDoc(), $this->requestData['page'])) {
             $this->view->assign('fulltext', true);
             $this->view->assign('activateFullTextInitially', MathUtility::forceIntegerInRange($this->settings['activateFullTextInitially'], 0, 1, 0));
         } else {
