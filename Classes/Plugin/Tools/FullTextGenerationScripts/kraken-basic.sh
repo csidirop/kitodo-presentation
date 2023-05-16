@@ -8,7 +8,8 @@ set -euo pipefail # exit on: error, undefined variable, pipefail
 # Test fuction, for manually testing the script
 function test() {
 	wget https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/max/1652998276_0001.jpg
-	kraken -a -i 1652998276_0001.jpg 1652998276_0001.txt binarize segment ocr -m /opt/kraken_models/digitue_best.mlmodel
+	kraken --alto --input 1652998276_0001.jpg 1652998276_0001.txt binarize segment ocr --model /opt/kraken_models/digitue.mlmodel 
+	#TODO: use default model, not digitue
 	exit 0;
 }
 
@@ -33,7 +34,7 @@ if [[ (${image_path} =~ $regex) || (-f ${image_path}) ]] ; then # If image_path 
 	echo "Running OCR: kraken"
 	filename=$(basename ${image_path}) # extract filename from url
 	wget ${image_path} -P fileadmin/_temp_/ocrTempFolder/images/
-	kraken -a -i "fileadmin/_temp_/ocrTempFolder/images/${filename}" "${output_path}.xml" binarize segment ocr
+	kraken --alto --input "fileadmin/_temp_/ocrTempFolder/images/${filename}" "${output_path}.xml" binarize segment ocr
 	rm "fileadmin/_temp_/ocrTempFolder/images/${filename}"
 	exit 0
 else

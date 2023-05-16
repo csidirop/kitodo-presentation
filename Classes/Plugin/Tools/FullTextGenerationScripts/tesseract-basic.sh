@@ -7,7 +7,7 @@ set -euo pipefail # exit on: error, undefined variable, pipefail
 
 # Test fuction, for manually testing the script
 function test() {
-	tesseract https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/max/1652998276_0001.jpg testout -l frak2021_1.069 txt pdf alto
+	tesseract https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/max/1652998276_0001.jpg "1652998276_0001_tesseract-basic" -l frak2021_1.069 txt pdf alto
 	exit 0;
 }
 
