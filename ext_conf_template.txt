@@ -41,10 +41,6 @@ ocrPlaceholderText=OCR is being prepared, please try to refresh the page
 ocrEngine=tesseract-basic
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrEngines
 ocrEngines = typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/ocrEngines.json
-# cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrLanguages
-ocrLanguages=um
-# cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrOptions
-ocrOptions=alto
 # cat=FulltextOCR; type=int; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDelay
 ocrDelay=2
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrLock

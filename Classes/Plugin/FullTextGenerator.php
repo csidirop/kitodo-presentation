@@ -319,8 +319,6 @@ class FullTextGenerator {
     echo '<script>alert("4. $output_path: ' . $output_path . '")</script>';
     echo '<script>alert("5. $temp_output_path: ' . $temp_output_path . '")</script>';
     echo '<script>alert("6. $lock_folder: ' . $lock_folder . '")</script>';
-    echo '<script>alert("7. $ocrLanguages: ' . $conf['ocrLanguages'] . '")</script>';
-    echo '<script>alert("8. $ocrOptions: ' . $conf['ocrOptions']  . '")</script>';
     echo '<script>alert("9. $image_download_command: ' . $image_download_command . '")</script>';
     echo '<script>alert("10. $ocr_shell_command: ' . $ocr_shell_command . '")</script>';
   }
