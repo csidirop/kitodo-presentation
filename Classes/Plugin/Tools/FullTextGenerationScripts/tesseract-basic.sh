@@ -18,8 +18,6 @@ while [ $# -gt 0 ] ; do
 	--page_id)			page_id="$2" ;;			#Page number
 	--image_path)		image_path="$2" ;;		#Image path/URL
 	--output_path)		output_path="$2" ;;		#Fulltextfile path
-	--ocrLanguages)		ocrLanguages="$2" ;;	#Models&Languages for Tesseract
-	--ocrOptions)		ocrOptions="$2" ;;		#Output types
 	--test)				test ;;
   esac
   shift
@@ -29,8 +27,10 @@ done
 # Parse URL or Path and run tesseract:
 regex='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]' #Regex for URL validation ( https://stackoverflow.com/a/3184819 )
 if [[ (${image_path} =~ $regex) || (-f ${image_path}) ]] ; then # If image_path is a valid URL or a local file
-	echo "Running OCR: tesseract $image_path $output_path -l $ocrLanguages $ocrOptions"
-	tesseract $image_path $output_path -l $ocrLanguages $ocrOptions
+	echo "Running OCR: tesseract $image_path $output_path -l frak2021_1.069 alto"
+
+	tesseract $image_path $output_path -l frak2021_1.069 alto
+
 	exit 0
 else
 	echo "File not found: ${image_path}"

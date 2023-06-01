@@ -19,8 +19,6 @@ while [ $# -gt 0 ] ; do
 	--page_id)			page_id="$2" ;;			#Page number
 	--image_path)		image_path="$2" ;;		#Image path/URL
 	--output_path)		output_path="$2" ;;		#Fulltextfile path
-	--ocrLanguages)		ocrLanguages="$2" ;;	#Models&Languages for Kraken
-	--ocrOptions)		ocrOptions="$2" ;;		#Output types
 	--test)				test ;;
   esac
   shift

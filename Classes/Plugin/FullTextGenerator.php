@@ -220,10 +220,10 @@ class FullTextGenerator {
     //Determine if the image should be downloaded. Than use remote URL ($image_url) or local PATH ($image_path):
     if ($conf['ocrDwnlTempImage']){ //download image
       $image_download_command = "wget $image_url -O $image_path"; //wget image and save to $image_path
-      $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_path, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+      $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_path, $temp_output_path, $output_path, $page_id);
       $ocr_shell_command .= " && rm $image_path";  // Remove used image
     } else { //do not download image, pass URL to the engine
-      $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_url, $temp_output_path, $output_path, $page_id, $conf['ocrLanguages'], $conf['ocrOptions']);
+      $ocr_shell_command .= self::genShellCommand($conf['ocrPlaceholderText'], $ocr_script_path, $image_url, $temp_output_path, $output_path, $page_id);
     }
 
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocr_shell_command.'")</script>'; //DEBUG
@@ -273,13 +273,11 @@ class FullTextGenerator {
    *  @param string image_path
    *  @param string output_path
    *  @param string page_id
-   *  @param string OCR_languages
-   *  @param string OCR_options
    * 
    *  @return string OCR-script shell command
    */
-  protected static function genOCRshellCommand(string $ocr_script_path, string $image_path, string $output_path, string $page_id, string $OCR_languages, string $OCR_options):string{
-    return "./$ocr_script_path --image_path $image_path --output_path $output_path --page_id $page_id --ocrLanguages $OCR_languages --ocrOptions $OCR_options ";
+  protected static function genOCRshellCommand(string $ocr_script_path, string $image_path, string $output_path, string $page_id):string{
+    return "./$ocr_script_path --image_path $image_path --output_path $output_path --page_id $page_id ";
   }
 
   /**
@@ -293,19 +291,17 @@ class FullTextGenerator {
    *  @param string temp_output_path
    *  @param string output_path
    *  @param int page_id
-   *  @param string OCR_languages
-   *  @param string OCR_options
    * 
    *  @return string Full OCR-script shell command
    */
-  protected static function genShellCommand(string $ocrPlaceholderText, string $ocr_script_path, string $image_path, string $temp_output_path, string $output_path, string $page_id, string $OCR_languages, string $OCR_options):string{
+  protected static function genShellCommand(string $ocrPlaceholderText, string $ocr_script_path, string $image_path, string $temp_output_path, string $output_path, string $page_id):string{
     $ocr_shell_command = "";
     if ($ocrPlaceholderText) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
       FullTextXMLtools::createPlaceholderFulltext($output_path, $ocrPlaceholderText);
-      $ocr_shell_command = self::genOCRshellCommand($ocr_script_path, $image_path, $temp_output_path, $page_id, $OCR_languages, $OCR_options);
+      $ocr_shell_command = self::genOCRshellCommand($ocr_script_path, $image_path, $temp_output_path, $page_id);
       $ocr_shell_command .= " && mv -f $temp_output_path.xml $output_path ";
     } else { //do not create dummy xml, write direcly the final file
-      $ocr_shell_command = self::genOCRshellCommand($ocr_script_path, $image_path, $output_path, $page_id, $OCR_languages, $OCR_options);
+      $ocr_shell_command = self::genOCRshellCommand($ocr_script_path, $image_path, $output_path, $page_id);
     }
     return $ocr_shell_command;
   }

@@ -19,10 +19,9 @@ function test() {
 # Paramaters:
 while [ $# -gt 0 ] ; do
   case $1 in
+	--page_id)			page_id="$2" ;;			#Page number
 	--image_path)		image_path="$2" ;;		#Image path/URL
 	--output_path)		output_path="$2" ;;		#Fulltextfile path
-	--ocrLanguages)		ocrLanguages="$2" ;;	#Models&Languages for OCRD
-	--ocrOptions)		ocrOptions="$2" ;;		#Output types
 	--test)				test ;;
   esac
   shift
@@ -46,6 +45,7 @@ if [[ (${image_path} =~ $regex) || (-f ${image_path}) ]] ; then # If image_path 
 
 	# clean dir:
 	ssh ${ocrdkitodo} rm -r "/data/${jobname}/"
+
 	exit 0
 else
 	echo "File not found: ${image_path}"
