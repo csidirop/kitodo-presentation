@@ -10,7 +10,7 @@ function test() {
 	ocrdkitodo=ocrd-manager-UBMA
 	ssh ${ocrdkitodo} wget -P /data/production-test-from-docker/images/ "https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/max/1652998276_0001.jpg"
 	ssh ${ocrdkitodo} for_production.sh --proc-id 1 --lang deu --script Fraktur "production-test-from-docker"
-	scp ${ocrdkitodo}:"/data/production-test-from-docker/ocr/alto/1652998276_0001.xml" "."
+	scp ${ocrdkitodo}:"/data/production-test-from-docker/ocr/alto/1652998276_0001.xml" "./1652998276_0001_ocrd-basic.xml"
 	ssh ${ocrdkitodo} rm -r "/data/production-test-from-docker/"
 	exit 0;
 }
