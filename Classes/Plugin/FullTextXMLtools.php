@@ -41,8 +41,9 @@ class FullTextXMLtools {
    */
   public static function getDocURN(Doc $doc):?string {
     // Load METS from memory and run through with XMLReader:
-    $reader = new XMLReader();
-    $reader->XML($doc->__toString());
+    // $reader = new XMLReader();
+    // $reader->XML($doc->__toString());  //TODO: remove if doc doesn't get the URL back
+    $reader = XMLReader::open($GLOBALS["_GET"]["tx_dlf"]["id"]);
     $urn = null;
     while ($reader->read()) {
       if((($reader->name=="mods:identifier")||($reader->name=="identifier")) && ($reader->getAttribute("type") === 'urn') && !empty($reader->readString())){ //if XML key is 'mods:identifier'/'identifier' and attribute 'type' is 'urn'
@@ -71,7 +72,7 @@ class FullTextXMLtools {
    */
   public static function writeMetsXML(Doc $doc, string $xml_path):void {
     if(!file_exists($xml_path)){ //check if METS XML file already exists
-      $file = self::getMetsXML($doc);
+      $file = self::getMetsXML($doc); //TODO: remove if doc doesn't get the URL back
       // $file = $doc->xml->asXML(); //Alternative: Get METS XML file from doc object -> faster but slightly different header
       $metsFile = fopen($xml_path, "w+") or die("Unable to write METS XML file!"); //create METS XML file
       fwrite($metsFile, $file); //write METS XML file
@@ -89,7 +90,8 @@ class FullTextXMLtools {
    * @return string METS XML content
    */
   protected static function getMetsXML(Doc $doc):string {
-    return file_get_contents($doc->uid);
+    // return file_get_contents($doc->uid); //TODO: remove if doc doesn't get the URL back
+    return file_get_contents($GLOBALS["_GET"]["tx_dlf"]["id"]);
   }
 
   /**

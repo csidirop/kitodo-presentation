@@ -65,8 +65,8 @@ class FullTextGenerator {
     if($urn){ //$urn is present
       $outputFolder_path = $conf['fulltextFolder'] . "/" . str_replace("urn/","URN/",str_replace("-", "/", str_replace(":", "/", $urn))); // -> URN/nbn/de/bsz/180/digosi/30
     } else { //no urn was present
-      $outputFolder_path = $conf['fulltextFolder'] . "/noURN/" . sha1($doc->uid); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757
-      //TODO: `$doc->uid` not working anymore: a) bring it back b) find other solution
+      // $outputFolder_path = $conf['fulltextFolder'] . "/noURN/" . sha1($doc->uid); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757 //TODO: remove if doc doesn't get the URL back
+      $outputFolder_path = $conf['fulltextFolder'] . "/noURN/" . sha1($GLOBALS["_GET"]["tx_dlf"]["id"]); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757
     }
 
     return $outputFolder_path;
