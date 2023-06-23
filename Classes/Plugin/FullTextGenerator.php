@@ -20,7 +20,8 @@ class FullTextGenerator {
   protected $conf = [];
 
   /**
-   * Returns local id of doc (i.e. is needed for fulltext storage)  
+   * Returns local id of doc.
+   * (eg. "log59088")
    * 
    * @access protected
    *
@@ -33,7 +34,8 @@ class FullTextGenerator {
   }
 
   /**
-   * Returns local id of page
+   * Returns local id of page.
+   * (eg. "log59088_1")
    * 
    * @access protected
    *
@@ -47,7 +49,10 @@ class FullTextGenerator {
   }
 
   /**
-   * Generates and returns a document specific local path for the fulltext doc (for example can be a folder)
+   * Returns a document specific local path where the fulltexts are stored.
+   * The Path is generated from the document's URN if present, otherwise from the document's UID hash
+   * This creates unique paths for each document.
+   * (eg. "fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30")
    * 
    * @access protected
    *
@@ -187,8 +192,8 @@ class FullTextGenerator {
     //Parse parameter and setup variables:
     $ocrEngineFolder  = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts";
     $ocrEngine_path   = "$ocrEngineFolder/$ocrEngine.sh";             //Path to OCR-Engine/Script
-    $pageId           = self::getPageLocalId($doc, $pageNum);         //Page number
-    $image_path       = $conf['fulltextImagesFolder'] . "/$pageId";   //Imagefile path
+    $pageId           = self::getPageLocalId($doc, $pageNum);         //Page number (eg. log59088_1)
+    $image_path       = $conf['fulltextImagesFolder'] . "/$pageId";   //Imagefile path (eg. fileadmin/fulltextimages/log59088_1)
     $document_path    = self::genDocLocalPath($extKey, $doc);         //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
     $outputFolder_path = "$document_path/$ocrEngine";                 //Fulltextfolder (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
     $origMets_path    = $document_path."/".self::getDocLocalId($doc).".xml"; //Path to original METS
@@ -201,10 +206,6 @@ class FullTextGenerator {
     $lockFile         = $lockFolder . hash("md5", $imageUrl);         //File used to lock OCR command
     $imageDownloadCommand =":";                                       //non empty command without effect //TODO: find better solution
     $ocrShellCommand = "";
-
-    echo '<script>alert("getDocLocalId: '.self::getDocLocalId($doc).'")</script>'; //DEBUG
-    echo '<script>alert("genDocLocalPath: '.self::genDocLocalPath($extKey, $doc).'")</script>'; //DEBUG
-    echo '<script>alert("getPageLocalId: '.self::getPageLocalId($doc, $pageNum).'")</script>'; //DEBUG
 
     // Locking command, so that only a limited number of an OCR-Engines can run at the same time
     if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
@@ -261,6 +262,7 @@ class FullTextGenerator {
       unlink($lockFile);
     }
 
+    //Write/update updated METS XML file:
     if (file_exists($newMets_path)){ // there is already an updated METS
       FullTextXMLtools::updateMetsXML($newMets_path, $output_path, $newMets_path, $ocrEngine);
     } else { // there is no updated METS
