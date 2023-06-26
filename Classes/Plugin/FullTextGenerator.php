@@ -61,23 +61,35 @@ class FullTextGenerator {
    *
    * @return string path to documents specific fulltext folder
    */
-  protected static function genDocLocalPath(string $extKey, Doc $doc):string {
+  protected static function getDocLocalPath(string $extKey, Doc $doc):string {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
-    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genDocLocalPath: '.$conf['fulltextFolder'].'")</script>'; //DEBUG
-
-    $urn = FullTextXMLtools::getDocURN($doc); // eg.: urn:nbn:de:bsz:180-digosi-30
-    if($urn){ //$urn is present
-      $outputFolder_path = $conf['fulltextFolder'] . "/" . str_replace("urn/","URN/",str_replace("-", "/", str_replace(":", "/", $urn))); // -> URN/nbn/de/bsz/180/digosi/30
-    } else { //no urn was present
-      // $outputFolder_path = $conf['fulltextFolder'] . "/noURN/" . sha1($doc->uid); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757 //TODO: remove if doc doesn't get the URL back
-      $outputFolder_path = $conf['fulltextFolder'] . "/noURN/" . sha1($GLOBALS["_GET"]["tx_dlf"]["id"]); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757
-    }
-
-    return $outputFolder_path;
+    
+    return $conf['fulltextFolder'] . "/" . self::generateUniqueDocLocalPath($doc);
   }
 
   /**
-   * Returns local path to the doc's page (uses genDocLocalPath)
+   * Returns a unique document specific local path depending on the its urn.
+   * eg.: urn:nbn:de:bsz:180-digosi-30 -> URN/nbn/de/bsz/180/digosi/30
+   * 
+   * @access protected
+   * 
+   * @param Doc doc
+   * 
+   * @return string path
+   */
+  protected static function generateUniqueDocLocalPath(Doc $doc):string {
+    $urn = FullTextXMLtools::getDocURN($doc);
+    if($urn){ //$urn is present
+      $uniquePath = "/" . str_replace("urn/","URN/", str_replace("-", "/", str_replace(":", "/", $urn))); // -> URN/nbn/de/bsz/180/digosi/30
+    } else { //no urn was present
+      // $outputFolder_path = $conf['fulltextFolder'] . "/noURN/" . sha1($doc->uid); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757 //TODO: remove if doc doesn't get the URL back
+      $uniquePath = "/noURN/" . sha1($GLOBALS["_GET"]["tx_dlf"]["id"]); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757
+    }
+    return $uniquePath;
+  }
+
+  /**
+   * Returns local path to the doc's page (uses getDocLocalPath)
    * 
    * @access public
    *
@@ -88,7 +100,7 @@ class FullTextGenerator {
    * @return string
    */
   public static function getPageLocalPath(string $extKey, Doc $doc, int $pageNum):string {
-    $outputFolder_path = self::genDocLocalPath($extKey, $doc);
+    $outputFolder_path = self::getDocLocalPath($extKey, $doc);
     $ocrEngine = PageViewController::getOCRengine($extKey);
     $pageId = self::getPageLocalId($doc, $pageNum);
     return "$outputFolder_path/$ocrEngine/$pageId.xml";
@@ -194,18 +206,21 @@ class FullTextGenerator {
     $ocrEngine_path   = "$ocrEngineFolder/$ocrEngine.sh";             //Path to OCR-Engine/Script
     $pageId           = self::getPageLocalId($doc, $pageNum);         //Page number (eg. log59088_1)
     $image_path       = $conf['fulltextImagesFolder'] . "/$pageId";   //Imagefile path (eg. fileadmin/fulltextimages/log59088_1)
-    $document_path    = self::genDocLocalPath($extKey, $doc);         //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
+    $document_path    = self::getDocLocalPath($extKey, $doc);         //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
     $outputFolder_path = "$document_path/$ocrEngine";                 //Fulltextfolder (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
     $origMets_path    = $document_path."/".self::getDocLocalId($doc).".xml"; //Path to original METS
     $newMets_path     = $outputFolder_path."/".self::getDocLocalId($doc).".xml"; //Path to updated METS
-    if (!file_exists($outputFolder_path)){ mkdir($outputFolder_path, 0777, true); }  //Create documents path if not present
-    FullTextXMLtools::writeMetsXML($doc, $origMets_path);             //Write original METS XML file
     $output_path      = "$outputFolder_path/$pageId.xml";             //Fulltextfile path
-    $tempOutput_path  = $conf['fulltextTempFolder'] . "/$pageId";     //Fulltextfile TMP path
+    $tempOutput_path  = $conf['fulltextTempFolder'] . self::generateUniqueDocLocalPath($doc) . "/$pageId"; //Fulltextfile temporary path
     $lockFolder       = $conf['fulltextLockFolder'] . "/";            //Folder used to store locks
     $lockFile         = $lockFolder . hash("md5", $imageUrl);         //File used to lock OCR command
     $imageDownloadCommand =":";                                       //non empty command without effect //TODO: find better solution
     $ocrShellCommand = "";
+
+    // Create folders and write original METS if not present:
+    if (!file_exists($tempOutput_path)){ mkdir($tempOutput_path, 0777, true); }     //Create documents temporary path if not present
+    if (!file_exists($outputFolder_path)){ mkdir($outputFolder_path, 0777, true); } //Create documents path if not present
+    FullTextXMLtools::writeMetsXML($doc, $origMets_path);                           //Write original METS XML file
 
     // Locking command, so that only a limited number of an OCR-Engines can run at the same time
     if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
