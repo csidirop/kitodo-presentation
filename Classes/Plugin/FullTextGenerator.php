@@ -225,12 +225,12 @@ class FullTextGenerator {
     // Locking command, so that only a limited number of an OCR-Engines can run at the same time
     if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
       if (!file_exists($lockFile)) { // If no lock on image url, go on
-        fopen($lockFile, "w") ; //write lock
         while(count(scandir($lockFolder))-2 > (int) $conf['ocrThreads']) { //wait as long as there more locks written as set in options
           session_write_close(); //close session to allow other accesses (otherwise no new site can be loaded as long as the lock is active)
           sleep(1);
           session_start();
         }
+        fopen($lockFile, "w") ; //write lock
       } else { //there is already OCR running for this image, so return -> this will show the gen placeholder fulltext till the OCR is completed
         return;
       }
