@@ -82,7 +82,7 @@ class FullTextGenerator {
     if($urn){ //$urn is present
       $uniquePath = "/" . str_replace("urn/","URN/", str_replace("-", "/", str_replace(":", "/", $urn))); // -> URN/nbn/de/bsz/180/digosi/30
     } else { //no urn was present
-      // $outputFolder_path = $conf['fulltextFolder'] . "/noURN/" . sha1($doc->uid); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757 //TODO: remove if doc doesn't get the URL back
+      // $outputFolderPath = $conf['fulltextFolder'] . "/noURN/" . sha1($doc->uid); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757 //TODO: remove if doc doesn't get the URL back
       $uniquePath = "/noURN/" . sha1($GLOBALS["_GET"]["tx_dlf"]["id"]); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757
     }
     return $uniquePath;
@@ -100,10 +100,10 @@ class FullTextGenerator {
    * @return string
    */
   public static function getPageLocalPath(string $extKey, Doc $doc, int $pageNum):string {
-    $outputFolder_path = self::getDocLocalPath($extKey, $doc);
+    $outputFolderPath = self::getDocLocalPath($extKey, $doc);
     $ocrEngine = PageViewController::getOCRengine($extKey);
     $pageId = self::getPageLocalId($doc, $pageNum);
-    return "$outputFolder_path/$ocrEngine/$pageId.xml";
+    return "$outputFolderPath/$ocrEngine/$pageId.xml";
   }
 
   /**
@@ -203,24 +203,25 @@ class FullTextGenerator {
 
     //Parse parameter and setup variables:
     $ocrEngineFolder  = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts";
-    $ocrEngine_path   = "$ocrEngineFolder/$ocrEngine.sh";             //Path to OCR-Engine/Script
+    $ocrEnginePath    = "$ocrEngineFolder/$ocrEngine.sh";             //Path to OCR-Engine/Script
     $pageId           = self::getPageLocalId($doc, $pageNum);         //Page number (eg. log59088_1)
-    $image_path       = $conf['fulltextImagesFolder'] . "/$pageId";   //Imagefile path (eg. fileadmin/fulltextimages/log59088_1)
-    $document_path    = self::getDocLocalPath($extKey, $doc);         //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
-    $outputFolder_path = "$document_path/$ocrEngine";                 //Fulltextfolder (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
-    $origMets_path    = $document_path."/".self::getDocLocalId($doc).".xml"; //Path to original METS
-    $newMets_path     = $outputFolder_path."/".self::getDocLocalId($doc).".xml"; //Path to updated METS
-    $output_path      = "$outputFolder_path/$pageId.xml";             //Fulltextfile path
-    $tempOutput_path  = $conf['fulltextTempFolder'] . self::generateUniqueDocLocalPath($doc) . "/$pageId"; //Fulltextfile temporary path
+    $documentPath     = self::getDocLocalPath($extKey, $doc);         //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
+    $outputFolderPath = "$documentPath/$ocrEngine";                   //Fulltextfolder (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
+    $origMetsPath     = $documentPath."/".self::getDocLocalId($doc).".xml"; //Path to original METS
+    $newMetsPath      = $outputFolderPath."/".self::getDocLocalId($doc).".xml"; //Path to updated METS
+    $outputPath       = "$outputFolderPath/$pageId.xml";              //Fulltextfile path
+    $tmpOutputFolderPath = $conf['fulltextTempFolder'] . self::generateUniqueDocLocalPath($doc) . "/$ocrEngine"; //(eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic)
+    $tmpImagePath     = $conf['fulltextImagesFolder'] . self::generateUniqueDocLocalPath($doc) . "/$pageId"; //Imagefile path (eg. fileadmin/_temp_/ocrTempFolder/images/URN/nbn/de/bsz/180/digosi/30/log59088_1)
+    $tmpOutputPath    = $tmpOutputFolderPath . "/$pageId";            //Fulltextfile temporary path (eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_295)
     $lockFolder       = $conf['fulltextLockFolder'] . "/";            //Folder used to store locks
     $lockFile         = $lockFolder . hash("md5", $imageUrl);         //File used to lock OCR command
     $imageDownloadCommand =":";                                       //non empty command without effect //TODO: find better solution
     $ocrShellCommand = "";
 
     // Create folders and write original METS if not present:
-    if (!file_exists($tempOutput_path)){ mkdir($tempOutput_path, 0777, true); }     //Create documents temporary path if not present
-    if (!file_exists($outputFolder_path)){ mkdir($outputFolder_path, 0777, true); } //Create documents path if not present
-    FullTextXMLtools::writeMetsXML($doc, $origMets_path);                           //Write original METS XML file
+    if (!file_exists($tmpOutputFolderPath)){ mkdir($tmpOutputFolderPath, 0777, true); } //Create documents temporary path if not present
+    if (!file_exists($outputFolderPath)){ mkdir($outputFolderPath, 0777, true); }       //Create documents path if not present
+    FullTextXMLtools::writeMetsXML($doc, $origMetsPath);                                 //Write original METS XML file
 
     // Locking command, so that only a limited number of an OCR-Engines can run at the same time
     if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
@@ -237,13 +238,13 @@ class FullTextGenerator {
     }
 
     //Build OCR script command:
-    //Determine if the image should be downloaded. Than use remote URL ($imageUrl) or local PATH ($image_path):
+    //Determine if the image should be downloaded. Than use remote URL ($imageUrl) or local PATH ($tmpImagePath):
     if ($conf['ocrDwnlTempImage']){ //download image
-      $imageDownloadCommand = "wget $imageUrl -O $image_path"; //wget image and save to $image_path
-      $ocrShellCommand .= self::genShellCommand($conf['ocrPlaceholderText'], $ocrEngine_path, $image_path, $tempOutput_path, $output_path, $pageId);
-      $ocrShellCommand .= " && rm $image_path";  // Remove used image
+      $imageDownloadCommand = "wget $imageUrl -O $tmpImagePath"; //wget image and save to $tmpImagePath
+      $ocrShellCommand .= self::genShellCommand($conf['ocrPlaceholderText'], $ocrEnginePath, $tmpImagePath, $tmpOutputPath, $outputPath, $pageId);
+      $ocrShellCommand .= " && rm $tmpImagePath";  // Remove used image
     } else { //do not download image, pass URL to the engine
-      $ocrShellCommand .= self::genShellCommand($conf['ocrPlaceholderText'], $ocrEngine_path, $imageUrl, $tempOutput_path, $output_path, $pageId);
+      $ocrShellCommand .= self::genShellCommand($conf['ocrPlaceholderText'], $ocrEnginePath, $imageUrl, $tmpOutputPath, $outputPath, $pageId);
     }
 
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocrShellCommand.'")</script>'; //DEBUG
@@ -264,7 +265,7 @@ class FullTextGenerator {
       
       //3. remove placeholder:
       if ($conf['ocrPlaceholder']) {
-        unlink($output_path);
+        unlink($outputPath);
       }
 
       //4. Reload page: (without action query part)
@@ -278,10 +279,10 @@ class FullTextGenerator {
     }
 
     //Write/update updated METS XML file:
-    if (file_exists($newMets_path)){ // there is already an updated METS
-      FullTextXMLtools::updateMetsXML($newMets_path, $output_path, $newMets_path, $ocrEngine);
+    if (file_exists($newMetsPath)){ // there is already an updated METS
+      FullTextXMLtools::updateMetsXML($newMetsPath, $outputPath, $newMetsPath, $ocrEngine);
     } else { // there is no updated METS
-      FullTextXMLtools::updateMetsXML($origMets_path, $output_path, $newMets_path, $ocrEngine);
+      FullTextXMLtools::updateMetsXML($origMetsPath, $outputPath, $newMetsPath, $ocrEngine);
     }
   }
 
@@ -290,15 +291,15 @@ class FullTextGenerator {
    * 
    *  @access protected
    * 
-   *  @param string ocrEngine_path
-   *  @param string image_path
-   *  @param string output_path
+   *  @param string ocrEnginePath
+   *  @param string imagePath
+   *  @param string outputPath
    *  @param string pageId
    * 
    *  @return string OCR-script shell command
    */
-  protected static function genOCRshellCommand(string $ocrEngine_path, string $image_path, string $output_path, string $pageId):string{
-    return "./$ocrEngine_path --image_path $image_path --output_path $output_path --page_id $pageId ";
+  protected static function genOCRshellCommand(string $ocrEnginePath, string $imagePath, string $outputPath, string $pageId):string{
+    return "./$ocrEnginePath --image_path $imagePath --output_path $outputPath --page_id $pageId --";
   }
 
   /**
@@ -307,22 +308,22 @@ class FullTextGenerator {
    *  @access protected
    * 
    *  @param string ocrPlaceholderText
-   *  @param string ocrEngine_path
-   *  @param string image_path
-   *  @param string tempOutput_path
-   *  @param string output_path
+   *  @param string ocrEnginePath
+   *  @param string imagePath
+   *  @param string tmpOutputPath
+   *  @param string outputPath
    *  @param int pageId
    * 
    *  @return string Full OCR-script shell command
    */
-  protected static function genShellCommand(string $ocrPlaceholderText, string $ocrEngine_path, string $image_path, string $tempOutput_path, string $output_path, string $pageId):string{
+  protected static function genShellCommand(string $ocrPlaceholderText, string $ocrEnginePath, string $imagePath, string $tmpOutputPath, string $outputPath, string $pageId):string{
     $ocrShellCommand = "";
     if ($ocrPlaceholderText) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
-      FullTextXMLtools::createPlaceholderFulltext($output_path, $ocrPlaceholderText);
-      $ocrShellCommand = self::genOCRshellCommand($ocrEngine_path, $image_path, $tempOutput_path, $pageId);
-      $ocrShellCommand .= " && mv -f $tempOutput_path.xml $output_path ";
+      FullTextXMLtools::createPlaceholderFulltext($outputPath, $ocrPlaceholderText);
+      $ocrShellCommand = self::genOCRshellCommand($ocrEnginePath, $imagePath, $tmpOutputPath, $pageId);
+      $ocrShellCommand .= " && mv -f $tmpOutputPath.xml $outputPath ";
     } else { //do not create dummy xml, write direcly the final file
-      $ocrShellCommand = self::genOCRshellCommand($ocrEngine_path, $image_path, $output_path, $pageId);
+      $ocrShellCommand = self::genOCRshellCommand($ocrEnginePath, $imagePath, $outputPath, $pageId);
     }
     return $ocrShellCommand;
   }
@@ -330,15 +331,15 @@ class FullTextGenerator {
   /** 
    * DEBUG: echo debuf alerts to show the values of all vars
    */
-  protected static function varOutput($conf, $pageId, $image_path, $outputFolder_path, $output_path, $tempOutput_path, $lock_folder, $imageDownloadCommand, $ocrShellCommand){
+  protected static function varOutput($conf, $pageId, $imagePath, $outputFolderPath, $outputPath, $tmpOutputPath, $lock_folder, $imageDownloadCommand, $ocrShellCommand){
     exec("pwd", $output, $retval);
     echo '<script>alert("pwd: ' .implode(" ",$output). '")</script>';
     echo '<script>alert("0. $dwlImage: ' . $conf['ocrDwnlTempImage'] . '")</script>';
     echo '<script>alert("1. $pageId: ' . $pageId . '")</script>';
-    echo '<script>alert("2. $image_path: ' . $image_path . '")</script>';
-    echo '<script>alert("3. $outputFolder_path: ' . $outputFolder_path . '")</script>';
-    echo '<script>alert("4. $output_path: ' . $output_path . '")</script>';
-    echo '<script>alert("5. $tempOutput_path: ' . $tempOutput_path . '")</script>';
+    echo '<script>alert("2. $imagePath: ' . $imagePath . '")</script>';
+    echo '<script>alert("3. $outputFolderPath: ' . $outputFolderPath . '")</script>';
+    echo '<script>alert("4. $outputPath: ' . $outputPath . '")</script>';
+    echo '<script>alert("5. $tmpOutputPath: ' . $tmpOutputPath . '")</script>';
     echo '<script>alert("6. $lock_folder: ' . $lock_folder . '")</script>';
     echo '<script>alert("9. $imageDownloadCommand: ' . $imageDownloadCommand . '")</script>';
     echo '<script>alert("10. $ocrShellCommand: ' . $ocrShellCommand . '")</script>';
