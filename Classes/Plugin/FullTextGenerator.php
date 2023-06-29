@@ -327,22 +327,5 @@ class FullTextGenerator {
     }
     return $ocrShellCommand;
   }
-
-  /** 
-   * DEBUG: echo debuf alerts to show the values of all vars
-   */
-  protected static function varOutput($conf, $pageId, $imagePath, $outputFolderPath, $outputPath, $tmpOutputPath, $lock_folder, $imageDownloadCommand, $ocrShellCommand){
-    exec("pwd", $output, $retval);
-    echo '<script>alert("pwd: ' .implode(" ",$output). '")</script>';
-    echo '<script>alert("0. $dwlImage: ' . $conf['ocrDwnlTempImage'] . '")</script>';
-    echo '<script>alert("1. $pageId: ' . $pageId . '")</script>';
-    echo '<script>alert("2. $imagePath: ' . $imagePath . '")</script>';
-    echo '<script>alert("3. $outputFolderPath: ' . $outputFolderPath . '")</script>';
-    echo '<script>alert("4. $outputPath: ' . $outputPath . '")</script>';
-    echo '<script>alert("5. $tmpOutputPath: ' . $tmpOutputPath . '")</script>';
-    echo '<script>alert("6. $lock_folder: ' . $lock_folder . '")</script>';
-    echo '<script>alert("9. $imageDownloadCommand: ' . $imageDownloadCommand . '")</script>';
-    echo '<script>alert("10. $ocrShellCommand: ' . $ocrShellCommand . '")</script>';
-  }
 }
 ?>
