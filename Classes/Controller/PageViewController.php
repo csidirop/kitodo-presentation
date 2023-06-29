@@ -353,7 +353,7 @@ class PageViewController extends AbstractController
      * @return void
      */
     protected function generateFullText():void {
-        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document->getDoc(), $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], self::getOCRengine(Doc::$extKey));
+        //OCR all pages: type=book
         if($_POST["request"]["type"] == "book") {
             //collect all image urls:
             $images = array();
@@ -361,7 +361,11 @@ class PageViewController extends AbstractController
                 $images[$i] = $this->getImage($i)["url"];
             }
             FullTextGenerator::createBookFullText(Doc::$extKey, $this->document->getDoc(), $images, self::getOCRengine(Doc::$extKey));
+            return;
         }
+
+        //OCR only this page
+        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document->getDoc(), $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], self::getOCRengine(Doc::$extKey));
     }
 
     /**
