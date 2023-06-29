@@ -16,9 +16,10 @@ function test() {
 # Paramaters:
 while [ $# -gt 0 ] ; do
   case $1 in
-	--page_id)			page_id="$2" ;;			#Page number
-	--image_path)		image_path="$2" ;;		#Image path/URL
-	--output_path)		output_path="$2" ;;		#Fulltextfile path
+	--pageId)			pageId="$2" ;;			#Page number
+	--imagePath)		imagePath="$2" ;;		#Image path/URL
+	--outputPath)		outputPath="$2" ;;		#Fulltextfile path
+	--tmpImagePath)		tmpImagePath="$2" ;;	#Temporarily image path
 	--test)				test ;;
   esac
   shift
@@ -27,16 +28,16 @@ done
 
 # Parse URL or Path and run tesseract:
 regex='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]' #Regex for URL validation ( https://stackoverflow.com/a/3184819 )
-if [[ (${image_path} =~ $regex) || (-f ${image_path}) ]] ; then # If image_path is a valid URL or a local file
+if [[ (${imagePath} =~ $regex) || (-f ${imagePath}) ]] ; then # If imagePath is a valid URL or a local file
 	echo "Running OCR: kraken-basic"
 
-	filename=$(basename ${image_path}) # extract filename from url
-	wget ${image_path} -P fileadmin/_temp_/ocrTempFolder/images/
-	kraken --alto --input "fileadmin/_temp_/ocrTempFolder/images/${filename}" "${output_path}.xml" segment --baseline ocr
-	rm "fileadmin/_temp_/ocrTempFolder/images/${filename}"
+	filename=$(basename ${imagePath}) # extract filename from url
+	wget ${imagePath} -P "$tmpImagePath"
+	kraken --alto --input "${tmpImagePath}/${filename}" "${outputPath}.xml" segment --baseline ocr
+	rm "${tmpImagePath}/${filename}"
 
 	exit 0
 else
-	echo "File not found: ${image_path}"
+	echo "File not found: ${imagePath}"
 	exit 2
 fi
