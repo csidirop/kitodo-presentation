@@ -204,7 +204,7 @@ class FullTextGenerator {
     //Parse parameter and setup variables:
     $ocrEngineFolder  = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts";
     $ocrEnginePath    = "$ocrEngineFolder/$ocrEngine.sh";             //Path to OCR-Engine/Script
-    $pageId           = self::getPageLocalId($doc, $pageNum);         //Page number (eg. log59088_1)
+    $pageId           = self::getPageLocalId($doc, $pageNum);         //Page ID (eg. log59088_1)
     $documentPath     = self::getDocLocalPath($extKey, $doc);         //Document specific path (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/)
     $outputFolderPath = "$documentPath/$ocrEngine";                   //Fulltextfolder (eg. fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
     $origMetsPath     = $documentPath."/".self::getDocLocalId($doc).".xml"; //Path to original METS
@@ -221,7 +221,7 @@ class FullTextGenerator {
     // Create folders and write original METS if not present:
     if (!file_exists($tmpOutputFolderPath)){ mkdir($tmpOutputFolderPath, 0777, true); } //Create documents temporary path if not present
     if (!file_exists($outputFolderPath)){ mkdir($outputFolderPath, 0777, true); }       //Create documents path if not present
-    FullTextXMLtools::writeMetsXML($doc, $origMetsPath);                                 //Write original METS XML file
+    FullTextXMLtools::writeMetsXML($doc, $origMetsPath);                                //Write original METS XML file
 
     // Locking command, so that only a limited number of an OCR-Engines can run at the same time
     if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
