@@ -197,8 +197,6 @@ class FullTextGenerator {
    * @return void
    */
   protected static function generatePageOCR(string $extKey, array $conf, Doc $doc, string $imageUrl, int $pageNum, int $sleepInterval = 0, string $ocrEngine):void {
-    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
-
     //Working dir is "/var/www/typo3/public"; //same as "/var/www/html" because sym link
 
     //Parse parameter and setup variables:
@@ -255,13 +253,14 @@ class FullTextGenerator {
     //Errorhandling, when OCR script failed:
     if($retval!=0){ //if exitcode != 0 -> script not successful
       //!. write to log:
-      $errorMsg = "OCR script failed with status: \"$retval\" \n Error: \"" . implode(" ",$output) ."\"";
-      $errorMsg .= "\nOn \"$ocrEngine\", with image: \"$imageUrl\" and page: $pageNum";
+      $errorMsg = "OCR script failed with status: $retval | Errormessage: " . implode(" ",$output);
+      $errorMsg .= " | On $ocrEngine, with image: $imageUrl and page: $pageNum";
       //$GLOBALS['BE_USER']->writelog(4, 0, 2, 0, "$errorMsg", null); //write error to log
       //Errorflags: 0 = message, 1 = error (user problem), 2 = System Error (which should not happen), 3 = security notice (admin)
       
       //2. Give feedback to user:
       echo '<script>alert("There was an error with your OCR job. Try again later or with an other OCR engine.")</script>';
+      /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$errorMsg.'")</script>'; //DEBUG
       
       //3. remove placeholder:
       if ($conf['ocrPlaceholder']) {
