@@ -51,5 +51,7 @@ if [ "$outputPath" != "$tmpOutputPath" ]; then
 	mv -v -f $tmpOutputPath.xml $outputPath
 fi
 
+# Update METS file:
+./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/UpdateMets.sh --pageId $pageId --outputPath $outputPath 
 
 exit 0
