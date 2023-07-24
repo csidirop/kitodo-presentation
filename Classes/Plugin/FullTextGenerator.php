@@ -199,8 +199,6 @@ class FullTextGenerator {
    * @return void
    */
   protected static function generatePageOCR(string $extKey, array $conf, Document $document, string $imageUrl, int $pageNum, int $sleepInterval = 0, string $ocrEngine):void {
-    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
-
     //Working dir is "/var/www/typo3/public"; //same as "/var/www/html" because sym link
 
     //Parse parameter and setup variables:
