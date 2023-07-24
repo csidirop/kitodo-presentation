@@ -13,6 +13,7 @@ namespace Kitodo\Dlf\Controller;
 
 use Kitodo\Dlf\Common\Doc;
 use Kitodo\Dlf\Common\IiifManifest;
+use Kitodo\Dlf\Domain\Model\Document;
 use Kitodo\Dlf\Plugin\FullTextGenerator;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -360,12 +361,12 @@ class PageViewController extends AbstractController
             for ($i=1; $i <= $this->document->getDoc()->numPages; $i++) {
                 $images[$i] = $this->getImage($i)["url"];
             }
-            FullTextGenerator::createBookFullText(Doc::$extKey, $this->document->getDoc(), $images, self::getOCRengine(Doc::$extKey));
+            FullTextGenerator::createBookFullText(Doc::$extKey, $this->document, $images, self::getOCRengine(Doc::$extKey));
             return;
         }
 
         //OCR only this page
-        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document->getDoc(), $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], self::getOCRengine(Doc::$extKey));
+        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document, $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], self::getOCRengine(Doc::$extKey));
     }
 
     /**

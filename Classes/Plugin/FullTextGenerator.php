@@ -3,6 +3,7 @@
 namespace Kitodo\Dlf\Plugin;
 
 use Kitodo\Dlf\Common\Doc;
+use Kitodo\Dlf\Domain\Model\Document;
 use Kitodo\Dlf\Plugin\FullTextXMLtools;
 use Kitodo\Dlf\Controller\PageViewController;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
@@ -165,18 +166,19 @@ class FullTextGenerator {
    * @access protected
    *
    * @param string extKey
-   * @param Doc doc
+   * @param Document document
    * @param string imageUrl
    * @param int pageNum
    * @param string $ocrEngine
    *
    * @return bool
    */
-  public static function createPageFullText(string $extKey, Doc $doc, string $imageUrl, int $pageNum, string $ocrEngine):void {
+  public static function createPageFullText(string $extKey, Document $document, string $imageUrl, int $pageNum, string $ocrEngine):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
+    $doc = $document->getDoc();
 
     if (!(self::checkLocal($extKey, $doc, $pageNum) || self::checkInProgress($extKey, $doc, $pageNum))) {
-      self::generatePageOCR($extKey, $conf, $doc, $imageUrl, $pageNum, $conf['ocrDelay'], $ocrEngine);
+      self::generatePageOCR($extKey, $conf, $document, $imageUrl, $pageNum, $conf['ocrDelay'], $ocrEngine);
     }
   }
 
@@ -188,7 +190,7 @@ class FullTextGenerator {
    *
    * @param string extKey
    * @param array conf
-   * @param Doc doc
+   * @param Document document
    * @param string imageUrl
    * @param int pageNum 
    * @param int sleepInterval
@@ -196,10 +198,13 @@ class FullTextGenerator {
    *
    * @return void
    */
-  protected static function generatePageOCR(string $extKey, array $conf, Doc $doc, string $imageUrl, int $pageNum, int $sleepInterval = 0, string $ocrEngine):void {
+  protected static function generatePageOCR(string $extKey, array $conf, Document $document, string $imageUrl, int $pageNum, int $sleepInterval = 0, string $ocrEngine):void {
+    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
+
     //Working dir is "/var/www/typo3/public"; //same as "/var/www/html" because sym link
 
     //Parse parameter and setup variables:
+    $doc              = $document->getDoc();
     $ocrEngineFolder  = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts";
     $ocrEnginePath    = "$ocrEngineFolder/$ocrEngine.sh";             //Path to OCR-Engine/Script
     $pageId           = self::getPageLocalId($doc, $pageNum);         //Page ID (eg. log59088_1)
@@ -219,7 +224,7 @@ class FullTextGenerator {
     // Create folders and write original METS if not present:
     if (!file_exists($tmpOutputFolderPath)){ mkdir($tmpOutputFolderPath, 0777, true); } //Create documents temporary path if not present
     if (!file_exists($outputFolderPath)){ mkdir($outputFolderPath, 0777, true); }       //Create documents path if not present
-    FullTextXMLtools::writeMetsXML($doc, $origMetsPath);                                //Write original METS XML file
+    FullTextXMLtools::writeMetsXML($document, $origMetsPath);                           //Write original METS XML file
 
     // Locking command, so that only a limited number of an OCR-Engines can run at the same time
     if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
