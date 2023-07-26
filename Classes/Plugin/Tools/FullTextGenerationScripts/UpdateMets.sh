@@ -8,9 +8,9 @@ set -euo pipefail # exit on: error, undefined variable, pipefail
 # Paramaters:
 while [ $# -gt 0 ] ; do
   case $1 in
-	--pageId)			pageId="$2" ;;			#Page ID (eg. log59088_1)
-	--URL)				URL="$2" ;;				#URL
-	--outputPath)		outputPath="$2" ;;		#Fulltextfile path
+  --pageId)       pageId="$2" ;;     #Page ID (eg. log59088_1)
+  --URL)          URL="$2" ;;        #URL
+  --outputPath)   outputPath="$2" ;; #Fulltextfile path
   esac
   shift
 done
