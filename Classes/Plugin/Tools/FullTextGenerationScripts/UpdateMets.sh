@@ -43,7 +43,7 @@ fi
 # Update METS with given ALTO file:
 ocrd --log-level INFO workspace add --file-grp FULLTEXT --file-id "fulltext-$pageId" --page-id="$pageNum" --mimetype text/xml "$pageId.xml"
 perl -pi -e 's/LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/LOCTYPE="URL"/' mets.xml
-perl -pi -e s,'"log59088_','"'$URL'/log59088_', mets.xml #todo log59088 string
+perl -pi -e s,'"'$pageId'','"'$URL'/'$pageId'', mets.xml
 
 # Validate METS:
 #apt -y install libxml2-utils
