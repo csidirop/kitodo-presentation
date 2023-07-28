@@ -10,6 +10,7 @@ use XMLWritingIteration;
 use DateTimeImmutable;
 
 use Kitodo\Dlf\Common\Doc;
+use Kitodo\Dlf\Domain\Model\Document;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Log\LogLevel;
 
@@ -66,13 +67,13 @@ class FullTextXMLtools {
    * 
    * @access protected
    * 
-   * @param Doc doc
+   * @param Document document
    * @param string xml_path Path to the output folder
    * 
    */
-  public static function writeMetsXML(Doc $doc, string $xml_path):void {
+  public static function writeMetsXML(Document $document, string $xml_path):void {
     if(!file_exists($xml_path)){ //check if METS XML file already exists
-      $file = self::getMetsXML($doc); //TODO: remove if doc doesn't get the URL back
+      $file = self::getMetsXML($document); //Get METS XML file from doc object
       // $file = $doc->xml->asXML(); //Alternative: Get METS XML file from doc object -> faster but slightly different header
       $metsFile = fopen($xml_path, "w+") or die("Unable to write METS XML file!"); //create METS XML file
       fwrite($metsFile, $file); //write METS XML file
@@ -85,13 +86,13 @@ class FullTextXMLtools {
    * 
    * @access protected
    * 
-   * @param Doc doc
+   * @param Document document
    * 
    * @return string METS XML content
    */
-  protected static function getMetsXML(Doc $doc):string {
-    // return file_get_contents($doc->uid); //TODO: remove if doc doesn't get the URL back
-    return file_get_contents($GLOBALS["_GET"]["tx_dlf"]["id"]);
+  protected static function getMetsXML(Document $document):string {
+    return file_get_contents($document->getLocation());
+    // return file_get_contents($GLOBALS["_GET"]["tx_dlf"]["id"]);
   }
 
   /**

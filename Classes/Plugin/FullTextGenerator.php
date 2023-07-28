@@ -3,6 +3,7 @@
 namespace Kitodo\Dlf\Plugin;
 
 use Kitodo\Dlf\Common\Doc;
+use Kitodo\Dlf\Domain\Model\Document;
 use Kitodo\Dlf\Plugin\FullTextXMLtools;
 use Kitodo\Dlf\Controller\PageViewController;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
@@ -165,18 +166,19 @@ class FullTextGenerator {
    * @access protected
    *
    * @param string extKey
-   * @param Doc doc
+   * @param Document document
    * @param string imageUrl
    * @param int pageNum
    * @param string $ocrEngine
    *
    * @return bool
    */
-  public static function createPageFullText(string $extKey, Doc $doc, string $imageUrl, int $pageNum, string $ocrEngine):void {
+  public static function createPageFullText(string $extKey, Document $document, string $imageUrl, int $pageNum, string $ocrEngine):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
+    $doc = $document->getDoc();
 
     if (!(self::checkLocal($extKey, $doc, $pageNum) || self::checkInProgress($extKey, $doc, $pageNum))) {
-      self::generatePageOCR($extKey, $conf, $doc, $imageUrl, $pageNum, $conf['ocrDelay'], $ocrEngine);
+      self::generatePageOCR($extKey, $conf, $document, $imageUrl, $pageNum, $conf['ocrDelay'], $ocrEngine);
     }
   }
 
@@ -188,7 +190,7 @@ class FullTextGenerator {
    *
    * @param string extKey
    * @param array conf
-   * @param Doc doc
+   * @param Document document
    * @param string imageUrl
    * @param int pageNum 
    * @param int sleepInterval
@@ -196,12 +198,11 @@ class FullTextGenerator {
    *
    * @return void
    */
-  protected static function generatePageOCR(string $extKey, array $conf, Doc $doc, string $imageUrl, int $pageNum, int $sleepInterval = 0, string $ocrEngine):void {
-    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("FullTextGen.genPageOCR")</script>'; //DEBUG
-
+  protected static function generatePageOCR(string $extKey, array $conf, Document $document, string $imageUrl, int $pageNum, int $sleepInterval = 0, string $ocrEngine):void {
     //Working dir is "/var/www/typo3/public"; //same as "/var/www/html" because sym link
 
     //Parse parameter and setup variables:
+    $doc              = $document->getDoc();
     $ocrEngineFolder  = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts";
     $ocrEnginePath    = "$ocrEngineFolder/$ocrEngine.sh";             //Path to OCR-Engine/Script
     $pageId           = self::getPageLocalId($doc, $pageNum);         //Page ID (eg. log59088_1)
@@ -256,13 +257,14 @@ class FullTextGenerator {
     //Errorhandling, when OCR script failed:
     if($retval!=0){ //if exitcode != 0 -> script not successful
       //!. write to log:
-      $errorMsg = "OCR script failed with status: \"$retval\" \n Error: \"" . implode(" ",$output) ."\"";
-      $errorMsg .= "\nOn \"$ocrEngine\", with image: \"$imageUrl\" and page: $pageNum";
+      $errorMsg = "OCR script failed with status: $retval | Errormessage: " . implode(" ",$output);
+      $errorMsg .= " | On $ocrEngine, with image: $imageUrl and page: $pageNum";
       //$GLOBALS['BE_USER']->writelog(4, 0, 2, 0, "$errorMsg", null); //write error to log
       //Errorflags: 0 = message, 1 = error (user problem), 2 = System Error (which should not happen), 3 = security notice (admin)
       
       //2. Give feedback to user:
       echo '<script>alert("There was an error with your OCR job. Try again later or with an other OCR engine.")</script>';
+      /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$errorMsg.'")</script>'; //DEBUG
       
       //3. remove placeholder:
       if ($conf['ocrPlaceholder']) {
