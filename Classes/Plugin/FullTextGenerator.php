@@ -150,12 +150,13 @@ class FullTextGenerator {
    *
    * @return void
    */
-  public static function createBookFullText(string $extKey, Doc $doc, array $imageUrls, string $ocrEngine):void {
+  public static function createBookFullText(string $extKey, Document $document, array $imageUrls, string $ocrEngine):void {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
+    $doc = $document->getDoc();
 
     for ($pageNum=1; $pageNum <= $doc->numPages; $pageNum++) {
       if (!(self::checkLocal($extKey, $doc, $pageNum) || self::checkInProgress($extKey, $doc, $pageNum))) {
-	      self::generatePageOCR($extKey, $conf, $doc, $imageUrls[$pageNum], $pageNum, $conf['ocrDelay'], $ocrEngine);
+	      self::generatePageOCR($extKey, $conf, $document, $imageUrls[$pageNum], $pageNum, $conf['ocrDelay'], $ocrEngine);
       }
     }
   }
