@@ -37,6 +37,7 @@ while [ $# -gt 0 ] ; do
 		--outputPath)			outputPath="$2" ;;		# Fulltextfile path
 		--tmpOutputPath)		tmpOutputPath="$2" ;;	# Temporary Fulltextfile path
 		--tmpImagePath)			tmpImagePath="$2" ;;	# Temporary image path
+		--url)					url="$2" ;;				# URL
 		--test)					test ;;
 	esac
 		shift
@@ -52,6 +53,6 @@ if [ "$outputPath" != "$tmpOutputPath" ]; then
 fi
 
 # Update METS file:
-./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/UpdateMets.sh --pageId $pageId --outputPath $outputPath 
+./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/UpdateMets.sh --pageId $pageId --outputPath $outputPath --url $url
 
 exit 0

@@ -223,8 +223,8 @@ class FullTextGenerator {
     // Create folders and write original METS if not present:
     if (!file_exists($tmpOutputFolderPath)){ mkdir($tmpOutputFolderPath, 0777, true); } //Create documents temporary path if not present
     if (!file_exists($outputFolderPath)){ mkdir($outputFolderPath, 0777, true); }       //Create documents path if not present
-    FullTextXMLtools::writeMetsXML($doc, $origMetsPath);                                //Write original METS XML file
-    FullTextXMLtools::writeMetsXML($doc, $newMetsPath);                                 //Write original METS XML file
+    FullTextXMLtools::writeMetsXML($document, $origMetsPath);                           //Write original METS XML file
+    FullTextXMLtools::writeMetsXML($document, $newMetsPath);                            //Write new METS XML file
 
     // Locking command, so that only a limited number of an OCR-Engines can run at the same time
     if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
@@ -244,13 +244,14 @@ class FullTextGenerator {
     //Determine if the image should be downloaded. Than use remote URL ($imageUrl) or local PATH ($tmpImagePath):
     if ($conf['ocrDwnlTempImage']){ //download image
       $imageDownloadCommand = "wget $imageUrl -O $tmpImagePath"; //wget image and save to $tmpImagePath
-      $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $tmpImagePath, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText']);
+      $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $tmpImagePath, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText'], $document->getLocation());
       $ocrShellCommand .= " && rm $tmpImagePath";  // Remove used image
     } else { //do not download image, pass URL to the engine
-      $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $imageUrl, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText']);
+      $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $imageUrl, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText'], $document->getLocation());
     }
 
-    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocrShellCommand.'")</script>'; //DEBUG
+    // /* DEBUG */ if($conf['ocrDebug']) 
+    echo '<script>alert("'.$ocrShellCommand.'")</script>'; //DEBUG
 
     //Execute shell commands:
     exec("$imageDownloadCommand && sleep $sleepInterval && $ocrShellCommand", $output, $retval);
@@ -265,7 +266,8 @@ class FullTextGenerator {
       
       //2. Give feedback to user:
       echo '<script>alert("There was an error with your OCR job. Try again later or with an other OCR engine.")</script>';
-      /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$errorMsg.'")</script>'; //DEBUG
+      // /* DEBUG */ if($conf['ocrDebug']) 
+      echo '<script>alert("'.$errorMsg.'")</script>'; //DEBUG
       
       //3. remove placeholder:
       if ($conf['ocrPlaceholder']) {
@@ -302,8 +304,8 @@ class FullTextGenerator {
    * 
    *  @return string OCR-script shell command
    */
-  protected static function genOCRshellCommand(string $ocrEnginePath, string $imagePath, string $tmpOutputPath, string $outputPath, string $tmpImagePath, string $pageId):string{
-    return "./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/OCRmain.sh --ocrEngine $ocrEnginePath --imagePath $imagePath --tmpOutputPath $tmpOutputPath --outputPath $outputPath --pageId $pageId --tmpImagePath $tmpImagePath";
+  protected static function genOCRshellCommand(string $ocrEnginePath, string $imagePath, string $tmpOutputPath, string $outputPath, string $tmpImagePath, string $pageId, string $url):string{
+    return "./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/OCRmain.sh --ocrEngine $ocrEnginePath --imagePath $imagePath --tmpOutputPath $tmpOutputPath --outputPath $outputPath --pageId $pageId --tmpImagePath $tmpImagePath --url $url";
   }
 
   /**
@@ -320,14 +322,14 @@ class FullTextGenerator {
    * 
    *  @return string Full OCR-script shell command
    */
-  protected static function genShellCommand(string $ocrEnginePath, string $imagePath, string $tmpOutputPath, string $outputPath, string $tmpImagePath, string $pageId, string $ocrPlaceholderText):string{
+  protected static function genShellCommand(string $ocrEnginePath, string $imagePath, string $tmpOutputPath, string $outputPath, string $tmpImagePath, string $pageId, string $ocrPlaceholderText, string $url):string{
     $ocrShellCommand = "";
     if ($ocrPlaceholderText) { //create first dummy xmls to prevent multiple tesseract jobs for the same page, then OCR
       FullTextXMLtools::createPlaceholderFulltext($outputPath, $ocrPlaceholderText);
-      $ocrShellCommand = self::genOCRshellCommand($ocrEnginePath, $imagePath, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId);
+      $ocrShellCommand = self::genOCRshellCommand($ocrEnginePath, $imagePath, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $url);
       # tmpOutputPath is used to create a dummy xml file, which is later replaced by the real one by the OCR script
     } else { //do not create dummy xml, write direcly the final file
-      $ocrShellCommand = self::genOCRshellCommand($ocrEnginePath, $imagePath, $outputPath, $outputPath, $tmpImagePath, $pageId);
+      $ocrShellCommand = self::genOCRshellCommand($ocrEnginePath, $imagePath, $outputPath, $outputPath, $tmpImagePath, $pageId, $url);
     }
     return $ocrShellCommand;
   }
