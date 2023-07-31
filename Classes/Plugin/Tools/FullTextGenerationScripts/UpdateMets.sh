@@ -9,7 +9,7 @@ set -euo pipefail # exit on: error, undefined variable, pipefail
 while [ $# -gt 0 ] ; do
   case $1 in
   --pageId)       pageId="$2" ;;     #Page ID (eg. log59088_1)
-  --URL)          URL="$2" ;;        #URL
+  --url)          url="$2" ;;        #URL
   --outputPath)   outputPath="$2" ;; #Fulltextfile path
   esac
   shift
@@ -19,12 +19,10 @@ done
 docLocalId=$(rev <<< "$pageId" | cut -d _ -f 2- | rev) # (eg. log59088)
 pageNum=$(rev <<< "$pageId" | cut -d _ -f 1 | rev) # (eg. 1)
 outputFolder=$(rev <<< "$outputPath" | cut -d / -f 2- | rev)
-#temp
-URL="http://localhost/fileadmin/fulltextFolder//URN/nbn/de/bsz/180/digosi/30/kraken-german_print"
-#/temp
 
 cd $outputFolder
-mv $docLocalId.xml mets.xml
+mv $docLocalId.xml $docLocalId.xml.backup # Backup METS
+cp $docLocalId.xml.backup mets.xml
 
 # Check if METS-data is wrapped in an OAI node:
 set +euo pipefail # unset error exits
@@ -43,7 +41,7 @@ fi
 # Update METS with given ALTO file:
 ocrd --log-level INFO workspace add --file-grp FULLTEXT --file-id "fulltext-$pageId" --page-id="$pageNum" --mimetype text/xml "$pageId.xml"
 sed -i 's/LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/LOCTYPE="URL"/' mets.xml
-sed -i s,"\"$pageId","\"$URL/$pageId", mets.xml
+sed -i s,"\"$pageId","\"$url/$pageId", mets.xml
 
 # Validate METS:
 #apt -y install libxml2-utils
