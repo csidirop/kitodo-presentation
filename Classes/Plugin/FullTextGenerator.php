@@ -250,8 +250,7 @@ class FullTextGenerator {
       $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $imageUrl, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText'], $document->getLocation());
     }
 
-    // /* DEBUG */ if($conf['ocrDebug']) 
-    echo '<script>alert("'.$ocrShellCommand.'")</script>'; //DEBUG
+    /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocrShellCommand.'")</script>'; //DEBUG
 
     //Execute shell commands:
     exec("$imageDownloadCommand && sleep $sleepInterval && $ocrShellCommand", $output, $retval);
@@ -266,8 +265,7 @@ class FullTextGenerator {
       
       //2. Give feedback to user:
       echo '<script>alert("There was an error with your OCR job. Try again later or with an other OCR engine.")</script>';
-      // /* DEBUG */ if($conf['ocrDebug']) 
-      echo '<script>alert("'.$errorMsg.'")</script>'; //DEBUG
+      /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$errorMsg.'")</script>'; //DEBUG
       
       //3. remove placeholder:
       if ($conf['ocrPlaceholder']) {
