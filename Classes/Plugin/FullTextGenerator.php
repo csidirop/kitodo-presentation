@@ -247,7 +247,7 @@ class FullTextGenerator {
       $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $tmpImagePath, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText'], $document->getLocation());
       $ocrShellCommand .= " && rm $tmpImagePath";  // Remove used image
     } else { //do not download image, pass URL to the engine
-      $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $imageUrl, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText'], $document->getLocation());
+      $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $imageUrl, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText'], "http://".$_SERVER['HTTP_HOST']."/".$outputPath);
     }
 
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocrShellCommand.'")</script>'; //DEBUG
