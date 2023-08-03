@@ -53,6 +53,6 @@ if [ "$outputPath" != "$tmpOutputPath" ]; then
 fi
 
 # Update METS file:
-./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/UpdateMets.sh --pageId $pageId --outputPath $outputPath --url $url
+./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/UpdateMets.sh --pageId $pageId --outputPath $outputPath --url $url --ocrEngine $ocrEngine
 
 exit 0
