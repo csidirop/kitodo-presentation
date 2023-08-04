@@ -8,10 +8,10 @@ set -euo pipefail # exit on: error, undefined variable, pipefail
 # Paramaters:
 while [ $# -gt 0 ] ; do
   case $1 in
-  --pageId)       pageId="$2" ;;     #Page ID (eg. log59088_1)
-  --url)          url="$2" ;;        #URL
-  --outputPath)   outputPath="$2" ;; #Fulltextfile path
-  --ocrEngine)    ocrEngine="$2" ;;  #OCR-Engine
+  --pageId)       pageId="$2" ;;     # Page ID (eg. log59088_1)
+  --url)          url="$2" ;;        # URL
+  --outputPath)   outputPath="$2" ;; # Fulltextfile path (eg. /var/www/typo3/public/fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_1.xml)
+  --ocrEngine)    ocrEngine="$2" ;;  # OCR-Engine (eg. /var/www/typo3/public/typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/tesseract-basic.sh)
   esac
   shift
 done
@@ -19,9 +19,9 @@ done
 # UPDATE METS:
 
 # Extract same values from parameters:
-docLocalId=$(rev <<< "$pageId" | cut -d _ -f 2- | rev) # (eg. log59088)
-pageNum=$(rev <<< "$pageId" | cut -d _ -f 1 | rev) # (eg. 1)
-outputFolder=$(rev <<< "$outputPath" | cut -d / -f 2- | rev)
+docLocalId=$(rev <<< "$pageId" | cut -d _ -f 2- | rev) # (eg. log_59088_1 -> log_59088)
+pageNum=$(rev <<< "$pageId" | cut -d _ -f 1 | rev) # (eg. log_59088_1 -> 1)
+outputFolder=$(rev <<< "$outputPath" | cut -d / -f 2- | rev) # (eg. /var/www/typo3/public/fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic)
 ocrEngine=$(rev <<< "$ocrEngine" | cut -d '/' -f 1 | cut -d '.' -f 2- | rev) # (eg. tesseract-basic)
 
 cd $outputFolder
