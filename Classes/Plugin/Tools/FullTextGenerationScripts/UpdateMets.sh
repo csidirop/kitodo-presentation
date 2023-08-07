@@ -25,6 +25,11 @@ outputFolder=$(rev <<< "$outputPath" | cut -d / -f 2- | rev) # (eg. /var/www/typ
 ocrEngine=$(rev <<< "$ocrEngine" | cut -d '/' -f 1 | cut -d '.' -f 2- | rev) # (eg. tesseract-basic)
 
 cd $outputFolder
+# Check if lock file exists
+while [ -f "lock_file" ]; do
+    sleep 1
+done
+touch lock_file
 mv $docLocalId.xml $docLocalId.xml.backup # Backup METS
 cp $docLocalId.xml.backup mets.xml
 
@@ -54,4 +59,5 @@ xmlstarlet ed -L -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "SOFTWARE" 
 #apt -y install libxml2-utils
 #xmllint --noout --schema http://www.loc.gov/standards/mets/mets.xsd mets.xml
 
+rm lock_file
 mv mets.xml $docLocalId.xml
