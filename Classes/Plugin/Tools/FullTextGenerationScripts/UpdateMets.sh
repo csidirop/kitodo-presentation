@@ -9,7 +9,7 @@ set -euo pipefail # exit on: error, undefined variable, pipefail
 while [ $# -gt 0 ] ; do
   case $1 in
   --pageId)       pageId="$2" ;;     # Page ID (eg. log59088_1)
-  --url)          url="$2" ;;        # URL
+  --url)          url="$2" ;;        # Alto URL (eg. http://localhost/fileadmin/fulltextFolder//URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_1.xml)
   --outputPath)   outputPath="$2" ;; # Fulltextfile path (eg. /var/www/typo3/public/fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_1.xml)
   --ocrEngine)    ocrEngine="$2" ;;  # OCR-Engine (eg. /var/www/typo3/public/typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/tesseract-basic.sh)
   esac
@@ -18,11 +18,12 @@ done
 
 # UPDATE METS:
 
-# Extract same values from parameters:
+# Extract some values from parameters:
 docLocalId=$(rev <<< "$pageId" | cut -d _ -f 2- | rev) # (eg. log_59088_1 -> log_59088)
 pageNum=$(rev <<< "$pageId" | cut -d _ -f 1 | rev) # (eg. log_59088_1 -> 1)
 outputFolder=$(rev <<< "$outputPath" | cut -d / -f 2- | rev) # (eg. /var/www/typo3/public/fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic)
 ocrEngine=$(rev <<< "$ocrEngine" | cut -d '/' -f 1 | cut -d '.' -f 2- | rev) # (eg. tesseract-basic)
+metsUrl=$(rev <<< "$url" | cut -d / -f 2- | rev)"/$docLocalId.xml"
 
 cd $outputFolder
 # Check if lock file exists
@@ -61,3 +62,5 @@ xmlstarlet ed -L -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "SOFTWARE" 
 
 rm lock_file
 mv mets.xml $docLocalId.xml
+
+/var/www/typo3/vendor/bin/typo3 kitodo:index -d $metsUrl -p 3 -s dlf # TODO: do not use absolute path

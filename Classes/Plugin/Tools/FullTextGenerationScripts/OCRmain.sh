@@ -37,7 +37,7 @@ while [ $# -gt 0 ] ; do
 		--outputPath)			outputPath="$2" ;;		# Fulltextfile path
 		--tmpOutputPath)		tmpOutputPath="$2" ;;	# Temporary Fulltextfile path
 		--tmpImagePath)			tmpImagePath="$2" ;;	# Temporary image path
-		--url)					url="$2" ;;				# URL
+		--url)					url="$2" ;;				# Alto URL (e.g http://localhost/fileadmin/fulltextFolder//URN/nbn/de/bsz/180/digosi/27/tesseract-basic/log59088_1.xml)
 		--test)					test ;;
 	esac
 		shift
@@ -49,6 +49,7 @@ $ocrEngine --pageId $pageId --imagePath $imagePath --outputPath $tmpOutputPath -
 
 # Move temporary output file to final location, if it is not already there:
 if [ "$outputPath" != "$tmpOutputPath" ]; then 
+	mkdir -p $(dirname $outputPath) # Create directory if it does not exist
 	mv -v -f $tmpOutputPath.xml $outputPath
 fi
 
