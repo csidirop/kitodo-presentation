@@ -38,6 +38,8 @@ while [ $# -gt 0 ] ; do
 		--tmpOutputPath)		tmpOutputPath="$2" ;;	# Temporary Fulltextfile path
 		--tmpImagePath)			tmpImagePath="$2" ;;	# Temporary image path
 		--url)					url="$2" ;;				# Alto URL (e.g http://localhost/fileadmin/fulltextFolder//URN/nbn/de/bsz/180/digosi/27/tesseract-basic/log59088_1.xml)
+		--ocrUpdateMets) 		ocrUpdateMets="$2" ;;	# Update METS XML with given ALTO file (1|0)
+		--ocrIndexMets) 		ocrIndexMets="$2" ;;	# Index METS XML with updated METS XML (only if ocrUpdateMets is 1) (1|0)
 		--test)					test ;;
 	esac
 		shift
@@ -54,6 +56,8 @@ if [ "$outputPath" != "$tmpOutputPath" ]; then
 fi
 
 # Update METS file:
-./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/UpdateMets.sh --pageId $pageId --outputPath $outputPath --url $url --ocrEngine $ocrEngine
+if [ "$ocrUpdateMets" == "1" ]; then
+	./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/UpdateMets.sh --pageId $pageId --outputPath $outputPath --url $url --ocrEngine $ocrEngine --ocrIndexMets $ocrIndexMets
+fi
 
 exit 0

@@ -24,7 +24,7 @@ fileGrpDownload = DOWNLOAD
 fileGrpFulltext = FULLTEXT
 # cat=Files; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fileGrpAudio
 fileGrpAudio = AUDIO
-#//OCR-Test
+#//OCR-On-Demand
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fulltextFolder
 fulltextFolder = fileadmin/fulltextFolder
 # cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.fulltextTempFolder
@@ -49,6 +49,10 @@ ocrLock=1
 ocrThreads=4
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDebug
 ocrDebug=0
+# cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrUpdateMets
+ocrUpdateMets=0
+# cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrIndexMets
+ocrIndexMets=0
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDwnlTempImage
 ocrDwnlTempImage=0
 # cat=IIIF; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.indexAnnotations

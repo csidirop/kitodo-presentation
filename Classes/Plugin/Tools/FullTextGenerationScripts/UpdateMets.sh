@@ -12,6 +12,7 @@ while [ $# -gt 0 ] ; do
   --url)          url="$2" ;;        # Alto URL (eg. http://localhost/fileadmin/fulltextFolder//URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_1.xml)
   --outputPath)   outputPath="$2" ;; # Fulltextfile path (eg. /var/www/typo3/public/fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_1.xml)
   --ocrEngine)    ocrEngine="$2" ;;  # OCR-Engine (eg. /var/www/typo3/public/typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/tesseract-basic.sh)
+  --ocrIndexMets) ocrIndexMets="$2" ;;  # Index METS XML with updated METS XML (1|0)
   esac
   shift
 done
@@ -63,4 +64,7 @@ xmlstarlet ed -L -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "SOFTWARE" 
 rm lock_file
 mv mets.xml $docLocalId.xml
 
-/var/www/typo3/vendor/bin/typo3 kitodo:index -d $metsUrl -p 3 -s dlf # TODO: do not use absolute path
+# Index METS:
+if [ "$ocrIndexMets" == "1" ]; then
+  /var/www/typo3/vendor/bin/typo3 kitodo:index -d $metsUrl -p 3 -s dlf # TODO: do not use absolute path
+fi
