@@ -244,7 +244,7 @@ class FullTextGenerator {
     //Determine if the image should be downloaded. Than use remote URL ($imageUrl) or local PATH ($tmpImagePath):
     if ($conf['ocrDwnlTempImage']){ //download image
       $imageDownloadCommand = "wget $imageUrl -O $tmpImagePath"; //wget image and save to $tmpImagePath
-      $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $tmpImagePath, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText'], $document->getLocation());
+      $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $tmpImagePath, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText'], "http://".$_SERVER['HTTP_HOST']."/".$outputPath);
       $ocrShellCommand .= " && rm $tmpImagePath";  // Remove used image
     } else { //do not download image, pass URL to the engine
       $ocrShellCommand .= self::genShellCommand($ocrEnginePath, $imageUrl, $tmpOutputPath, $outputPath, $tmpImagePath, $pageId, $conf['ocrPlaceholderText'], "http://".$_SERVER['HTTP_HOST']."/".$outputPath);
