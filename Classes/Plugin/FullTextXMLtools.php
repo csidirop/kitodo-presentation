@@ -36,15 +36,16 @@ class FullTextXMLtools {
    * 
    * @access protected
    * 
-   * @param Doc doc
+   * @param Document document
    * 
    * @return string The document's URN or null if not found.
    */
-  public static function getDocURN(Doc $doc):?string {
+  public static function getDocURN(Document $document):?string {
     // Load METS from memory and run through with XMLReader:
-    // $reader = new XMLReader();
+    $reader = new XMLReader();
     // $reader->XML($doc->__toString());  //TODO: remove if doc doesn't get the URL back
-    $reader = XMLReader::open($GLOBALS["_GET"]["tx_dlf"]["id"]);
+    // Load METS from URL and run through with XMLReader:
+    $reader->open($document->getLocation());
     $urn = null;
     while ($reader->read()) {
       if((($reader->name=="mods:identifier")||($reader->name=="identifier")) && ($reader->getAttribute("type") === 'urn') && !empty($reader->readString())){ //if XML key is 'mods:identifier'/'identifier' and attribute 'type' is 'urn'
