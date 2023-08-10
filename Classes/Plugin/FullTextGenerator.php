@@ -58,14 +58,14 @@ class FullTextGenerator {
    * @access protected
    *
    * @param string extKey
-   * @param Doc doc
+   * @param Document document
    *
    * @return string path to documents specific fulltext folder
    */
-  protected static function getDocLocalPath(string $extKey, Doc $doc):string {
+  protected static function getDocLocalPath(string $extKey, Document $document):string {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
     
-    return $conf['fulltextFolder'] . "/" . self::generateUniqueDocLocalPath($doc);
+    return $conf['fulltextFolder'] . "/" . self::generateUniqueDocLocalPath($document);
   }
 
   /**
@@ -74,17 +74,16 @@ class FullTextGenerator {
    * 
    * @access protected
    * 
-   * @param Doc doc
+   * @param Document document
    * 
    * @return string path
    */
-  protected static function generateUniqueDocLocalPath(Doc $doc):string {
-    $urn = FullTextXMLtools::getDocURN($doc);
+  protected static function generateUniqueDocLocalPath(Document $document):string {
+    $urn = FullTextXMLtools::getDocURN($document);
     if($urn){ //$urn is present
       $uniquePath = "/" . str_replace("urn/","URN/", str_replace("-", "/", str_replace(":", "/", $urn))); // -> URN/nbn/de/bsz/180/digosi/30
     } else { //no urn was present
-      // $outputFolderPath = $conf['fulltextFolder'] . "/noURN/" . sha1($doc->uid); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757 //TODO: remove if doc doesn't get the URL back
-      $uniquePath = "/noURN/" . sha1($GLOBALS["_GET"]["tx_dlf"]["id"]); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757
+      $uniquePath = "/noURN/" . sha1($document->getLocation()); // -> URN/ff0fdd600d8b46542ebe329c00a397841b71e757
     }
     return $uniquePath;
   }
@@ -95,15 +94,15 @@ class FullTextGenerator {
    * @access public
    *
    * @param string extKey
-   * @param Doc doc
+   * @param Document document
    * @param int pageNum
    *
    * @return string
    */
-  public static function getPageLocalPath(string $extKey, Doc $doc, int $pageNum):string {
-    $outputFolderPath = self::getDocLocalPath($extKey, $doc);
+  public static function getPageLocalPath(string $extKey, Document $document, int $pageNum):string {
+    $outputFolderPath = self::getDocLocalPath($extKey, $document);
     $ocrEngine = PageViewController::getOCRengine($extKey);
-    $pageId = self::getPageLocalId($doc, $pageNum);
+    $pageId = self::getPageLocalId($document->getDoc() , $pageNum);
     return "$outputFolderPath/$ocrEngine/$pageId.xml";
   }
 
@@ -113,13 +112,13 @@ class FullTextGenerator {
    * @access public
    *
    * @param string extKey
-   * @param Doc doc
+   * @param Document document
    * @param int pageNum
    *
    * @return bool
    */
-  public static function checkLocal(string $extKey, Doc $doc, int $pageNum):bool {
-    return file_exists(self::getPageLocalPath($extKey, $doc, $pageNum));
+  public static function checkLocal(string $extKey, Document $document, int $pageNum):bool {
+    return file_exists(self::getPageLocalPath($extKey, $document, $pageNum));
   }
 
   /**
@@ -155,7 +154,7 @@ class FullTextGenerator {
     $doc = $document->getDoc();
 
     for ($pageNum=1; $pageNum <= $doc->numPages; $pageNum++) {
-      if (!(self::checkLocal($extKey, $doc, $pageNum) || self::checkInProgress($extKey, $doc, $pageNum))) {
+      if (!(self::checkLocal($extKey, $document, $pageNum) || self::checkInProgress($extKey, $doc, $pageNum))) {
 	      self::generatePageOCR($extKey, $conf, $document, $imageUrls[$pageNum], $pageNum, $conf['ocrDelay'], $ocrEngine);
       }
     }
@@ -178,7 +177,7 @@ class FullTextGenerator {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
     $doc = $document->getDoc();
 
-    if (!(self::checkLocal($extKey, $doc, $pageNum) || self::checkInProgress($extKey, $doc, $pageNum))) {
+    if (!(self::checkLocal($extKey, $document, $pageNum) || self::checkInProgress($extKey, $doc, $pageNum))) {
       self::generatePageOCR($extKey, $conf, $document, $imageUrl, $pageNum, $conf['ocrDelay'], $ocrEngine);
     }
   }
@@ -207,13 +206,13 @@ class FullTextGenerator {
     $ocrEngineFolder  = "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts";
     $ocrEnginePath    = "$ocrEngineFolder/$ocrEngine.sh";             //Path to OCR-Engine/Script
     $pageId           = self::getPageLocalId($doc, $pageNum);         //Page ID (eg. log59088_1)
-    $documentPath     = self::getDocLocalPath($extKey, $doc);         //Document specific path (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/)
+    $documentPath     = self::getDocLocalPath($extKey, $document);    //Document specific path (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/)
     $outputFolderPath = "$documentPath/$ocrEngine";                   //Fulltextfolder (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
     $origMetsPath     = $documentPath."/".self::getDocLocalId($doc).".xml"; //Path to original METS (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/log59088.xml)
     $newMetsPath      = $outputFolderPath."/".self::getDocLocalId($doc).".xml"; //Path to updated METS
     $outputPath       = "$outputFolderPath/$pageId.xml";              //Fulltextfile path
-    $tmpOutputFolderPath = $conf['fulltextTempFolder'] . self::generateUniqueDocLocalPath($doc) . "/$ocrEngine"; //(eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic)
-    $tmpImagePath     = $conf['fulltextImagesFolder'] . self::generateUniqueDocLocalPath($doc) . "/$pageId"; //Imagefile path (eg. fileadmin/_temp_/ocrTempFolder/images/URN/nbn/de/bsz/180/digosi/30/log59088_1)
+    $tmpOutputFolderPath = $conf['fulltextTempFolder'] . self::generateUniqueDocLocalPath($document) . "/$ocrEngine"; //(eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic)
+    $tmpImagePath     = $conf['fulltextImagesFolder'] . self::generateUniqueDocLocalPath($document) . "/$pageId"; //Imagefile path (eg. fileadmin/_temp_/ocrTempFolder/images/URN/nbn/de/bsz/180/digosi/30/log59088_1)
     $tmpOutputPath    = $tmpOutputFolderPath . "/$pageId";            //Fulltextfile temporary path (eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_295)
     $lockFolder       = $conf['fulltextLockFolder'] . "/";            //Folder used to store locks
     $lockFile         = $lockFolder . hash("md5", $imageUrl);         //File used to lock OCR command

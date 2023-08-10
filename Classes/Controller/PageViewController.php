@@ -162,7 +162,7 @@ class PageViewController extends AbstractController
                 }
                 $fulltext['mimetype'] = $this->document->getDoc()->getFileMimeType($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
                 break;
-            } else if (FullTextGenerator::checkLocal(Doc::$extKey, $this->document->getDoc(), $page)) { //fulltext is locally present
+            } else if (FullTextGenerator::checkLocal(Doc::$extKey, $this->document, $page)) { //fulltext is locally present
                 //check server protocol (https://stackoverflow.com/a/14270161):
                 if ( isset($_SERVER['HTTPS'])  &&  ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
                     ||  isset($_SERVER['HTTP_X_FORWARDED_PROTO'])  &&  $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
@@ -170,7 +170,7 @@ class PageViewController extends AbstractController
                 } else {
                     $protocol = 'http://';
                 }
-                $fulltext['url'] = $protocol . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document->getDoc(), $page);
+                $fulltext['url'] = $protocol . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document, $page);
                 $fulltext['mimetype'] = "text/xml";
             } else { //no fulltext present
                 $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');

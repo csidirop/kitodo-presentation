@@ -169,7 +169,7 @@ class ToolboxController extends AbstractController
                 break;
             }
         }
-        if (!empty($fullTextFile) || FullTextGenerator::checkLocal(\Kitodo\Dlf\Common\Doc::$extKey, $this->document->getDoc(), $this->requestData['page'])) {
+        if (!empty($fullTextFile) || FullTextGenerator::checkLocal(\Kitodo\Dlf\Common\Doc::$extKey, $this->document, $this->requestData['page'])) {
             $this->view->assign('fulltext', true);
             $this->view->assign('activateFullTextInitially', MathUtility::forceIntegerInRange($this->settings['activateFullTextInitially'], 0, 1, 0));
         } else {
