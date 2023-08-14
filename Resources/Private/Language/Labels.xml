@@ -196,7 +196,7 @@
             <label index="config.ocrDelay">Delay until OCR start (in seconds)</label>
             <label index="config.ocrLock">Make run only one instance of OCR at time</label>
             <label index="config.ocrThreads">Max. number of OCR processes running simultaneously</label>
-            <label index="config.ocrTimeout">Timeout for OCR processes (in seconds)</label>
+            <label index="config.ocrTimeout">Timeout for OCR processes (in seconds): For reference: While the fastest OCR Engines with easy layouts can complete in under 2 sec, more complex layouts and other engines may use 260s and more!</label>
             <label index="config.ocrDebug">Show interupting debugging alerts for backend</label>
             <label index="config.ocrUpdateMets">Update METS files with the on demand created ALTO fulltext files</label>
             <label index="config.ocrIndexMets">Index updated METS files (solr needed): Only affected if 'ocrUpdateMets' is active.</label>
@@ -423,7 +423,7 @@
             <label index="config.ocrDelay">Verzögerung bis zum Start der OCR (in Sekunden)</label>
             <label index="config.ocrLock">Nur eine Instanz von OCR zur gleichen Zeit ausführen lassen</label>
             <label index="config.ocrThreads">Anzahl der max. gleichzeitig laufenden OCR Prozesse</label>
-            <label index="config.ocrTimeout">Maximale Laufzeit der Volltexterkennung (in Sekunden)</label>
+            <label index="config.ocrTimeout">Maximale Laufzeit der Volltexterkennung (in Sekunden): Zur Orientierung: Während die schnellsten OCR-Engines mit einfachen Layouts in weniger als 2 Sekunden fertig werden können, können komplexere Layouts und andere Engines 260s und mehr benötigen!</label>
             <label index="config.ocrDebug">Unterbrechende Debugging-Warnungen für das Backend anzeigen</label>
             <label index="config.ocrUpdateMets">METS-Dateien mit den on demand erstellten ALTO-Volltextdateien aktualisieren</label>
             <label index="config.ocrIndexMets">Indiziere aktualisierte METS-Dateien (Solr erforderlich): Nur relevant, wenn 'ocrUpdateMets' aktiv ist.</label>
