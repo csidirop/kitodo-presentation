@@ -45,7 +45,7 @@ ocrEngines = typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/oc
 ocrDelay=2
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrLock
 ocrLock=1
-# cat=FulltextOCR; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrThreads
+# cat=FulltextOCR; type=int; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrThreads
 ocrThreads=4
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDebug
 ocrDebug=0
