@@ -252,18 +252,21 @@ class FullTextGenerator {
     /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$ocrShellCommand.'")</script>'; //DEBUG
 
     //Execute shell commands:
-    exec("$imageDownloadCommand && sleep $sleepInterval && $ocrShellCommand", $output, $retval);
+    $timeout = $conf['ocrTimeout']; //timeout in seconds
+    exec("$imageDownloadCommand && sleep $sleepInterval && timeout $timeout $ocrShellCommand", $output, $retval);
 
     //Errorhandling, when OCR script failed:
     if($retval!=0){ //if exitcode != 0 -> script not successful
-      //!. write to log:
-      $errorMsg = "OCR script failed with status: $retval | Errormessage: " . implode(" ",$output);
-      $errorMsg .= " | On $ocrEngine, with image: $imageUrl and page: $pageNum";
-      //$GLOBALS['BE_USER']->writelog(4, 0, 2, 0, "$errorMsg", null); //write error to log
-      //Errorflags: 0 = message, 1 = error (user problem), 2 = System Error (which should not happen), 3 = security notice (admin)
+      //1. write to log:
+      $errorMsg = "OCR script failed with status: $retval | Errormessage: " . implode(" ", $output);
+      //TODO: write to log
       
       //2. Give feedback to user:
-      echo '<script>alert("There was an error with your OCR job. Try again later or with an other OCR engine.")</script>';
+      if($retval==124){ //timeout
+        echo '<script>alert("OCR script timed out. Try again later or with an other OCR engine.")</script>';
+      } else {
+        echo '<script>alert("There was an error (#'.$retval.') with your OCR job. Try again later or with an other OCR engine.")</script>';
+      }
       /* DEBUG */ if($conf['ocrDebug']) echo '<script>alert("'.$errorMsg.'")</script>'; //DEBUG
       
       //3. remove placeholder:

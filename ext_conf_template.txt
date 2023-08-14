@@ -47,6 +47,8 @@ ocrDelay=2
 ocrLock=1
 # cat=FulltextOCR; type=int; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrThreads
 ocrThreads=4
+# cat=FulltextOCR; type=int; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrTimeout
+ocrTimeout=600
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDebug
 ocrDebug=0
 # cat=FulltextOCR; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrUpdateMets
