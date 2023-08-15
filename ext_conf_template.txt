@@ -45,8 +45,6 @@ ocrPlaceholder=1
 ocrPlaceholderText=OCR is being prepared, please try to refresh the page
 # cat=Fulltext-OCR-Engines; type=int; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDelay
 ocrDelay=2
-# cat=Fulltext-OCR-Engines; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrLock
-ocrLock=1
 # cat=Fulltext-OCR-Engines; type=int; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrThreads
 ocrThreads=4
 # cat=Fulltext-OCR-Engines; type=int; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrTimeout

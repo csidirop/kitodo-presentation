@@ -226,7 +226,7 @@ class FullTextGenerator {
     FullTextXMLtools::writeMetsXML($document, $newMetsPath);                            //Write new METS XML file
 
     // Locking command, so that only a limited number of an OCR-Engines can run at the same time
-    if ($conf['ocrLock']) { //hold only when wanted //TODO: check what downsides not waiting can have
+    if ($conf['ocrThreads'] > 0) { //hold only when wanted //TODO: check what downsides not waiting can have
       if (!file_exists($lockFile)) { // If no lock on image url, go on
         while(count(scandir($lockFolder))-2 >= (int) $conf['ocrThreads']) { //wait as long as there more locks written as set in options
           session_write_close(); //close session to allow other accesses (otherwise no new site can be loaded as long as the lock is active)
