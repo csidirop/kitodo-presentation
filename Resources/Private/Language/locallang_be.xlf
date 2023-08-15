@@ -527,6 +527,18 @@
             <trans-unit id="solr.error" approved="yes">
                 <source><![CDATA[Apache Solr not reachable with given configuration.]]></source>
             </trans-unit>
+            <trans-unit id="ocrd.connected" approved="yes">
+                <source><![CDATA[Connection established!]]></source>
+            </trans-unit>
+            <trans-unit id="ocrd.status" approved="yes">
+                <source><![CDATA[OCR-D server is running and taking requests.]]></source>
+            </trans-unit>
+            <trans-unit id="ocrd.notConnected" approved="yes">
+                <source><![CDATA[Connection failed!]]></source>
+            </trans-unit>
+            <trans-unit id="ocrd.error" approved="yes">
+                <source><![CDATA[OCR-D server not reachable with given configuration.]]></source>
+            </trans-unit>
 		</body>
 	</file>
 </xliff>

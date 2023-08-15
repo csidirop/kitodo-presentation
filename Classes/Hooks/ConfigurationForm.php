@@ -59,6 +59,35 @@ class ConfigurationForm
     }
 
     /**
+     * Check if a connection to a OCRD server could be established with the given credentials.
+     *
+     * @access public
+     *
+     * @return string Message informing the user of success or failure
+     */
+    public function checkOCRDConnection()
+    {
+        $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)->get('dlf');
+
+        exec(" ssh -q -o BatchMode=yes -o ConnectTimeout=2 ".$conf['ocrdHost']." 'exit 0' ", $output, $retval);
+
+        if ($retval == 0) {
+            Helper::addMessage(
+                Helper::getLanguageService()->getLL('ocrd.status'),
+                Helper::getLanguageService()->getLL('ocrd.connected'),
+                \TYPO3\CMS\Core\Messaging\FlashMessage::OK
+            );
+        } else {
+            Helper::addMessage(
+                Helper::getLanguageService()->getLL('ocrd.error'),
+                Helper::getLanguageService()->getLL('ocrd.notConnected'),
+                \TYPO3\CMS\Core\Messaging\FlashMessage::WARNING
+            );
+        }
+        return Helper::renderFlashMessages();
+    }
+
+    /**
      * This is the constructor.
      *
      * @access public
