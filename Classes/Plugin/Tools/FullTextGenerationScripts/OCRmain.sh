@@ -4,27 +4,50 @@
 
 set -euo pipefail # exit on: error, undefined variable, pipefail
 
-# Test fuction, for manually testing the script
-function test() { 
-	CLR_G='\e[32m' # Green
-	NC='\e[0m' # No Color
+# Test function, for manually testing the script
+function test() {
+    CLR_B='\e[1;34m' # Bold Blue
+    CLR_G='\e[32m' # Green
+    CLR_R='\e[31m' # Red
+    NC='\e[0m' # No Color
 
-	if [ -d "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/" ]; then 
-		cd typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts
-	fi
-	echo -e "Starting tests:"
-	echo -e "tesseract-basc.sh:"
-	./tesseract-basic.sh --test
-	echo -e "${CLR_G}tesseract-basic.sh: OK${NC}"
-	echo -e "kraken-basic.sh:"
-	./kraken-basic.sh --test
-	echo -e "${CLR_G}kraken-basic.sh: OK${NC}"
-	echo -e "ocrd-basic.sh:"
-	./ocrd-basic.sh --test
-	echo -e "${CLR_G}ocrd-basic.sh: OK${NC}"
-	echo -e "${CLR_G}All tests passed${NC}"
+    if [ -d "typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/" ]; then 
+        cd typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts
+    fi
 
-	exit 0;
+    echo -e "${CLR_B}Starting tests:${NC}"
+    ocrEngines_passed=()
+    ocrEngines_failed=()
+    # Iterate through all .sh files in the current directory:
+    for file in *.sh; do
+        if [ "$file" != "OCRmain.sh" ] && [ "$file" != "UpdateMets.sh" ]; then # exclude OCRmain.sh and UpdateMets.sh
+            echo -e "${CLR_B}Running '$file --test':${NC}"
+            set +euo pipefail # unset error exits
+            bash "$file" "--test" # Run the ocrEngine in test mode
+            success=$?
+            set -euo pipefail # re-set error exits
+            if [ "$success" == 0 ]; then
+                echo -e "\n${CLR_G}$file: passed${NC}\n"
+                ocrEngines_passed+=("$file")
+            else
+                echo -e "\n${CLR_R}$file: failed${NC}\n"
+                ocrEngines_failed+=("$file")
+            fi
+        fi
+    done
+
+    echo -e "${CLR_B}Finished tests. Summering results:${NC}"
+
+    echo -e "${CLR_G}${#ocrEngines_passed[@]} engines passed:${NC}"
+    for engine in "${ocrEngines_passed[@]}"; do
+        echo -e "\t $engine"
+    done
+    echo -e "${CLR_R}${#ocrEngines_failed[@]} engines failed:${NC}"
+    for engine in "${ocrEngines_failed[@]}"; do
+        echo -e "\t $engine"
+    done
+
+    exit 0;
 }
 
 
