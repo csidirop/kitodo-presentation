@@ -226,17 +226,17 @@ class FullTextGenerator {
     FullTextXMLtools::writeMetsXML($document, $newMetsPath);                            //Write new METS XML file
 
     // Locking command, so that only a limited number of an OCR-Engines can run at the same time
-    if ($conf['ocrThreads'] > 0) { //hold only when wanted //TODO: check what downsides not waiting can have
-      if (!file_exists($lockFile)) { // If no lock on image url, go on
-        while(count(scandir($lockFolder))-2 >= (int) $conf['ocrThreads']) { //wait as long as there more locks written as set in options
-          session_write_close(); //close session to allow other accesses (otherwise no new site can be loaded as long as the lock is active)
-          sleep(1);
-          session_start();
-        }
-        fopen($lockFile, "w") ; //write lock
-      } else { //there is already OCR running for this image, so return -> this will show the gen placeholder fulltext till the OCR is completed
-        return;
+    if (!file_exists($lockFile)) { // If no lock on image url, go on
+      //wait as long as there are more locks written, as set in options:
+      while(count(scandir($lockFolder))-2 >= (int) $conf['ocrThreads']) {
+        session_write_close(); //close session to allow other accesses (otherwise no new site can be loaded as long as the lock is active)
+        sleep(1);
+        session_start();
       }
+      fopen($lockFile, "w") ; //write lock
+    } else { //lockfile exists -> there is already OCR running for this image, so return -> this will show the gen placeholder fulltext till the OCR is completed
+      //TODO: give feedback to user?
+      return;
     }
 
     //Build OCR script command:
@@ -280,9 +280,7 @@ class FullTextGenerator {
     }
 
     //Remove lock:
-    if ($conf['ocrLock']) {
-      unlink($lockFile);
-    }
+    unlink($lockFile);
 
     //Write/update updated METS XML file:
     // if (file_exists($newMetsPath)){ // there is already an updated METS
