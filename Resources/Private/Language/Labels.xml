@@ -191,6 +191,7 @@
             <label index="config.fulltextLockFolder">Temporary directory which holds the locks for locking the OCR in progress</label>
             <label index="config.ocrPlaceholder">Create a blank ALTO file as a placeholder</label>
             <label index="config.ocrPlaceholderText">Defines the text of the ALTO placeholder file</label>
+            <label index="config.ocrLoadActiveOCREngines">All active OCR Engines: Loaded from the json set in 'ocrEngines' entry</label>
             <label index="config.ocrdConnect">OCR-D Connection</label>
             <label index="config.ocrdHost">OCR-D server SSH config</label>
             <label index="config.ocrEngine">Default OCR-Engine</label>
@@ -419,6 +420,7 @@
             <label index="config.ocrDwnlTempImage">Bilder für lokale OCR-Engines (wie Tesseract) herunterladen</label>
             <label index="config.ocrPlaceholder">Erstelle eine leere ALTO Datei als Platzhalter</label>
             <label index="config.ocrPlaceholderText">Definiert den Text der ALTO Platzhalter Datei</label>
+            <label index="config.ocrLoadActiveOCREngines">Alle aktiven OCR Engines: Geladen aus der in 'ocrEngines' angegebenen JSON-Datei</label>
             <label index="config.ocrdConnect">OCR-D Verbindung</label>
             <label index="config.ocrdHost">OCR-D Server SSH config</label>
             <label index="config.ocrEngine">Standardmäßige OCR-Engine</label>

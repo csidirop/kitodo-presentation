@@ -539,6 +539,12 @@
             <trans-unit id="ocrd.error" approved="yes">
                 <source><![CDATA[OCR-D server not reachable with given configuration.]]></source>
             </trans-unit>
+            <trans-unit id="ocrEngines.loaded" approved="yes">
+                <source><![CDATA[Active OCR Engines loaded:]]></source>
+            </trans-unit>
+            <trans-unit id="ocrEngines.notLoaded" approved="yes">
+                <source><![CDATA[Active OCR Engines not loaded!]]></source>
+            </trans-unit>
 		</body>
 	</file>
 </xliff>
