@@ -97,8 +97,8 @@ class ConfigurationForm
     public function printActiveOCREngines()
     {
         $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Configuration\ExtensionConfiguration::class)->get('dlf');
-        $ocrEnginesJson = json_decode(file_get_contents("../".$conf['ocrEngines']), true); # working dir is '/var/www/typo3/public/typo3'
-        $ocrEnginesDir = dirname("../".$conf['ocrEngines']);
+        $ocrEnginesJson = json_decode(file_get_contents("../".$conf['ocrEngines']."/".$conf['ocrEnginesConfig']), true); # working dir is '/var/www/typo3/public/typo3'
+        $ocrEnginesDir = "../".$conf['ocrEngines'];
         $files = scandir($ocrEnginesDir);
         $ocrEngines = array(); // All ocrEngines in the directory
         $activeOcrEngines = array(); // All active OCR engines

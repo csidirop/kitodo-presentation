@@ -36,7 +36,9 @@ fulltextLockFolder = fileadmin/_temp_/ocrTempFolder/lock
 # cat=Fulltext-OCR-general; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrDebug
 ocrDebug=0
 # cat=Fulltext-OCR-Engines; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrEngines
-ocrEngines = typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/ocrEngines.json
+ocrEngines = typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/
+# cat=Fulltext-OCR-Engines; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrEnginesConfig
+ocrEnginesConfig = ocrEngines.json
 # cat=Fulltext-OCR-Engines; type=user[Kitodo\Dlf\Hooks\ConfigurationForm->printActiveOCREngines]; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrLoadActiveOCREngines
 ocrLoadActiveOCREngines = 0
 # cat=Fulltext-OCR-Engines; type=string; label=LLL:EXT:dlf/Resources/Private/Language/Labels.xml:config.ocrEngine

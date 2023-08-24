@@ -80,7 +80,7 @@ class PageViewController extends AbstractController
     {
         // Load current document.
         $this->loadDocument($this->requestData);
-        $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']);
+        $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']."/".GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEnginesConfig']);
         $this->clearPageCache();
         //Proccess request: Do OCR on given image(s):
         if ($_POST["request"]) {
