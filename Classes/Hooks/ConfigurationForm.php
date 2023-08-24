@@ -111,6 +111,7 @@ class ConfigurationForm
                 }
             }
         }
+
         // Get all active OCR engines:
         foreach ($ocrEnginesJson['ocrEngines'] as $engine) {
             $activeOcrEngines[] = $engine['data'];
@@ -127,6 +128,7 @@ class ConfigurationForm
             }
         }
 
+        // Build feedback:
         if ($ocrEnginesJson !== null) {
             Helper::addMessage(
                 $ocrEnginesStr,
@@ -136,7 +138,7 @@ class ConfigurationForm
         } else {
             Helper::addMessage(
                 "-",
-                Helper::getLanguageService()->getLL('ocrd.notConnected'), #engine file not loaded
+                Helper::getLanguageService()->getLL('ocr.notLoaded'), #engine file not loaded
                 \TYPO3\CMS\Core\Messaging\FlashMessage::WARNING
             );
         }
