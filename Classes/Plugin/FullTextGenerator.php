@@ -234,7 +234,15 @@ class FullTextGenerator {
         sleep(1);
         session_start();
       }
-      fopen($lockFile, "w") ; //write lock
+      // Get clients IP address:
+      if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $userIP = $_SERVER['HTTP_X_FORWARDED_FOR'];
+      } else {
+        $userIP = $_SERVER['REMOTE_ADDR'];
+      }
+      $file = fopen($lockFile, "w") ; //write lock
+      fwrite($file, "Job: " . date("Y-m-d H:i:s T", time()) . ' | ' . $ocrEngine . ' | ' . $document->getLocation() . ' | page: ' . $pageNum. ' | users ip: ' . $userIP); //write some metadata to lock for better monitoring
+      fclose($file);
     } else { //lockfile exists -> there is already OCR running for this image, so return -> this will show the gen placeholder fulltext till the OCR is completed
       //TODO: give feedback to user?
       return;
