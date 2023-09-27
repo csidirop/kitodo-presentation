@@ -14,8 +14,6 @@ namespace Kitodo\Dlf\Controller;
 use Kitodo\Dlf\Common\Doc;
 use Kitodo\Dlf\Common\Helper;
 use Kitodo\Dlf\Common\IiifManifest;
-use Kitodo\Dlf\Domain\Model\Collection;
-use Kitodo\Dlf\Domain\Model\Metadata;
 use Kitodo\Dlf\Domain\Repository\CollectionRepository;
 use Kitodo\Dlf\Domain\Repository\MetadataRepository;
 use Kitodo\Dlf\Domain\Repository\StructureRepository;
@@ -80,8 +78,6 @@ class MetadataController extends AbstractController
      */
     public function mainAction()
     {
-        $this->cObj = $this->configurationManager->getContentObject();
-
         // Load current document.
         $this->loadDocument();
         if ($this->isDocMissing()) {
@@ -377,8 +373,8 @@ class MetadataController extends AbstractController
             // Get current structure's @ID.
             $ids = [];
             if (!empty($this->doc->physicalStructure[$this->requestData['page']]) && !empty($this->doc->smLinks['p2l'][$this->doc->physicalStructure[$this->requestData['page']]])) {
-                foreach ($this->doc->smLinks['p2l'][$doc->physicalStructure[$this->requestData['page']]] as $logId) {
-                    $count = $doc->getStructureDepth($logId);
+                foreach ($this->doc->smLinks['p2l'][$this->doc->physicalStructure[$this->requestData['page']]] as $logId) {
+                    $count = $this->doc->getStructureDepth($logId);
                     $ids[$count][] = $logId;
                 }
             }
