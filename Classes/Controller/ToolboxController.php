@@ -29,7 +29,7 @@ class ToolboxController extends AbstractController
     /**
      * This holds the current document
      *
-     * @var \Kitodo\Dlf\Common\Doc
+     * @var \Kitodo\Dlf\Common\AbstractDocument
      * @access private
      */
     private $doc;
@@ -47,10 +47,11 @@ class ToolboxController extends AbstractController
         $this->view->assign('double', $this->requestData['double']);
 
         if (!$this->isDocMissingOrEmpty()) {
-            $this->doc = $this->document->getDoc();
+            $this->doc = $this->document->getCurrentDocument();
         }
 
         $this->renderTool();
+        $this->view->assign('viewData', $this->viewData);
     }
 
     /**
@@ -120,7 +121,7 @@ class ToolboxController extends AbstractController
     {
         if ($this->isDocMissingOrEmpty()) {
             // Quit without doing anything if required variables are not set.
-            return '';
+            return;
         }
 
         $this->setPage();
@@ -150,7 +151,7 @@ class ToolboxController extends AbstractController
             || empty($this->extConf['fileGrpFulltext'])
         ) {
             // Quit without doing anything if required variables are not set.
-            return '';
+            return;
         }
 
         $this->setPage();
@@ -173,7 +174,7 @@ class ToolboxController extends AbstractController
             || empty($this->extConf['fileGrpFulltext'])
         ) {
             // Quit without doing anything if required variables are not set.
-            return '';
+            return;
         }
 
         $this->setPage();
@@ -200,7 +201,7 @@ class ToolboxController extends AbstractController
             || empty($this->settings['fileGrpsImageDownload'])
         ) {
             // Quit without doing anything if required variables are not set.
-            return '';
+            return;
         }
 
         $this->setPage();
@@ -282,7 +283,7 @@ class ToolboxController extends AbstractController
             || empty($this->extConf['fileGrpDownload'])
         ) {
             // Quit without doing anything if required variables are not set.
-            return '';
+            return;
         }
 
         $this->setPage();
@@ -386,7 +387,7 @@ class ToolboxController extends AbstractController
             || empty($this->settings['solrcore'])
         ) {
             // Quit without doing anything if required variables are not set.
-            return '';
+            return;
         }
 
         $this->setPage();
@@ -401,6 +402,7 @@ class ToolboxController extends AbstractController
             'LABEL_QUERY_URL' => $this->settings['queryInputName'],
             'LABEL_START' => $this->settings['startInputName'],
             'LABEL_ID' => $this->settings['idInputName'],
+            'LABEL_PID' => $this->settings['pidInputName'],
             'LABEL_PAGE_URL' => $this->settings['pageInputName'],
             'LABEL_HIGHLIGHT_WORD' => $this->settings['highlightWordInputName'],
             'LABEL_ENCRYPTED' => $this->settings['encryptedInputName'],
