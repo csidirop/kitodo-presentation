@@ -82,6 +82,14 @@ class PageViewController extends AbstractController
         $this->loadDocument($this->requestData);
         $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']."/".GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEnginesConfig']);
         $this->clearPageCache();
+        $this->checkFulltextAvailability((int) $this->requestData['page']);
+
+        $data = array("tesseract-basic");
+        // add more data to %data array:
+        array_push($data, "kraken-basic");
+
+        echo "<script>var phpData = '" . json_encode($data) . "';</script>";
+
         //Proccess request: Do OCR on given image(s):
         if ($_POST["request"]) {
             $this->generateFullText();
@@ -323,6 +331,30 @@ class PageViewController extends AbstractController
     protected function parseOCRengines(string $ocrEnginesPath):void{
         self::$ocrEngines = file_get_contents($ocrEnginesPath);
         setcookie('tx-dlf-ocrEngines', self::$ocrEngines, ['SameSite' => 'lax']);
+    }
+
+    /**
+     * Checks if the fulltext is locally available for all active OCR engines.
+     * 
+     * @access protected
+     * 
+     * 
+     */
+    protected function checkFulltextAvailability(int $page) {
+        $ocrEnginesArray = json_decode(self::$ocrEngines, true);
+        $resArray = array();
+
+        $path = FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document, $page); //TODO incorrect path
+        echo '<script>alert("'.$path.'")</script>'; //DEBUG
+
+        //check if path exists:
+        for($i=0; $i<count($ocrEnginesArray); $i++){
+            $data = $ocrEnginesArray['ocrEngines'][$i]['data'];
+            if(!file_exists($data)){
+                echo '<script>alert("'.$data.' exists")</script>'; //DEBUG
+                array_push($resArray, $data);
+            }
+        }
     }
 
     /**
