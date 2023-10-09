@@ -341,18 +341,21 @@ class PageViewController extends AbstractController
      * 
      */
     protected function checkFulltextAvailability(int $page) {
-        $ocrEnginesArray = json_decode(self::$ocrEngines, true);
+        $ocrEnginesArray = json_decode(self::$ocrEngines, true)['ocrEngines'];
         $resArray = array();
 
-        $path = FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document, $page); //TODO incorrect path
-        echo '<script>alert("'.$path.'")</script>'; //DEBUG
+        $path = FullTextGenerator::getDocLocalPath(Doc::$extKey, $this->document);
+        $topLevelId = $this->document->getDoc()->toplevelId; // (eg. "log59088")
 
         //check if path exists:
         for($i=0; $i<count($ocrEnginesArray); $i++){
-            $data = $ocrEnginesArray['ocrEngines'][$i]['data'];
-            if(!file_exists($data)){
-                echo '<script>alert("'.$data.' exists")</script>'; //DEBUG
+            $data = $ocrEnginesArray[$i]['data'];
+            echo '<script>alert("PATH: '.$path.'/'.$data.'/'.$topLevelId.'_'.$page.'.xml'.'")</script>'; //DEBUG
+            if(isset($data) && !empty($data) && file_exists($path.'/'.$data.'/'.$topLevelId.'_'.$page.'.xml')) {
+                // echo '<script>alert("'.$data.' exists")</script>'; //DEBUG
                 array_push($resArray, $data);
+            } else {
+                // echo '<script>alert("'.$data.' does not exists")</script>'; //DEBUG
             }
         }
     }
