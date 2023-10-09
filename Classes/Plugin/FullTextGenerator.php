@@ -62,7 +62,7 @@ class FullTextGenerator {
    *
    * @return string path to documents specific fulltext folder
    */
-  protected static function getDocLocalPath(string $extKey, Document $document):string {
+  public static function getDocLocalPath(string $extKey, Document $document):string {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
     
     return $conf['fulltextFolder'] . "/" . self::generateUniqueDocLocalPath($document);
@@ -90,6 +90,8 @@ class FullTextGenerator {
 
   /**
    * Returns local path to the doc's page (uses getDocLocalPath)
+   * 
+   * (eg.: "fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/ocrd-basic/log59088_42.xml")
    * 
    * @access public
    *
