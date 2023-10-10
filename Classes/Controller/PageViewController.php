@@ -82,7 +82,7 @@ class PageViewController extends AbstractController
         $this->loadDocument($this->requestData);
         $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']."/".GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEnginesConfig']);
         $this->clearPageCache();
-        $this->checkFulltextAvailability((int) $this->requestData['page']);
+        // $this->checkFulltextAvailability((int) $this->requestData['page']);
 
         //Proccess request: Do OCR on given image(s):
         if ($_POST["request"]) {
@@ -324,10 +324,25 @@ class PageViewController extends AbstractController
      */
     protected function parseOCRengines(string $ocrEnginesPath):void{
         self::$ocrEngines = file_get_contents($ocrEnginesPath);
+
         // trim json line by line -> reduse cookie space by ~50% (2077 -> 1048 with four engines)):
         $lines = explode("\n", self::$ocrEngines);
         $trimmed_lines = array_map('trim', $lines);
-        self::$ocrEngines = implode("\n", $trimmed_lines);
+
+        // check availability of fulltexts for each engine: //TODO:clean up and make more efficient!!
+        $edited_lines = [];
+        $availEngines = $this->checkFulltextAvailability((int) $this->requestData['page']);
+        foreach ($trimmed_lines as $line) {
+            $edited_lines[] = $line;
+            if (in_array(substr(explode('"data": ', $line)[1], 1, strlen(explode('"data": ', $line)[1])-2), $availEngines)) {
+                array_pop($edited_lines); //TODO: make this more efficient
+                $edited_lines[] = $line.',';
+                $edited_lines[] = '"avail": "Y"';
+            }
+        }
+
+        self::$ocrEngines = implode("\n", $edited_lines);
+
         setcookie('tx-dlf-ocrEngines', self::$ocrEngines, ['SameSite' => 'lax']);
     }
 
@@ -336,9 +351,12 @@ class PageViewController extends AbstractController
      * 
      * @access protected
      * 
+     * @param int $page: Page number
+     * 
+     * @return array An array containing the names of all OCR engines that have a local fulltext available
      * 
      */
-    protected function checkFulltextAvailability(int $page) {
+    protected function checkFulltextAvailability(int $page):array {
         $ocrEnginesArray = json_decode(self::$ocrEngines, true)['ocrEngines'];
         $resArray = array();
 
@@ -348,14 +366,11 @@ class PageViewController extends AbstractController
         //check if path exists:
         for($i=0; $i<count($ocrEnginesArray); $i++){
             $data = $ocrEnginesArray[$i]['data'];
-            echo '<script>alert("PATH: '.$path.'/'.$data.'/'.$topLevelId.'_'.$page.'.xml'.'")</script>'; //DEBUG
             if(isset($data) && !empty($data) && file_exists($path.'/'.$data.'/'.$topLevelId.'_'.$page.'.xml')) {
-                // echo '<script>alert("'.$data.' exists")</script>'; //DEBUG
                 array_push($resArray, $data);
-            } else {
-                // echo '<script>alert("'.$data.' does not exists")</script>'; //DEBUG
             }
         }
+        return $resArray;
     }
 
     /**
