@@ -322,6 +322,10 @@ class PageViewController extends AbstractController
      */
     protected function parseOCRengines(string $ocrEnginesPath):void{
         self::$ocrEngines = file_get_contents($ocrEnginesPath);
+        // trim json line by line -> reduse cookie space by ~50% (2077 -> 1048 with four engines)):
+        $lines = explode("\n", self::$ocrEngines);
+        $trimmed_lines = array_map('trim', $lines);
+        self::$ocrEngines = implode("\n", $trimmed_lines);
         setcookie('tx-dlf-ocrEngines', self::$ocrEngines, ['SameSite' => 'lax']);
     }
 
