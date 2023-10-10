@@ -84,12 +84,6 @@ class PageViewController extends AbstractController
         $this->clearPageCache();
         $this->checkFulltextAvailability((int) $this->requestData['page']);
 
-        $data = array("tesseract-basic");
-        // add more data to %data array:
-        array_push($data, "kraken-basic");
-
-        echo "<script>var phpData = '" . json_encode($data) . "';</script>";
-
         //Proccess request: Do OCR on given image(s):
         if ($_POST["request"]) {
             $this->generateFullText();
