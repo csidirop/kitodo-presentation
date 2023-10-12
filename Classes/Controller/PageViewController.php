@@ -315,15 +315,26 @@ class PageViewController extends AbstractController
     }
 
     /**
-     * Parses the json with all active OCR Engines.
+     * Parses the json with all active OCR Engines. The parsed engines are stored in the cookie `tx-dlf-ocrEngines`.
+     * 
+     * The `ocrEngines.json` has following scheme:
+     * {
+     * "ocrEngines": [
+     *   {
+     *       "name": "Tesseract",
+     *       "de": "Tesseract",
+     *       "en": "Tesseract",
+     *       "class": "tesseract",
+     *       "data": "tesseract-basic"
+     *   }, ....
      *
      * @access protected
      *
-     * @param string $ocrEnginesPath: Path to the JSON containing all active OCR engines
+     * @param string $ocrEnginesPath: Path to the JSON containing all active OCR engines. Can ignored if the file is already in memory.
      * 
      * @return void
      */
-    protected function parseOCRengines(string $ocrEnginesPath = null):void{
+    protected function parseOCRengines(string $ocrEnginesPath = null):void {
         if ($ocrEnginesPath != null) { // no need to reload the file if it's already in memory
             self::$ocrEngines = file_get_contents($ocrEnginesPath);
         }
