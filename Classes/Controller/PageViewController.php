@@ -82,9 +82,11 @@ class PageViewController extends AbstractController
         $this->loadDocument($this->requestData);
         $this->parseOCRengines(GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEngines']."/".GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('dlf')['ocrEnginesConfig']);
         $this->clearPageCache();
-        //Proccess request: Do OCR on given image(s):
+
+        // Proccess request: Do OCR on given image(s):
         if ($_POST["request"]) {
             $this->generateFullText();
+            $this->parseOCRengines();
         }
 
         if ($this->isDocMissingOrEmpty()) {
@@ -312,21 +314,69 @@ class PageViewController extends AbstractController
     }
 
     /**
-     * Parses the json with all active OCR Engines.
+     * Parses the json with all active OCR Engines. The parsed engines are stored in the cookie `tx-dlf-ocrEngines`.
+     * 
+     * The `ocrEngines.json` has following scheme:
+     * {
+     * "ocrEngines": [
+     *   {
+     *       "name": "Tesseract",
+     *       "de": "Tesseract",
+     *       "en": "Tesseract",
+     *       "class": "tesseract",
+     *       "data": "tesseract-basic"
+     *   }, ....
      *
      * @access protected
      *
-     * @param string $ocrEnginesPath: Path to the JSON containing all active OCR engines
+     * @param string $ocrEnginesPath: Path to the JSON containing all active OCR engines. Can ignored if the file is already in memory.
      * 
      * @return void
      */
-    protected function parseOCRengines(string $ocrEnginesPath):void{
-        self::$ocrEngines = file_get_contents($ocrEnginesPath);
-        // trim json line by line -> reduse cookie space by ~50% (2077 -> 1048 with four engines)):
-        $lines = explode("\n", self::$ocrEngines);
-        $trimmed_lines = array_map('trim', $lines);
-        self::$ocrEngines = implode("\n", $trimmed_lines);
+    protected function parseOCRengines(string $ocrEnginesPath = null):void {
+        if ($ocrEnginesPath != null) { // no need to reload the file if it's already in memory
+            self::$ocrEngines = file_get_contents($ocrEnginesPath);
+        }
+
+        $availEngines = $this->checkFulltextAvailability((int) $this->requestData['page']); // check availability of fulltexts for each engine
+        $ocrEnginesJson = json_decode(self::$ocrEngines, true);
+
+        // Add availability to json:
+        foreach ($ocrEnginesJson['ocrEngines'] as &$engine) {
+            if (in_array($engine['data'], $availEngines)) {
+                $engine['avail'] = 'Y'; // fulltext is available
+            }
+        }
+
+        self::$ocrEngines = json_encode($ocrEnginesJson);
         setcookie('tx-dlf-ocrEngines', self::$ocrEngines, ['SameSite' => 'lax']);
+    }
+
+    /**
+     * Checks if the fulltext is locally available for all active OCR engines.
+     * 
+     * @access protected
+     * 
+     * @param int $page: Page number
+     * 
+     * @return array An array containing the names of all OCR engines that have a local fulltext available
+     * 
+     */
+    protected function checkFulltextAvailability(int $page):array {
+        $ocrEnginesArray = json_decode(self::$ocrEngines, true)['ocrEngines'];
+        $resArray = array();
+
+        $path = FullTextGenerator::getDocLocalPath(Doc::$extKey, $this->document);
+        $topLevelId = $this->document->getDoc()->toplevelId; // (eg. "log59088")
+
+        //check if path exists:
+        for($i=0; $i<count($ocrEnginesArray); $i++){
+            $data = $ocrEnginesArray[$i]['data'];
+            if(isset($data) && !empty($data) && file_exists($path.'/'.$data.'/'.$topLevelId.'_'.$page.'.xml')) {
+                array_push($resArray, $data);
+            }
+        }
+        return $resArray;
     }
 
     /**
