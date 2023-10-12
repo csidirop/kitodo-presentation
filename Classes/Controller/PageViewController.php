@@ -84,9 +84,10 @@ class PageViewController extends AbstractController
         $this->clearPageCache();
         // $this->checkFulltextAvailability((int) $this->requestData['page']);
 
-        //Proccess request: Do OCR on given image(s):
+        // Proccess request: Do OCR on given image(s):
         if ($_POST["request"]) {
             $this->generateFullText();
+            $this->parseOCRengines();
         }
 
         if ($this->isDocMissingOrEmpty()) {
@@ -322,8 +323,10 @@ class PageViewController extends AbstractController
      * 
      * @return void
      */
-    protected function parseOCRengines(string $ocrEnginesPath):void{
-        self::$ocrEngines = file_get_contents($ocrEnginesPath);
+    protected function parseOCRengines(string $ocrEnginesPath = null):void{
+        if ($ocrEnginesPath != null) { // no need to reload the file if it's already in memory
+            self::$ocrEngines = file_get_contents($ocrEnginesPath);
+        }
 
         $availEngines = $this->checkFulltextAvailability((int) $this->requestData['page']); // check availability of fulltexts for each engine
         $ocrEnginesJson = json_decode(self::$ocrEngines, true);
@@ -331,7 +334,7 @@ class PageViewController extends AbstractController
         // Add availability to json:
         foreach ($ocrEnginesJson['ocrEngines'] as &$engine) {
             if (in_array($engine['data'], $availEngines)) {
-                $engine['avail'] = 'Y';
+                $engine['avail'] = 'Y'; // fulltext is available
             }
         }
 
