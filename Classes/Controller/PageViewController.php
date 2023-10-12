@@ -325,24 +325,17 @@ class PageViewController extends AbstractController
     protected function parseOCRengines(string $ocrEnginesPath):void{
         self::$ocrEngines = file_get_contents($ocrEnginesPath);
 
-        // trim json line by line -> reduse cookie space by ~50% (2077 -> 1048 with four engines)):
-        $lines = explode("\n", self::$ocrEngines);
-        $trimmed_lines = array_map('trim', $lines);
+        $availEngines = $this->checkFulltextAvailability((int) $this->requestData['page']); // check availability of fulltexts for each engine
+        $ocrEnginesJson = json_decode(self::$ocrEngines, true);
 
-        // check availability of fulltexts for each engine: //TODO:clean up and make more efficient!!
-        $edited_lines = [];
-        $availEngines = $this->checkFulltextAvailability((int) $this->requestData['page']);
-        foreach ($trimmed_lines as $line) {
-            $edited_lines[] = $line;
-            if (in_array(substr(explode('"data": ', $line)[1], 1, strlen(explode('"data": ', $line)[1])-2), $availEngines)) {
-                array_pop($edited_lines); //TODO: make this more efficient
-                $edited_lines[] = $line.',';
-                $edited_lines[] = '"avail": "Y"';
+        // Add availability to json:
+        foreach ($ocrEnginesJson['ocrEngines'] as &$engine) {
+            if (in_array($engine['data'], $availEngines)) {
+                $engine['avail'] = 'Y';
             }
         }
 
-        self::$ocrEngines = implode("\n", $edited_lines);
-
+        self::$ocrEngines = json_encode($ocrEnginesJson);
         setcookie('tx-dlf-ocrEngines', self::$ocrEngines, ['SameSite' => 'lax']);
     }
 
