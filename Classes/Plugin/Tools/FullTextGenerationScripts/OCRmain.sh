@@ -55,7 +55,8 @@ function test() {
 while [ $# -gt 0 ] ; do
 	case $1 in
 		--ocrEngine)			ocrEngine="$2" ;;		# OCR-Engine to use
-		--pageId)				pageId="$2" ;;			# Page number
+		--pageId)				pageId="$2" ;;			# Page ID (eg. log59088_1)
+		--pageNum)				pageNum="$2" ;;			# Page number (eg. 1)
 		--imagePath)			imagePath="$2" ;;		# Image path/URL
 		--outputPath)			outputPath="$2" ;;		# Fulltextfile path
 		--tmpOutputPath)		tmpOutputPath="$2" ;;	# Temporary Fulltextfile path
