@@ -55,8 +55,8 @@ fi
 ocrd --log-level INFO workspace add --force --file-grp FULLTEXT --file-id "fulltext-$pageId" --page-id="$pageNum" --mimetype text/xml "$pageId.xml"
 sed -i 's/LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/LOCTYPE="URL"/' mets.xml # Replace LOCTYPE OTHER with URL
 sed -i s,"\"$pageId.xml","\"$url", mets.xml # Replace ALTO file path with URL
-xmlstarlet ed -L -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "CREATED" -v "$(date +%Y-%m-%dT%H:%M:%S%z)" mets.xml # Add Date attribute to file node
-xmlstarlet ed -L -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "SOFTWARE" -v "DFG-Viewer-OCR-On-Demand-$ocrEngine" mets.xml # Add OCR-ENGINE attribute to file node
+xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "CREATED" -v "$(date +%Y-%m-%dT%H:%M:%S%z)" mets.xml # Add Date attribute to file node
+xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "SOFTWARE" -v "DFG-Viewer-OCR-On-Demand-$ocrEngine" mets.xml # Add OCR-ENGINE attribute to file node
 
 # Validate METS:
 #apt -y install libxml2-utils
