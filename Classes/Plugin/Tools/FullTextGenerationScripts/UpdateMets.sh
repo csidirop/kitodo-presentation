@@ -62,7 +62,7 @@ for fileId in "${fileIdList[@]}"; do
 
     # Update METS by updating exisiting elements with given ALTO file:
     # todo ocrd
-    ocrd --log-level INFO workspace add --force --file-grp FULLTEXT --file-id "fulltext-$pageId" --page-id="$pageNum" --mimetype text/xml "$pageId.xml"
+    ocrd --log-level INFO workspace add --force --file-grp FULLTEXT --file-id "$pageId" --page-id="$pageNum" --mimetype text/xml "$url"
     xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -u "//mets:file[@ID='$fileId']/@CREATED" -v "$(date +%Y-%m-%dT%H:%M:%S%z)" -i "//mets:file[@ID='$fileId'][not(@CREATED)]" -t attr -n "CREATED" -v "$(date +%Y-%m-%dT%H:%M:%S%z)" mets.xml  # Add/Update date attribute to file node
     xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -u "//mets:file[@ID='$fileId']/@SOFTWARE" -v "DFG-Viewer-OCR-On-Demand-$ocrEngine" -i "//mets:file[@ID='$fileId'][not(@SOFTWARE)]" -t attr -n "SOFTWARE" -v "DFG-Viewer-OCR-On-Demand-$ocrEngine" mets.xml  # Add OCR-ENGINE attribute to file node
   fi
@@ -72,12 +72,7 @@ done
 if [[ $updated == 0 ]]; then # No FULLTEXT section for fileId
   echo "No FULLTEXT section for fileId: $fileId"; # TODO remove
   # Update METS by adding given ALTO file:
-  # mm-update add-file -G FULLTEXT -m text/xml -u $url $pageId.xml  # Add ALTO file to METS via mm-update
-  ocrd --log-level INFO workspace add --force --file-grp FULLTEXT --file-id "fulltext-$pageId" --page-id="$pageNum" --mimetype text/xml "$pageId.xml"
-  # sed -i 's/LOCTYPE="OTHER" OTHERLOCTYPE="FILE"/LOCTYPE="URL"/' mets.xml # Replace LOCTYPE OTHER with URL #TODO not needed anymore with ocrd update?
-  xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -u "//mets:file[@ID='fulltext-$pageId']/mets:FLocat/@LOCTYPE" -v "URL" -d "//mets:file[@ID='fulltext-$pageId']/mets:FLocat/@OTHERLOCTYPE" mets.xml # Replace LOCTYPE OTHER with URL #TODO not needed anymore with ocrd update?
-  # sed -i s,"\"$pageId.xml","\"$url", mets.xml # Replace ALTO file path with URL
-  xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -u "//mets:file[@ID='fulltext-$pageId']/mets:FLocat/@xlink:href" -v "$url" mets.xml
+  ocrd --log-level INFO workspace add --force --file-grp FULLTEXT --file-id "fulltext-$pageId" --page-id="fulltext-$pageNum" --mimetype text/xml "$url"
   xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "CREATED" -v "$(date +%Y-%m-%dT%H:%M:%S%z)" mets.xml # Add Date attribute to file node
   xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "SOFTWARE" -v "DFG-Viewer-OCR-On-Demand-$ocrEngine" mets.xml # Add OCR-ENGINE attribute to file node
   # TODO add `OTHER` attribute to file node as soon as ocrd gets updated
