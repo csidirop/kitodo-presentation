@@ -144,8 +144,8 @@ class PageViewController extends AbstractController
         // Get fulltext link:
         $fileGrpsFulltext = GeneralUtility::trimExplode(',', $this->extConf['fileGrpFulltext']);
 
-        while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) {
-            //check if and where fulltext is present:
+        //check if remote fulltext is present:
+        while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) { 
             if (!empty($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext])) { //fulltext is remote present
                 $fulltext['url'] = $this->document->getDoc()->getFileLocation($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
                 if ($this->settings['useInternalProxy']) {
@@ -163,21 +163,26 @@ class PageViewController extends AbstractController
                     $fulltext['url'] = $uri;
                 }
                 $fulltext['mimetype'] = $this->document->getDoc()->getFileMimeType($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
+                setcookie('tx-dlf-ocr-remotepresent', "Y", ['SameSite' => 'lax']);
                 break;
-            } else if (FullTextGenerator::checkLocal(Doc::$extKey, $this->document, $page)) { //fulltext is locally present
-                //check server protocol (https://stackoverflow.com/a/14270161):
-                if ( isset($_SERVER['HTTPS'])  &&  ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
-                    ||  isset($_SERVER['HTTP_X_FORWARDED_PROTO'])  &&  $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-                    $protocol = 'https://';
-                } else {
-                    $protocol = 'http://';
-                }
-                $fulltext['url'] = $protocol . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document, $page);
-                $fulltext['mimetype'] = "text/xml";
             } else { //no fulltext present
                 $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
+                setcookie('tx-dlf-ocr-remotepresent', "N", ['SameSite' => 'lax']);
             }
         }
+
+        if (PageViewController::getOCRengine(Doc::$extKey)!="originalremote" && FullTextGenerator::checkLocal(Doc::$extKey, $this->document, $page)) { //fulltext is locally present
+            //check server protocol (https://stackoverflow.com/a/14270161):
+            if ( isset($_SERVER['HTTPS'])  &&  ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
+                ||  isset($_SERVER['HTTP_X_FORWARDED_PROTO'])  &&  $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+                $protocol = 'https://';
+            } else {
+                $protocol = 'http://';
+            }
+            $fulltext['url'] = $protocol . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document, $page);
+            $fulltext['mimetype'] = "text/xml";
+        }
+
         if (empty($fulltext)) {
             $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrps "' . $this->extConf['fileGrpFulltext'] . '"');
         }
@@ -390,14 +395,12 @@ class PageViewController extends AbstractController
      */
     public static function getOCRengine(string $extKey):string {
         $conf = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
-        $ocrEngine = '';
 
-        if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && str_contains(self::$ocrEngines, $_COOKIE['tx-dlf-ocrEngine'])){
-            $ocrEngine = $_COOKIE['tx-dlf-ocrEngine'];
+        if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && (str_contains(self::$ocrEngines, $ocrEngine=$_COOKIE['tx-dlf-ocrEngine']) || $ocrEngine == "originalremote")){
+            return $ocrEngine;
         } else {
-            $ocrEngine = $conf['ocrEngine'] ; //get default default value
+            return $conf['ocrEngine'] ; //get default default value
         }
-        return $ocrEngine;
     }
 
     /**
