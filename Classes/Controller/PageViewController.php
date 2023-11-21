@@ -411,19 +411,23 @@ class PageViewController extends AbstractController
      * @return void
      */
     protected function generateFullText():void {
-        //OCR all pages: type=book
+        if(($engine = PageViewController::getOCRengine(Doc::$extKey)) == "originalremote") {
+            return;
+        }
+
+        // OCR all pages: (type=book)
         if($_POST["request"]["type"] == "book") {
             //collect all image urls:
             $images = array();
             for ($i=1; $i <= $this->document->getDoc()->numPages; $i++) {
                 $images[$i] = $this->getImage($i)["url"];
             }
-            FullTextGenerator::createBookFullText(Doc::$extKey, $this->document, $images, self::getOCRengine(Doc::$extKey));
+            FullTextGenerator::createBookFullText(Doc::$extKey, $this->document, $images, $engine);
             return;
         }
 
-        //OCR only this page
-        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document, $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], self::getOCRengine(Doc::$extKey));
+        // OCR only this page:
+        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document, $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], $engine);
     }
 
     /**
