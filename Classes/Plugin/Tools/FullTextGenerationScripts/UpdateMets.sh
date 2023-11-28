@@ -72,8 +72,7 @@ if [[ $updated == 0 ]]; then # No FULLTEXT section for fileId
   ocrd --log-level INFO workspace add --force --file-grp FULLTEXT --file-id "fulltext-$pageId" --page-id="$physID" --mimetype text/xml "$url"
   xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "CREATED" -v "$(date +%Y-%m-%dT%H:%M:%S%z)" mets.xml # Add Date attribute to file node
   xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "SOFTWARE" -v "DFG-Viewer-OCR-On-Demand-$ocrEngine" mets.xml # Add OCR-ENGINE attribute to file node
-  # TODO add `OTHER` attribute to file node as soon as ocrd gets updated
-  # ocrd workspace update-page --order "$pageNum"
+  # ocrd workspace update-page --order "$pageNum" "$physID" # Update physical structMap if needed
 fi
 
 # Validate METS:
