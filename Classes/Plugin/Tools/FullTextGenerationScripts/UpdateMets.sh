@@ -9,6 +9,7 @@ set -euo pipefail # exit on: error, undefined variable, pipefail
 while [ $# -gt 0 ] ; do
   case $1 in
   --pageId)       pageId="$2" ;;     # Page ID (eg. log59088_1)
+  --pageNum)      pageNum="$2" ;;    # Page number (eg. 1)
   --url)          url="$2" ;;        # Alto URL (eg. http://localhost/fileadmin/fulltextFolder//URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_1.xml)
   --outputPath)   outputPath="$2" ;; # Fulltextfile path (eg. /var/www/typo3/public/fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_1.xml)
   --ocrEngine)    ocrEngine="$2" ;;  # OCR-Engine (eg. /var/www/typo3/public/typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/tesseract-basic.sh)
@@ -21,7 +22,7 @@ done
 
 # Extract some values from parameters:
 docLocalId=$(rev <<< "$pageId" | cut -d _ -f 2- | rev) # (eg. log_59088_1 -> log_59088)
-pageNum=$(rev <<< "$pageId" | cut -d _ -f 1 | rev) # (eg. log_59088_1 -> 1)
+#pageNum=$(rev <<< "$pageId" | cut -d _ -f 1 | rev) # (eg. log_59088_1 -> 1)
 outputFolder=$(rev <<< "$outputPath" | cut -d / -f 2- | rev) # (eg. /var/www/typo3/public/fileadmin/fulltextfolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic)
 ocrEngine=$(rev <<< "$ocrEngine" | cut -d '/' -f 1 | cut -d '.' -f 2- | rev) # (eg. tesseract-basic)
 metsUrl=$(rev <<< "$url" | cut -d / -f 2- | rev)"/$docLocalId.xml"
@@ -49,10 +50,30 @@ if [ $oai ] ; then
   mv mets_tmp.xml mets.xml
 fi
 
-# Update METS with given ALTO file:
-ocrd --log-level INFO workspace add --force --file-grp FULLTEXT --file-id "fulltext-$pageId" --page-id="fulltext-$pageNum" --mimetype text/xml "$url"
-xmlstarlet ed -L -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "CREATED" -v "$(date +%Y-%m-%dT%H:%M:%S%z)" mets.xml # Add Date attribute to file node
-xmlstarlet ed -L -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "SOFTWARE" -v "DFG-Viewer-OCR-On-Demand-$ocrEngine" mets.xml # Add OCR-ENGINE attribute to file node
+# Check if there is already a FULLTEXT section for the given pageId:
+# 1. Get all FILEIDs from structMap for given page number:
+physID=$(xmlstarlet sel -N mets="http://www.loc.gov/METS/" -t -v "//mets:div[@ORDER='$pageNum']/@ID" mets.xml)
+fileIdList=($(xmlstarlet sel -N mets="http://www.loc.gov/METS/" -t -v '//mets:structMap[@TYPE="PHYSICAL"]/mets:div/mets:div[@ID="'$physID'"]/mets:fptr/@FILEID' -n mets.xml ));
+# 2. Check if there is already a FULLTEXT section for the given fileId:
+updated=0 # Flag to check if METS was updated
+for fileId in "${fileIdList[@]}"; do
+  if [[ -n $(xmlstarlet sel -N mets="http://www.loc.gov/METS/" -t -v '//mets:fileSec/mets:fileGrp[@USE="FULLTEXT"]/mets:file[@ID="'$fileId'"]/mets:FLocat/@xlink:href' -n mets.xml) ]] ; then
+    updated=1 # Set flag to 1
+
+    # Update METS by updating existing elements with given ALTO file:
+    ocrd --log-level INFO workspace add --force --file-grp FULLTEXT --file-id "$fileId" --page-id="$physID" --mimetype text/xml "$url"
+    xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -u "//mets:file[@ID='$fileId']/@CREATED" -v "$(date +%Y-%m-%dT%H:%M:%S%z)" -i "//mets:file[@ID='$fileId'][not(@CREATED)]" -t attr -n "CREATED" -v "$(date +%Y-%m-%dT%H:%M:%S%z)" mets.xml  # Add/Update date attribute to file node
+    xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -u "//mets:file[@ID='$fileId']/@SOFTWARE" -v "DFG-Viewer-OCR-On-Demand-$ocrEngine" -i "//mets:file[@ID='$fileId'][not(@SOFTWARE)]" -t attr -n "SOFTWARE" -v "DFG-Viewer-OCR-On-Demand-$ocrEngine" mets.xml  # Add OCR-ENGINE attribute to file node
+  fi
+done
+
+if [[ $updated == 0 ]]; then # No FULLTEXT section for fileId
+  # Update METS by adding given ALTO file:
+  ocrd --log-level INFO workspace add --force --file-grp FULLTEXT --file-id "fulltext-$pageId" --page-id="$physID" --mimetype text/xml "$url"
+  xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "CREATED" -v "$(date +%Y-%m-%dT%H:%M:%S%z)" mets.xml # Add Date attribute to file node
+  xmlstarlet ed -L -N mets="http://www.loc.gov/METS/" -a "//mets:file[@ID='fulltext-$pageId']" -t attr -n "SOFTWARE" -v "DFG-Viewer-OCR-On-Demand-$ocrEngine" mets.xml # Add OCR-ENGINE attribute to file node
+  # ocrd workspace update-page --order "$pageNum" "$physID" # Update physical structMap if needed
+fi
 
 # Validate METS:
 #apt -y install libxml2-utils

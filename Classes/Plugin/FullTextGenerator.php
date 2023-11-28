@@ -65,7 +65,7 @@ class FullTextGenerator {
   public static function getDocLocalPath(string $extKey, Document $document):string {
     $conf = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
     
-    return $conf['fulltextFolder'] . "/" . self::generateUniqueDocLocalPath($document);
+    return $conf['fulltextFolder'] . self::generateUniqueDocLocalPath($document);
   }
 
   /**
@@ -212,7 +212,7 @@ class FullTextGenerator {
     $outputFolderPath = "$documentPath/$ocrEngine";                   //Fulltextfolder (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
     $origMetsPath     = $documentPath."/".self::getDocLocalId($doc).".xml"; //Path to original METS (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/log59088.xml)
     $newMetsPath      = $outputFolderPath."/".self::getDocLocalId($doc).".xml"; //Path to updated METS
-    $outputPath       = "$outputFolderPath/$pageId.xml";              //Fulltextfile path
+    $outputPath       = "$outputFolderPath/$pageId.xml";              //Fulltextfile path (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_295.xml)
     $tmpOutputFolderPath = $conf['fulltextTempFolder'] . self::generateUniqueDocLocalPath($document) . "/$ocrEngine"; //(eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic)
     $tmpImagePath     = $conf['fulltextImagesFolder'] . self::generateUniqueDocLocalPath($document) . "/$pageId"; //Imagefile path (eg. fileadmin/_temp_/ocrTempFolder/images/URN/nbn/de/bsz/180/digosi/30/log59088_1)
     $tmpOutputPath    = $tmpOutputFolderPath . "/$pageId";            //Fulltextfile temporary path (eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_295)

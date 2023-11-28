@@ -144,27 +144,36 @@ class PageViewController extends AbstractController
         // Get fulltext link:
         $fileGrpsFulltext = GeneralUtility::trimExplode(',', $this->extConf['fileGrpFulltext']);
 
-        while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) {
-            //check if and where fulltext is present:
-            if (!empty($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext])) { //fulltext is remote present
-                $fulltext['url'] = $this->document->getDoc()->getFileLocation($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
-                if ($this->settings['useInternalProxy']) {
-                    // Configure @action URL for form.
-                    $uri = $this->uriBuilder->reset()
-                        ->setTargetPageUid($GLOBALS['TSFE']->id)
-                        ->setCreateAbsoluteUri(!empty($this->settings['forceAbsoluteUrl']) ? true : false)
-                        ->setArguments([
-                            'eID' => 'tx_dlf_pageview_proxy',
-                            'url' => $fulltext['url'],
-                            'uHash' => GeneralUtility::hmac($fulltext['url'], 'PageViewProxy')
-                            ])
-                        ->build();
+        if (PageViewController::getOCRengine(Doc::$extKey) == "originalremote") {
+            //check if remote fulltext exists:
+            while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) { 
+                if (!empty($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext])) { //fulltext is remote present
+                    $fulltext['url'] = $this->document->getDoc()->getFileLocation($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
+                    if ($this->settings['useInternalProxy']) {
+                        // Configure @action URL for form.
+                        $uri = $this->uriBuilder->reset()
+                            ->setTargetPageUid($GLOBALS['TSFE']->id)
+                            ->setCreateAbsoluteUri(!empty($this->settings['forceAbsoluteUrl']) ? true : false)
+                            ->setArguments([
+                                'eID' => 'tx_dlf_pageview_proxy',
+                                'url' => $fulltext['url'],
+                                'uHash' => GeneralUtility::hmac($fulltext['url'], 'PageViewProxy')
+                                ])
+                            ->build();
 
-                    $fulltext['url'] = $uri;
+                        $fulltext['url'] = $uri;
+                    }
+                    $fulltext['mimetype'] = $this->document->getDoc()->getFileMimeType($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
+                    setcookie('tx-dlf-ocr-remotepresent', "Y", ['SameSite' => 'lax']);
+                    break;
+                } else { //no fulltext present
+                    $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
+                    setcookie('tx-dlf-ocr-remotepresent', "N", ['SameSite' => 'lax']);
                 }
-                $fulltext['mimetype'] = $this->document->getDoc()->getFileMimeType($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
-                break;
-            } else if (FullTextGenerator::checkLocal(Doc::$extKey, $this->document, $page)) { //fulltext is locally present
+            }
+        } else {
+            //check if local fulltext exists:
+            if (FullTextGenerator::checkLocal(Doc::$extKey, $this->document, $page)) { //fulltext is locally present
                 //check server protocol (https://stackoverflow.com/a/14270161):
                 if ( isset($_SERVER['HTTPS'])  &&  ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
                     ||  isset($_SERVER['HTTP_X_FORWARDED_PROTO'])  &&  $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
@@ -174,10 +183,9 @@ class PageViewController extends AbstractController
                 }
                 $fulltext['url'] = $protocol . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document, $page);
                 $fulltext['mimetype'] = "text/xml";
-            } else { //no fulltext present
-                $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
             }
         }
+
         if (empty($fulltext)) {
             $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrps "' . $this->extConf['fileGrpFulltext'] . '"');
         }
@@ -390,14 +398,12 @@ class PageViewController extends AbstractController
      */
     public static function getOCRengine(string $extKey):string {
         $conf = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get($extKey);
-        $ocrEngine = '';
 
-        if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && str_contains(self::$ocrEngines, $_COOKIE['tx-dlf-ocrEngine'])){
-            $ocrEngine = $_COOKIE['tx-dlf-ocrEngine'];
+        if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && (str_contains(self::$ocrEngines, $ocrEngine=$_COOKIE['tx-dlf-ocrEngine']) || $ocrEngine == "originalremote")){
+            return $ocrEngine;
         } else {
-            $ocrEngine = $conf['ocrEngine'] ; //get default default value
+            return $conf['ocrEngine'] ; //get default default value
         }
-        return $ocrEngine;
     }
 
     /**
@@ -408,19 +414,23 @@ class PageViewController extends AbstractController
      * @return void
      */
     protected function generateFullText():void {
-        //OCR all pages: type=book
+        if(($engine = PageViewController::getOCRengine(Doc::$extKey)) == "originalremote") {
+            return;
+        }
+
+        // OCR all pages: (type=book)
         if($_POST["request"]["type"] == "book") {
             //collect all image urls:
             $images = array();
             for ($i=1; $i <= $this->document->getDoc()->numPages; $i++) {
                 $images[$i] = $this->getImage($i)["url"];
             }
-            FullTextGenerator::createBookFullText(Doc::$extKey, $this->document, $images, self::getOCRengine(Doc::$extKey));
+            FullTextGenerator::createBookFullText(Doc::$extKey, $this->document, $images, $engine);
             return;
         }
 
-        //OCR only this page
-        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document, $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], self::getOCRengine(Doc::$extKey));
+        // OCR only this page:
+        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document, $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], $engine);
     }
 
     /**

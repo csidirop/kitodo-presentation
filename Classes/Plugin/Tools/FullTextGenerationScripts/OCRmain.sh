@@ -73,7 +73,7 @@ done
 SECONDS=0 #messure time
 
 # Run given OCR-Engine:
-$ocrEngine --pageId $pageId --imagePath $imagePath --outputPath $tmpOutputPath --tmpImagePath $tmpImagePath
+$ocrEngine --pageId $pageId --pageNum $pageNum --imagePath $imagePath --outputPath $tmpOutputPath --tmpImagePath $tmpImagePath
 
 # Move temporary output file to final location, if it is not already there:
 if [ "$outputPath" != "$tmpOutputPath" ]; then 
@@ -83,7 +83,7 @@ fi
 
 # Update METS file:
 if [ "$ocrUpdateMets" == "1" ]; then
-	./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/UpdateMets.sh --pageId $pageId --outputPath $outputPath --url $url --ocrEngine $ocrEngine --ocrIndexMets $ocrIndexMets
+	./typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/UpdateMets.sh --pageId $pageId --pageNum $pageNum --outputPath $outputPath --url $url --ocrEngine $ocrEngine --ocrIndexMets $ocrIndexMets
 fi
 
 echo -e "OCR completed in $SECONDS seconds"
