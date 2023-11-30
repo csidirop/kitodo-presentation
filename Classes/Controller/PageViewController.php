@@ -144,10 +144,10 @@ class PageViewController extends AbstractController
         // Get fulltext link:
         $fileGrpsFulltext = GeneralUtility::trimExplode(',', $this->extConf['fileGrpFulltext']);
 
-        if (PageViewController::getOCRengine(Doc::$extKey) == "originalremote") {
-            //check if remote fulltext exists:
-            while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) { 
-                if (!empty($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext])) { //fulltext is remote present
+        //check if remote fulltext exists:
+        while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) { 
+            if (!empty($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext])) { //fulltext is remote present
+                if (PageViewController::getOCRengine(Doc::$extKey) == "originalremote") {
                     $fulltext['url'] = $this->document->getDoc()->getFileLocation($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
                     if ($this->settings['useInternalProxy']) {
                         // Configure @action URL for form.
@@ -164,15 +164,17 @@ class PageViewController extends AbstractController
                         $fulltext['url'] = $uri;
                     }
                     $fulltext['mimetype'] = $this->document->getDoc()->getFileMimeType($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext]);
-                    setcookie('tx-dlf-ocr-remotepresent', "Y", ['SameSite' => 'lax']);
-                    break;
-                } else { //no fulltext present
-                    $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
-                    setcookie('tx-dlf-ocr-remotepresent', "N", ['SameSite' => 'lax']);
                 }
+                setcookie('tx-dlf-ocr-remotepresent', "Y", ['SameSite' => 'lax']);
+                break;
+            } else { //no fulltext present
+                $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
+                setcookie('tx-dlf-ocr-remotepresent', "N", ['SameSite' => 'lax']);
             }
-        } else {
-            //check if local fulltext exists:
+        }
+
+        //check if local fulltext exists:
+        if (PageViewController::getOCRengine(Doc::$extKey) != "originalremote") {
             if (FullTextGenerator::checkLocal(Doc::$extKey, $this->document, $page)) { //fulltext is locally present
                 //check server protocol (https://stackoverflow.com/a/14270161):
                 if ( isset($_SERVER['HTTPS'])  &&  ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
