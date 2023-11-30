@@ -211,7 +211,7 @@ class FullTextGenerator {
     $documentPath     = self::getDocLocalPath($extKey, $document);    //Document specific path (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/)
     $outputFolderPath = "$documentPath/$ocrEngine";                   //Fulltextfolder (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/)
     $origMetsPath     = $documentPath."/".self::getDocLocalId($doc).".xml"; //Path to original METS (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/log59088.xml)
-    $newMetsPath      = $outputFolderPath."/".self::getDocLocalId($doc).".xml"; //Path to updated METS
+    $newMetsPath      = $outputFolderPath."/".self::getDocLocalId($doc).".xml"; //Path to updated METS (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088.xml)
     $outputPath       = "$outputFolderPath/$pageId.xml";              //Fulltextfile path (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_295.xml)
     $tmpOutputFolderPath = $conf['fulltextTempFolder'] . self::generateUniqueDocLocalPath($document) . "/$ocrEngine"; //(eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic)
     $tmpImagePath     = $conf['fulltextImagesFolder'] . self::generateUniqueDocLocalPath($document) . "/$pageId"; //Imagefile path (eg. fileadmin/_temp_/ocrTempFolder/images/URN/nbn/de/bsz/180/digosi/30/log59088_1)
@@ -285,7 +285,15 @@ class FullTextGenerator {
         unlink($outputPath);
       }
 
-      //4. Reload page: (without action query part)
+      //4. Remove mets lock, all working files and restore backup mets:
+      if($conf['ocrUpdateMets'] && file_exists($outputFolderPath."/lock_file")){ 
+        rename("$newMetsPath.backup", "$newMetsPath");
+        unlink($outputFolderPath."/mets.xml");
+        unlink($outputFolderPath."/mets_tmp.xml");
+        unlink($outputFolderPath."/lock_file");
+      }
+
+      //5. Reload page: (without action query part)
       $url="/viewer?tx_dlf[id]=".$GLOBALS["_GET"]['tx_dlf']["id"]."&tx_dlf[page]=".$GLOBALS["_GET"]['tx_dlf']["page"]."&no_cache=1";
       header("Refresh:0; url=$url");
     }
