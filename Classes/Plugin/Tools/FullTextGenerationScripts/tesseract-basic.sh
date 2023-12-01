@@ -7,7 +7,7 @@ set -euo pipefail # exit on: error, undefined variable, pipefail
 
 # Test fuction, for manually testing the script
 function test() {
-	tesseract https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/max/1652998276_0001.jpg "1652998276_0001_tesseract-basic" -l frak2021_1.069 txt pdf alto
+	tesseract https://digi.bib.uni-mannheim.de/fileadmin/digi/1652998276/max/1652998276_0001.jpg "1652998276_0001_tesseract-basic" txt pdf alto
 	exit 0;
 }
 
@@ -28,9 +28,9 @@ done
 # Parse URL or Path and run tesseract:
 regex='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]' #Regex for URL validation ( https://stackoverflow.com/a/3184819 )
 if [[ (${imagePath} =~ $regex) || (-f ${imagePath}) ]] ; then # If imagePath is a valid URL or a local file
-	echo "Running OCR: tesseract $imagePath $outputPath -l frak2021_1.069 alto"
+	echo "Running OCR: tesseract $imagePath $outputPath -l alto"
 
-	tesseract $imagePath $outputPath -l frak2021_1.069 alto
+	tesseract $imagePath $outputPath -l alto
 
 	exit 0
 else
