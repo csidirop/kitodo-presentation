@@ -23,69 +23,72 @@ use TYPO3\CMS\Core\Pagination\PaginationInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Core\Pagination\PaginatorInterface;
+use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
 /**
  * Abstract controller class for most of the plugin controller.
  *
- * @author Sebastian Meyer <sebastian.meyer@slub-dresden.de>
  * @package TYPO3
  * @subpackage dlf
+ *
  * @access public
+ *
+ * @abstract
  */
-abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\ActionController implements LoggerAwareInterface
+abstract class AbstractController extends ActionController implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
     /**
+     * @access protected
      * @var DocumentRepository
      */
-    protected $documentRepository;
+    protected DocumentRepository $documentRepository;
 
     /**
+     * @access public
+     *
      * @param DocumentRepository $documentRepository
+     *
+     * @return void
      */
-    public function injectDocumentRepository(DocumentRepository $documentRepository)
+    public function injectDocumentRepository(DocumentRepository $documentRepository): void
     {
         $this->documentRepository = $documentRepository;
     }
 
     /**
-     * This holds the current document
-     *
-     * @var \Kitodo\Dlf\Domain\Model\Document
      * @access protected
+     * @var Document|null This holds the current document
      */
-    protected $document;
+    protected ?Document $document = null;
 
     /**
-     * @var array
      * @access protected
+     * @var array
      */
-    protected $extConf;
+    protected array $extConf;
 
     /**
-     * This holds the request parameter
-     *
-     * @var array
      * @access protected
+     * @var array This holds the request parameter
      */
-    protected $requestData;
+    protected array $requestData;
 
     /**
-     * This holds some common data for the fluid view
-     *
-     * @var array
      * @access protected
+     * @var array This holds some common data for the fluid view
      */
-    protected $viewData;
+    protected array $viewData;
 
     /**
      * Initialize the plugin controller
      *
      * @access protected
+     *
      * @return void
      */
-    protected function initialize()
+    protected function initialize(): void
     {
         $this->requestData = GeneralUtility::_GPmerged('tx_dlf');
 
@@ -107,11 +110,11 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
      *
      * @access protected
      *
-     * @param  int $documentId: The document's UID (fallback: $this->requestData[id])
+     * @param int $documentId The document's UID (fallback: $this->requestData[id])
      *
      * @return void
      */
-    protected function loadDocument(int $documentId = 0)
+    protected function loadDocument(int $documentId = 0): void
     {
         // Get document ID from request data if not passed as parameter.
         if ($documentId === 0 && !empty($this->requestData['id'])) {
@@ -137,12 +140,14 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
 
                 if ($doc !== null) {
                     if ($doc->recordId) {
-                        $this->document = $this->documentRepository->findOneByRecordId($doc->recordId);
-                    }
-
-                    if ($this->document === null) {
-                        // create new dummy Document object
-                        $this->document = GeneralUtility::makeInstance(Document::class);
+                        // find document from repository by recordId
+                        $docFromRepository = $this->documentRepository->findOneByRecordId($doc->recordId);
+                        if ($docFromRepository !== null) {
+                            $this->document = $docFromRepository;
+                        } else {
+                            // create new dummy Document object
+                            $this->document = GeneralUtility::makeInstance(Document::class);
+                        }
                     }
 
                     // Make sure configuration PID is set when applicable
@@ -166,7 +171,7 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
 
             if ($this->document !== null) {
                 $doc = AbstractDocument::getInstance($this->document->getLocation(), $this->settings, true);
-                if ($this->document !== null && $doc !== null) {
+                if ($doc !== null) {
                     $this->document->setCurrentDocument($doc);
                 } else {
                     $this->logger->error('Failed to load document with record ID "' . $this->requestData['recordId'] . '"');
@@ -186,7 +191,7 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
      *
      * @return void
      */
-    protected function configureProxyUrl(&$url) {
+    protected function configureProxyUrl(string &$url): void {
         $this->uriBuilder->reset()
             ->setTargetPageUid($GLOBALS['TSFE']->id)
             ->setCreateAbsoluteUri(!empty($this->settings['forceAbsoluteUrl']))
@@ -201,9 +206,11 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
     /**
      * Checks if doc is missing or is empty (no pages)
      *
-     * @return boolean
+     * @access protected
+     *
+     * @return bool
      */
-    protected function isDocMissingOrEmpty()
+    protected function isDocMissingOrEmpty(): bool
     {
         return $this->isDocMissing() || $this->document->getCurrentDocument()->numPages < 1;
     }
@@ -211,15 +218,19 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
     /**
      * Checks if doc is missing
      *
-     * @return boolean
+     * @access protected
+     *
+     * @return bool
      */
-    protected function isDocMissing()
+    protected function isDocMissing(): bool
     {
         return $this->document === null || $this->document->getCurrentDocument() === null;
     }
 
     /**
      * Returns the LanguageService
+     *
+     * @access protected
      *
      * @return LanguageService
      */
@@ -229,14 +240,15 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
     }
 
     /**
-     * Safely gets Parameters from request
-     * if they exist
+     * Safely gets Parameters from request if they exist
+     *
+     * @access protected
      *
      * @param string $parameterName
      *
      * @return null|string|array
      */
-    protected function getParametersSafely($parameterName)
+    protected function getParametersSafely(string $parameterName)
     {
         if ($this->request->hasArgument($parameterName)) {
             return $this->request->getArgument($parameterName);
@@ -251,7 +263,7 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
      *
      * @return void
      */
-    protected function sanitizeRequestData()
+    protected function sanitizeRequestData(): void
     {
         // tx_dlf[id] may only be an UID or URI.
         if (
@@ -283,7 +295,7 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
      *
      * @return void
      */
-    protected function setPage() {
+    protected function setPage(): void {
         if (!empty($this->requestData['logicalPage'])) {
             $this->requestData['page'] = $this->document->getCurrentDocument()->getPhysicalPage($this->requestData['logicalPage']);
             // The logical page parameter should not appear again
@@ -300,7 +312,7 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
      *
      * @return void
      */
-    protected function setDefaultPage() {
+    protected function setDefaultPage(): void {
         // Set default values if not set.
         // $this->requestData['page'] may be integer or string (physical structure @ID)
         if (
@@ -334,7 +346,7 @@ abstract class AbstractController extends \TYPO3\CMS\Extbase\Mvc\Controller\Acti
      * @param PaginatorInterface $paginator
      * @return array
      */
-    protected function buildSimplePagination(PaginationInterface $pagination, PaginatorInterface $paginator)
+    protected function buildSimplePagination(PaginationInterface $pagination, PaginatorInterface $paginator): array
     {
         $firstPage = $pagination->getFirstPageNumber();
         $lastPage = $pagination->getLastPageNumber();

@@ -25,11 +25,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Search suggestions Middleware for plugin 'Search' of the 'dlf' extension
  *
- * @author Henrik Lochmann <dev@mentalmotive.com>
- * @author Sebastian Meyer <sebastian.meyer@slub-dresden.de>
- * @author Beatrycze Volk <beatrycze.volk@slub-dresden.de>
  * @package TYPO3
  * @subpackage dlf
+ *
  * @access public
  */
 class SearchSuggest implements MiddlewareInterface
@@ -48,7 +46,7 @@ class SearchSuggest implements MiddlewareInterface
     {
         $response = $handler->handle($request);
         // Get input parameters and decrypt core name.
-        $parameters = $request->getParsedBody();
+        $parameters = $request->getQueryParams();
         // Return if not this middleware
         if (!isset($parameters['middleware']) || ($parameters['middleware'] != 'dlf/search-suggest')) {
             return $response;

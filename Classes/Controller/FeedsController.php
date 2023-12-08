@@ -19,24 +19,24 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Controller class for the plugin 'Feeds'.
  *
- * @author Sebastian Meyer <sebastian.meyer@slub-dresden.de>
- * @author Alexander Bigga <alexander.bigga@slub-dresden.de>
  * @package TYPO3
  * @subpackage dlf
+ *
  * @access public
  */
 class FeedsController extends AbstractController
 {
 
     /**
+     * @access protected
      * @var LibraryRepository
      */
-    protected $libraryRepository;
+    protected LibraryRepository $libraryRepository;
 
     /**
      * @param LibraryRepository $libraryRepository
      */
-    public function injectLibraryRepository(LibraryRepository $libraryRepository)
+    public function injectLibraryRepository(LibraryRepository $libraryRepository): void
     {
         $this->libraryRepository = $libraryRepository;
     }
@@ -44,9 +44,11 @@ class FeedsController extends AbstractController
     /**
      * Initializes the current action
      *
+     * @access public
+     *
      * @return void
      */
-    public function initializeAction()
+    public function initializeAction(): void
     {
         $this->request->setFormat('xml');
     }
@@ -54,9 +56,11 @@ class FeedsController extends AbstractController
     /**
      * The main method of the plugin
      *
+     * @access public
+     *
      * @return void
      */
-    public function mainAction()
+    public function mainAction(): void
     {
         // access to GET parameter tx_dlf_feeds['collection']
         $requestData = $this->request->getArguments();

@@ -26,10 +26,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Search in document Middleware for plugin 'Search' of the 'dlf' extension
  *
- * @author Alexander Bigga <alexander.bigga@slub-dresden.de>
- * @author Beatrycze Volk <beatrycze.volk@slub-dresden.de>
  * @package TYPO3
  * @subpackage dlf
+ *
  * @access public
  */
 class SearchInDocument implements MiddlewareInterface
@@ -58,13 +57,13 @@ class SearchInDocument implements MiddlewareInterface
      * @param ServerRequestInterface $request
      * @param RequestHandlerInterface $handler
      *
-     * @return ResponseInterface JSON response of documents
+     * @return ResponseInterface JSON response of search suggestions
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $response = $handler->handle($request);
         // Get input parameters and decrypt core name.
-        $parameters = $request->getParsedBody();
+        $parameters = $request->getQueryParams();
         // Return if not this middleware
         if (!isset($parameters['middleware']) || ($parameters['middleware'] != 'dlf/search-in-document')) {
             return $response;
@@ -89,13 +88,14 @@ class SearchInDocument implements MiddlewareInterface
         if ($this->solr->ready) {
             $result = $this->executeSolrQuery($parameters);
             /** @scrutinizer ignore-call */
-            $output['numFound'] = $result->getNumFound();
+            $output['numFound'] = $result->getNumFound(); // @phpstan-ignore-line
             $data = $result->getData();
             $highlighting = $data['ocrHighlighting'];
 
             $siteFinder = GeneralUtility::makeInstance(SiteFinder::class);
             $site = $siteFinder->getSiteByPageId($parameters['pid']);
 
+            // @phpstan-ignore-next-line
             foreach ($result as $record) {
                 $resultDocument = new ResultDocument($record, $highlighting, $this->fields);
 
@@ -155,7 +155,7 @@ class SearchInDocument implements MiddlewareInterface
          // return the coordinates of highlighted search as absolute coordinates
         $solrRequest->addParam('hl.ocr.absoluteHighlights', 'on');
         // max amount of snippets for a single page
-        $solrRequest->addParam('hl.snippets', 40);
+        $solrRequest->addParam('hl.snippets', '40');
         // we store the fulltext on page level and can disable this option
         $solrRequest->addParam('hl.ocr.trackPages', 'off');
 
@@ -168,11 +168,11 @@ class SearchInDocument implements MiddlewareInterface
      *
      * @access private
      *
-     * @param array|object $parameters parsed from request body
+     * @param array $parameters parsed from request body
      *
      * @return string SOLR query
      */
-    private function getQuery($parameters)
+    private function getQuery(array $parameters): string
     {
         return $this->fields['fulltext'] . ':(' . Solr::escapeQuery((string) $parameters['q']) . ') AND ' . $this->fields['uid'] . ':' . $this->getUid($parameters['uid']);
     }
@@ -187,7 +187,7 @@ class SearchInDocument implements MiddlewareInterface
      *
      * @return int|string uid of the document
      */
-    private function getUid($uid)
+    private function getUid(string $uid)
     {
         return is_numeric($uid) ? intval($uid) : $uid;
     }

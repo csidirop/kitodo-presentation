@@ -12,25 +12,34 @@
 
 namespace Kitodo\Dlf\Domain\Repository;
 
+use Doctrine\DBAL\ForwardCompatibility\Result;
 use Kitodo\Dlf\Common\AbstractDocument;
 use Kitodo\Dlf\Common\Helper;
 use Kitodo\Dlf\Common\Solr\SolrSearch;
 use Kitodo\Dlf\Domain\Model\Collection;
 use Kitodo\Dlf\Domain\Model\Document;
+use Kitodo\Dlf\Domain\Model\Structure;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
-use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use TYPO3\CMS\Extbase\Persistence\Generic\QueryResult;
+use TYPO3\CMS\Extbase\Persistence\Repository;
+use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 
-class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
+/**
+ * Document repository.
+ *
+ * @package TYPO3
+ * @subpackage dlf
+ *
+ * @access public
+ */
+class DocumentRepository extends Repository
 {
     /**
-     * The controller settings passed to the repository for some special actions.
-     *
-     * @var array
      * @access protected
+     * @var array The controller settings passed to the repository for some special actions.
      */
     protected $settings;
 
@@ -44,6 +53,8 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
      * - 'recordId': the record_id of the document
      *
      * Currently used by EXT:slub_digitalcollections
+     *
+     * @access public
      *
      * @param array $parameters
      *
@@ -92,6 +103,8 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     /**
      * Find the oldest document
      *
+     * @access public
+     *
      * @return Document|null
      */
     public function findOldestDocument()
@@ -105,8 +118,11 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     }
 
     /**
+     * @access public
+     *
      * @param int $partOf
-     * @param  \Kitodo\Dlf\Domain\Model\Structure $structure
+     * @param Structure $structure
+     *
      * @return array|\TYPO3\CMS\Extbase\Persistence\QueryResultInterface
      */
     public function getChildrenOfYearAnchor($partOf, $structure)
@@ -126,6 +142,8 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     /**
      * Finds all documents for the given settings
      *
+     * @access public
+     *
      * @param int $uid
      * @param array $settings
      *
@@ -140,6 +158,8 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
 
     /**
      * Finds all documents for the given settings
+     *
+     * @access public
      *
      * @param array $settings
      *
@@ -170,6 +190,8 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
 
     /**
      * Finds all documents for the given collections
+     *
+     * @access public
      *
      * @param array $collections
      * @param int $limit
@@ -209,6 +231,8 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
      * Volumes are documents that are both
      *  a) "leaf" elements i.e. partof != 0
      *  b) "root" elements that are not referenced by other documents ("root" elements that have no descendants)
+     *
+     * @access public
      *
      * @param array $settings
      *
@@ -343,11 +367,13 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     /**
      * Build table of contents
      *
+     * @access public
+     *
      * @param int $uid
      * @param int $pid
      * @param array $settings
      *
-     * @return \Doctrine\DBAL\ForwardCompatibility\Result
+     * @return Result
      */
     public function getTableOfContentsFromDb($uid, $pid, $settings)
     {
@@ -393,6 +419,8 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     /**
      * Find one document by given settings and identifier
      *
+     * @access public
+     *
      * @param array $settings
      * @param array $parameters
      *
@@ -434,12 +462,13 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     /**
      * Finds all documents for the given settings
      *
-     * @param array $settings
+     * @access public
+     *
      * @param array $documentsToProcess
      *
-     * @return array The found document objects
+     * @return Result The found document objects
      */
-    public function getOaiDocumentList($settings, $documentsToProcess)
+    public function getOaiDocumentList($documentsToProcess): Result
     {
         $connection = GeneralUtility::makeInstance(ConnectionPool::class)
             ->getConnectionForTable('tx_dlf_documents');
@@ -462,16 +491,16 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
         ];
 
         // Create a prepared statement for the passed SQL query, bind the given params with their binding types and execute the query
-        $documents = $connection->executeQuery($sql, $values, $types);
-
-        return $documents;
+        return $connection->executeQuery($sql, $values, $types);
     }
 
     /**
      * Finds all documents with given uids
      *
+     * @access public
+     *
      * @param array $uids
-     * @param array $checkPartof Whether or not to also match $uids against partof.
+     * @param bool $checkPartof Whether or not to also match $uids against partof.
      *
      * @return array
      */
@@ -519,7 +548,7 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     }
 
     /**
-     *
+     * @access public
      *
      * @param array $uids
      *
@@ -541,10 +570,13 @@ class DocumentRepository extends \TYPO3\CMS\Extbase\Persistence\Repository
     /**
      * Find all documents with given collection from Solr
      *
-     * @param QueryResult|Collection $collection
+     * @access public
+     *
+     * @param QueryResult|Collection|null $collection
      * @param array $settings
      * @param array $searchParams
      * @param QueryResult $listedMetadata
+     *
      * @return SolrSearch
      */
     public function findSolrByCollection($collection, $settings, $searchParams, $listedMetadata = null)

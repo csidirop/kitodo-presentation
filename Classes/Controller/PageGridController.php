@@ -11,19 +11,16 @@
 
 namespace Kitodo\Dlf\Controller;
 
-use TYPO3\CMS\Core\Pagination\ArrayPaginator;
 use Kitodo\Dlf\Pagination\PageGridPagination;
 use Kitodo\Dlf\Pagination\PageGridPaginator;
-use TYPO3\CMS\Core\Pagination\SimplePagination;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Controller class for the plugin 'Page Grid'.
  *
- * @author Henrik Lochmann <dev@mentalmotive.com>
- * @author Sebastian Meyer <sebastian.meyer@slub-dresden.de>
  * @package TYPO3
  * @subpackage dlf
+ *
  * @access public
  */
 class PageGridController extends AbstractController
@@ -31,9 +28,11 @@ class PageGridController extends AbstractController
     /**
      * The main method of the plugin
      *
+     * @access public
+     *
      * @return void
      */
-    public function mainAction()
+    public function mainAction(): void
     {
         $this->loadDocument();
         if (
@@ -79,12 +78,12 @@ class PageGridController extends AbstractController
      *
      * @access protected
      *
-     * @param int $number: The page to render
-     * @param string $fileGrpThumbs: the file group(s) of thumbs
+     * @param int $number The page to render
+     * @param string $fileGrpThumbs the file group(s) of thumbs
      *
      * @return array The rendered entry ready for fluid
      */
-    protected function getEntry($number, $fileGrpThumbs)
+    protected function getEntry(int $number, string $fileGrpThumbs): array
     {
         // Set pagination.
         $entry['pagination'] = htmlspecialchars($this->document->getCurrentDocument()->physicalStructureInfo[$this->document->getCurrentDocument()->physicalStructure[$number]]['orderlabel']);

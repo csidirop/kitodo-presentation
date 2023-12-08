@@ -15,6 +15,8 @@ namespace Kitodo\Dlf\Common;
 use Kitodo\Dlf\Common\Solr\Solr;
 use Kitodo\Dlf\Domain\Repository\DocumentRepository;
 use Kitodo\Dlf\Domain\Model\Document;
+use Solarium\Core\Query\DocumentInterface;
+use Solarium\QueryType\Update\Query\Query;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
@@ -25,29 +27,28 @@ use TYPO3\CMS\Core\Core\Environment;
 /**
  * Indexer class for the 'dlf' extension
  *
- * @author Sebastian Meyer <sebastian.meyer@slub-dresden.de>
  * @package TYPO3
  * @subpackage dlf
+ *
  * @access public
  */
 class Indexer
 {
     /**
-     * The extension key
-     *
-     * @var string
      * @access public
+     * @static
+     * @var string The extension key
      */
-    public static $extKey = 'dlf';
+    public static string $extKey = 'dlf';
 
     /**
-     * Array of metadata fields' configuration
-     * @see loadIndexConf()
-     *
-     * @var array
      * @access protected
+     * @static
+     * @var array Array of metadata fields' configuration
+     *
+     * @see loadIndexConf()
      */
-    protected static $fields = [
+    protected static array $fields = [
         'autocomplete' => [],
         'facets' => [],
         'sortables' => [],
@@ -58,40 +59,41 @@ class Indexer
     ];
 
     /**
-     * Is the index configuration loaded?
+     * @access protected
+     * @static
+     * @var bool Is the index configuration loaded?
+     *
      * @see $fields
-     *
-     * @var bool
-     * @access protected
      */
-    protected static $fieldsLoaded = false;
+    protected static bool $fieldsLoaded = false;
 
     /**
-     * List of already processed documents
-     *
-     * @var array
      * @access protected
+     * @static
+     * @var array List of already processed documents
      */
-    protected static $processedDocs = [];
+    protected static array $processedDocs = [];
 
     /**
-     * Instance of \Kitodo\Dlf\Common\Solr\Solr class
-     *
-     * @var Solr
      * @access protected
+     * @static
+     * @var Solr Instance of Solr class
      */
-    protected static $solr;
+    protected static Solr $solr;
 
     /**
      * Insert given document into Solr index
      *
      * @access public
      *
-     * @param \Kitodo\Dlf\Domain\Model\Document $document: The document to add
+     * @static
+     *
+     * @param Document $document The document to add
+     * @param DocumentRepository $documentRepository The document repository for search of parent
      *
      * @return bool true on success or false on failure
      */
-    public static function add(Document $document, DocumentRepository $documentRepository)
+    public static function add(Document $document, DocumentRepository $documentRepository): bool
     {
         if (in_array($document->getUid(), self::$processedDocs)) {
             return true;
@@ -198,12 +200,14 @@ class Indexer
      *
      * @access public
      *
-     * @param string $index_name: The metadata field's name in database
-     * @param int $pid: UID of the configuration page
+     * @static
+     *
+     * @param string $indexName The metadata field's name in database
+     * @param int $pid UID of the configuration page
      *
      * @return string The field's dynamic index name
      */
-    public static function getIndexFieldName($index_name, $pid = 0)
+    public static function getIndexFieldName(string $indexName, int $pid = 0): string
     {
         // Sanitize input.
         $pid = max(intval($pid), 0);
@@ -214,11 +218,11 @@ class Indexer
         // Load metadata configuration.
         self::loadIndexConf($pid);
         // Build field's suffix.
-        $suffix = (in_array($index_name, self::$fields['tokenized']) ? 't' : 'u');
-        $suffix .= (in_array($index_name, self::$fields['stored']) ? 's' : 'u');
-        $suffix .= (in_array($index_name, self::$fields['indexed']) ? 'i' : 'u');
-        $index_name .= '_' . $suffix;
-        return $index_name;
+        $suffix = (in_array($indexName, self::$fields['tokenized']) ? 't' : 'u');
+        $suffix .= (in_array($indexName, self::$fields['stored']) ? 's' : 'u');
+        $suffix .= (in_array($indexName, self::$fields['indexed']) ? 'i' : 'u');
+        $indexName .= '_' . $suffix;
+        return $indexName;
     }
 
     /**
@@ -226,11 +230,13 @@ class Indexer
      *
      * @access protected
      *
-     * @param int $pid: The configuration page's UID
+     * @static
+     *
+     * @param int $pid The configuration page's UID
      *
      * @return void
      */
-    protected static function loadIndexConf($pid)
+    protected static function loadIndexConf(int $pid): void
     {
         if (!self::$fieldsLoaded) {
             $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
@@ -296,12 +302,14 @@ class Indexer
      *
      * @access protected
      *
-     * @param \Kitodo\Dlf\Domain\Model\Document $document: The METS document
-     * @param array $logicalUnit: Array of the logical unit to process
+     * @static
+     *
+     * @param Document $document The METS document
+     * @param array $logicalUnit Array of the logical unit to process
      *
      * @return bool true on success or false on failure
      */
-    protected static function processLogical(Document $document, array $logicalUnit)
+    protected static function processLogical(Document $document, array $logicalUnit): bool
     {
         $success = true;
         $doc = $document->getCurrentDocument();
@@ -425,13 +433,15 @@ class Indexer
      *
      * @access protected
      *
-     * @param \Kitodo\Dlf\Domain\Model\Document $document: The METS document
-     * @param int $page: The page number
-     * @param array $physicalUnit: Array of the physical unit to process
+     * @static
+     *
+     * @param Document $document The METS document
+     * @param int $page The page number
+     * @param array $physicalUnit Array of the physical unit to process
      *
      * @return bool true on success or false on failure
      */
-    protected static function processPhysical(Document $document, $page, array $physicalUnit)
+    protected static function processPhysical(Document $document, int $page, array $physicalUnit): bool
     {
         $doc = $document->getCurrentDocument();
         $doc->cPid = $document->getPid();
@@ -452,6 +462,7 @@ class Indexer
             $solrDoc->setField('toplevel', false);
             $solrDoc->setField('type', $physicalUnit['type'], self::$fields['fieldboost']['type']);
             $solrDoc->setField('collection', $doc->metadataArray[$doc->toplevelId]['collection']);
+            $solrDoc->setField('location', $document->getLocation());
 
             $solrDoc->setField('fulltext', $fullText);
             if (is_array($doc->metadataArray[$doc->toplevelId])) {
@@ -512,28 +523,27 @@ class Indexer
      *
      * @access protected
      *
-     * @param int $core: UID of the Solr core
-     * @param int $pid: UID of the configuration page
+     * @static
+     *
+     * @param int $core UID of the Solr core
+     * @param int $pid UID of the configuration page
      *
      * @return bool true on success or false on failure
      */
-    protected static function solrConnect($core, $pid = 0)
+    protected static function solrConnect(int $core, int $pid = 0): bool
     {
         // Get Solr instance.
-        if (!self::$solr) {
-            // Connect to Solr server.
-            $solr = Solr::getInstance($core);
-            if ($solr->ready) {
-                self::$solr = $solr;
-                // Load indexing configuration if needed.
-                if ($pid) {
-                    self::loadIndexConf($pid);
-                }
-            } else {
-                return false;
+        $solr = Solr::getInstance($core);
+        // Connect to Solr server.
+        if ($solr->ready) {
+            self::$solr = $solr;
+            // Load indexing configuration if needed.
+            if ($pid) {
+                self::loadIndexConf($pid);
             }
+            return true;
         }
-        return true;
+        return false;
     }
 
     /**
@@ -541,14 +551,17 @@ class Indexer
      *
      * @access private
      *
-     * @param \Solarium\QueryType\Update\Query\Query $updateQuery solarium query
-     * @param \Kitodo\Dlf\Domain\Model\Document $document: The METS document
-     * @param array $unit: Array of the logical or physical unit to process
-     * @param string $fullText: Text containing full text for indexing
+     * @static
      *
-     * @return \Solarium\Core\Query\DocumentInterface
+     * @param Query $updateQuery solarium query
+     * @param Document $document The METS document
+     * @param array $unit Array of the logical or physical unit to process
+     * @param string $fullText Text containing full text for indexing
+     *
+     * @return DocumentInterface
      */
-    private static function getSolrDocument($updateQuery, $document, $unit, $fullText = '') {
+    private static function getSolrDocument(Query $updateQuery, Document $document, array $unit, string $fullText = ''): DocumentInterface
+    {
         $solrDoc = $updateQuery->createDocument();
         // Create unique identifier from document's UID and unit's XML ID.
         $solrDoc->setField('id', $document->getUid() . $unit['id']);
@@ -568,11 +581,14 @@ class Indexer
      *
      * @access private
      *
-     * @param array|string $authors: Array or string containing author/authors
+     * @static
+     *
+     * @param array|string $authors Array or string containing author/authors
      *
      * @return array|string
      */
-    private static function removeAppendsFromAuthor($authors) {
+    private static function removeAppendsFromAuthor($authors)
+    {
         if (is_array($authors)) {
             foreach ($authors as $i => $author) {
                 $splitName = explode(chr(31), $author);
@@ -586,10 +602,10 @@ class Indexer
      * Prevent instantiation by hiding the constructor
      *
      * @access private
+     *
+     * @return void
      */
-    private function __construct(DocumentRepository $documentRepository)
+    private function __construct()
     {
-        // This is a static class, thus no instances should be created.
-        $this->documentRepository = $documentRepository;
     }
 }

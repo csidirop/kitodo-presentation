@@ -23,62 +23,74 @@ use Ubl\Iiif\Tools\IiifHelper;
 /**
  * Document class for the 'dlf' extension
  *
- * @author Sebastian Meyer <sebastian.meyer@slub-dresden.de>
- * @author Henrik Lochmann <dev@mentalmotive.com>
  * @package TYPO3
  * @subpackage dlf
+ *
  * @access public
- * @property int $cPid This holds the PID for the configuration
- * @property-read bool $hasFulltext Are there any fulltext files available?
- * @property-read array $metadataArray This holds the documents' parsed metadata array
- * @property-read int $numPages The holds the total number of pages
- * @property-read int $parentId This holds the UID of the parent document or zero if not multi-volumed
- * @property-read array $physicalStructure This holds the physical structure
- * @property-read array $physicalStructureInfo This holds the physical structure metadata
- * @property-read int $pid This holds the PID of the document or zero if not in database
- * @property-read bool $ready Is the document instantiated successfully?
- * @property-read string $recordId The METS file's / IIIF manifest's record identifier
- * @property-read int $rootId This holds the UID of the root document or zero if not multi-volumed
- * @property-read array $smLinks This holds the smLinks between logical and physical structMap
- * @property-read array $tableOfContents This holds the logical structure
- * @property-read string $thumbnail This holds the document's thumbnail location
- * @property-read string $toplevelId This holds the toplevel structure's "@ID" (METS) or the manifest's "@id" (IIIF)
+ *
  * @abstract
+ *
+ * @property int $cPid this holds the PID for the configuration
+ * @property-read array $formats this holds the configuration for all supported metadata encodings
+ * @property bool $formatsLoaded flag with information if the available metadata formats are loaded
+ * @property-read bool $hasFulltext flag with information if there are any fulltext files available
+ * @property array $lastSearchedPhysicalPage the last searched logical and physical page
+ * @property array $logicalUnits this holds the logical units
+ * @property-read array $metadataArray this holds the documents' parsed metadata array
+ * @property bool $metadataArrayLoaded flag with information if the metadata array is loaded
+ * @property-read int $numPages the holds the total number of pages
+ * @property-read int $parentId this holds the UID of the parent document or zero if not multi-volumed
+ * @property-read array $physicalStructure this holds the physical structure
+ * @property-read array $physicalStructureInfo this holds the physical structure metadata
+ * @property bool $physicalStructureLoaded flag with information if the physical structure is loaded
+ * @property-read int $pid this holds the PID of the document or zero if not in database
+ * @property array $rawTextArray this holds the documents' raw text pages with their corresponding structMap//div's ID (METS) or Range / Manifest / Sequence ID (IIIF) as array key
+ * @property-read bool $ready Is the document instantiated successfully?
+ * @property-read string $recordId the METS file's / IIIF manifest's record identifier
+ * @property-read int $rootId this holds the UID of the root document or zero if not multi-volumed
+ * @property-read array $smLinks this holds the smLinks between logical and physical structMap
+ * @property bool $smLinksLoaded flag with information if the smLinks are loaded
+ * @property-read array $tableOfContents this holds the logical structure
+ * @property bool $tableOfContentsLoaded flag with information if the table of contents is loaded
+ * @property-read string $thumbnail this holds the document's thumbnail location
+ * @property bool $thumbnailLoaded flag with information if the thumbnail is loaded
+ * @property-read string $toplevelId this holds the toplevel structure's "@ID" (METS) or the manifest's "@id" (IIIF)
+ * @property \SimpleXMLElement $xml this holds the whole XML file as \SimpleXMLElement object
  */
 abstract class AbstractDocument
 {
     /**
-     * This holds the logger
-     *
-     * @var Logger
      * @access protected
+     * @var Logger This holds the logger
      */
-    protected $logger;
+    protected Logger $logger;
 
     /**
-     * This holds the PID for the configuration
-     *
-     * @var int
      * @access protected
+     * @var int This holds the PID for the configuration
      */
-    protected $cPid = 0;
+    protected int $cPid = 0;
 
     /**
-     * The extension key
-     *
-     * @var string
      * @access public
+     * @static
+     * @var string The extension key
      */
-    public static $extKey = 'dlf';
+    public static string $extKey = 'dlf';
 
     /**
-     * This holds the configuration for all supported metadata encodings
-     * @see loadFormats()
-     *
-     * @var array
      * @access protected
+     * @var array Additional information about files (e.g., ADMID), indexed by ID.
      */
-    protected $formats = [
+    protected array $fileInfos = [];
+
+    /**
+     * @access protected
+     * @var array This holds the configuration for all supported metadata encodings
+     *
+     * @see loadFormats()
+     */
+    protected array $formats = [
         'OAI' => [
             'rootElement' => 'OAI-PMH',
             'namespaceURI' => 'http://www.openarchives.org/OAI/2.0/',
@@ -94,239 +106,295 @@ abstract class AbstractDocument
     ];
 
     /**
-     * Are the available metadata formats loaded?
-     * @see $formats
-     *
-     * @var bool
      * @access protected
+     * @var bool Are the available metadata formats loaded?
+     *
+     * @see $formats
      */
-    protected $formatsLoaded = false;
+    protected bool $formatsLoaded = false;
 
     /**
      * Are there any fulltext files available? This also includes IIIF text annotations
      * with motivation 'painting' if Kitodo.Presentation is configured to store text
      * annotations as fulltext.
      *
+     * @access protected
      * @var bool
-     * @access protected
      */
-    protected $hasFulltext = false;
+    protected bool $hasFulltext = false;
 
     /**
-     * Last searched logical and physical page
-     *
-     * @var array
      * @access protected
+     * @var array Last searched logical and physical page
      */
-    protected $lastSearchedPhysicalPage = ['logicalPage' => null, 'physicalPage' => null];
+    protected array $lastSearchedPhysicalPage = ['logicalPage' => null, 'physicalPage' => null];
 
     /**
-     * This holds the logical units
-     *
-     * @var array
      * @access protected
+     * @var array This holds the logical units
      */
-    protected $logicalUnits = [];
+    protected array $logicalUnits = [];
 
     /**
      * This holds the documents' parsed metadata array with their corresponding
      * structMap//div's ID (METS) or Range / Manifest / Sequence ID (IIIF) as array key
      *
-     * @var array
      * @access protected
+     * @var array
      */
-    protected $metadataArray = [];
+    protected array $metadataArray = [];
 
     /**
-     * Is the metadata array loaded?
+     * @access protected
+     * @var bool Is the metadata array loaded?
+     *
      * @see $metadataArray
-     *
-     * @var bool
-     * @access protected
      */
-    protected $metadataArrayLoaded = false;
+    protected bool $metadataArrayLoaded = false;
 
     /**
-     * The holds the total number of pages
-     *
-     * @var int
      * @access protected
+     * @var int The holds the total number of pages
      */
-    protected $numPages = 0;
+    protected int $numPages = 0;
 
     /**
-     * This holds the UID of the parent document or zero if not multi-volumed
-     *
-     * @var int
      * @access protected
+     * @var int This holds the UID of the parent document or zero if not multi-volumed
      */
-    protected $parentId = 0;
+    protected int $parentId = 0;
 
     /**
-     * This holds the physical structure
-     *
-     * @var array
      * @access protected
+     * @var array This holds the physical structure
      */
-    protected $physicalStructure = [];
+    protected array $physicalStructure = [];
 
     /**
-     * This holds the physical structure metadata
-     *
-     * @var array
      * @access protected
+     * @var array This holds the physical structure metadata
      */
-    protected $physicalStructureInfo = [];
+    protected array $physicalStructureInfo = [];
 
     /**
-     * Is the physical structure loaded?
+     * @access protected
+     * @var bool Is the physical structure loaded?
+     *
      * @see $physicalStructure
-     *
-     * @var bool
-     * @access protected
      */
-    protected $physicalStructureLoaded = false;
+    protected bool $physicalStructureLoaded = false;
 
     /**
-     * This holds the PID of the document or zero if not in database
-     *
-     * @var int
      * @access protected
+     * @var int This holds the PID of the document or zero if not in database
      */
-    protected $pid = 0;
+    protected int $pid = 0;
 
     /**
      * This holds the documents' raw text pages with their corresponding
      * structMap//div's ID (METS) or Range / Manifest / Sequence ID (IIIF) as array key
      *
+     * @access protected
      * @var array
-     * @access protected
      */
-    protected $rawTextArray = [];
+    protected array $rawTextArray = [];
 
     /**
-     * Is the document instantiated successfully?
-     *
-     * @var bool
      * @access protected
+     * @var bool Is the document instantiated successfully?
      */
-    protected $ready = false;
+    protected bool $ready = false;
 
     /**
-     * The METS file's / IIIF manifest's record identifier
-     *
-     * @var string
      * @access protected
+     * @var string The METS file's / IIIF manifest's record identifier
      */
-    protected $recordId;
+    protected string $recordId = '';
 
     /**
-     * This holds the singleton object of the document
-     *
-     * @var array (AbstractDocument)
+     * @access protected
      * @static
-     * @access protected
+     * @var array (AbstractDocument) This holds the singleton object of the document
      */
-    protected static $registry = [];
+    protected static array $registry = [];
 
     /**
-     * This holds the UID of the root document or zero if not multi-volumed
+     * @access protected
+     * @var int This holds the UID of the root document or zero if not multi-volumed
+     */
+    protected int $rootId = 0;
+
+    /**
+     * @access protected
+     * @var bool Is the root id loaded?
      *
-     * @var int
-     * @access protected
-     */
-    protected $rootId = 0;
-
-    /**
-     * Is the root id loaded?
      * @see $rootId
-     *
-     * @var bool
-     * @access protected
      */
-    protected $rootIdLoaded = false;
+    protected bool $rootIdLoaded = false;
 
     /**
-     * This holds the smLinks between logical and physical structMap
-     *
-     * @var array
      * @access protected
+     * @var array This holds the smLinks between logical and physical structMap
      */
-    protected $smLinks = ['l2p' => [], 'p2l' => []];
+    protected array $smLinks = ['l2p' => [], 'p2l' => []];
 
     /**
-     * Are the smLinks loaded?
+     * @access protected
+     * @var bool Are the smLinks loaded?
+     *
      * @see $smLinks
-     *
-     * @var bool
-     * @access protected
      */
-    protected $smLinksLoaded = false;
+    protected bool $smLinksLoaded = false;
 
     /**
      * This holds the logical structure
      *
+     * @access protected
      * @var array
-     * @access protected
      */
-    protected $tableOfContents = [];
+    protected array $tableOfContents = [];
 
     /**
-     * Is the table of contents loaded?
+     * @access protected
+     * @var bool Is the table of contents loaded?
+     *
      * @see $tableOfContents
-     *
-     * @var bool
-     * @access protected
      */
-    protected $tableOfContentsLoaded = false;
+    protected bool $tableOfContentsLoaded = false;
 
     /**
-     * This holds the document's thumbnail location
-     *
-     * @var string
      * @access protected
+     * @var string This holds the document's thumbnail location
      */
-    protected $thumbnail = '';
+    protected string $thumbnail = '';
 
     /**
-     * Is the document's thumbnail location loaded?
+     * @access protected
+     * @var bool Is the document's thumbnail location loaded?
+     *
      * @see $thumbnail
-     *
-     * @var bool
-     * @access protected
      */
-    protected $thumbnailLoaded = false;
+    protected bool $thumbnailLoaded = false;
 
     /**
-     * This holds the toplevel structure's "@ID" (METS) or the manifest's "@id" (IIIF)
-     *
-     * @var string
      * @access protected
+     * @var string This holds the toplevel structure's "@ID" (METS) or the manifest's "@id" (IIIF)
      */
-    protected $toplevelId = '';
+    protected string $toplevelId = '';
 
     /**
-     * This holds the whole XML file as \SimpleXMLElement object
-     *
-     * @var \SimpleXMLElement
      * @access protected
+     * @var \SimpleXMLElement This holds the whole XML file as \SimpleXMLElement object
      */
-    protected $xml;
+    protected \SimpleXMLElement $xml;
 
     /**
-     * This clears the static registry to prevent memory exhaustion
+     * This gets the location of a downloadable file for a physical page or track
      *
      * @access public
      *
-     * @static
+     * @abstract
+     *
+     * @param string $id The "@ID" attribute of the file node (METS) or the "@id" property of the IIIF resource
+     *
+     * @return string The file's location as URL
+     */
+    abstract public function getDownloadLocation(string $id): string;
+
+    /**
+     * This gets all file information stored in single array.
+     *
+     * @access public
+     *
+     * @abstract
+     *
+     * @param string $id The "@ID" attribute of the file node (METS) or the "@id" property of the IIIF resource
+     * 
+     * @return array|null The set of file information
+     */
+    abstract public function getFileInfo($id): ?array;
+
+    /**
+     * This gets the location of a file representing a physical page or track
+     *
+     * @access public
+     *
+     * @abstract
+     *
+     * @param string $id The "@ID" attribute of the file node (METS) or the "@id" property of the IIIF resource
+     *
+     * @return string The file's location as URL
+     */
+    abstract public function getFileLocation(string $id): string;
+
+    /**
+     * This gets the MIME type of a file representing a physical page or track
+     *
+     * @access public
+     *
+     * @abstract
+     *
+     * @param string $id The "@ID" attribute of the file node
+     *
+     * @return string The file's MIME type
+     */
+    abstract public function getFileMimeType(string $id): string;
+
+    /**
+     * This extracts the OCR full text for a physical structure node / IIIF Manifest / Canvas. Text might be
+     * given as ALTO for METS or as annotations or ALTO for IIIF resources.
+     *
+     * @access public
+     *
+     * @abstract
+     *
+     * @param string $id The "@ID" attribute of the physical structure node (METS) or the "@id" property
+     * of the Manifest / Range (IIIF)
+     *
+     * @return string The OCR full text
+     */
+    abstract public function getFullText(string $id): string;
+
+    /**
+     * This gets details about a logical structure element
+     *
+     * @access public
+     *
+     * @abstract
+     *
+     * @param string $id The "@ID" attribute of the logical structure node (METS) or
+     * the "@id" property of the Manifest / Range (IIIF)
+     * @param bool $recursive Whether to include the child elements / resources
+     *
+     * @return array Array of the element's id, label, type and physical page indexes/mptr link
+     */
+    abstract public function getLogicalStructure(string $id, bool $recursive = false): array;
+
+    /**
+     * This extracts all the metadata for a logical structure node
+     *
+     * @access public
+     *
+     * @abstract
+     *
+     * @param string $id The "@ID" attribute of the logical structure node (METS) or the "@id" property
+     * of the Manifest / Range (IIIF)
+     * @param int $cPid The PID for the metadata definitions (defaults to $this->cPid or $this->pid)
+     *
+     * @return array The logical structure node's / the IIIF resource's parsed metadata array
+     */
+    abstract public function getMetadata(string $id, int $cPid = 0): array;
+
+    /**
+     * Analyze the document if it contains any fulltext that needs to be indexed.
+     *
+     * @access protected
+     *
+     * @abstract
      *
      * @return void
      */
-    public static function clearRegistry()
-    {
-        // Reset registry array.
-        self::$registry = [];
-    }
+    abstract protected function ensureHasFulltextIsSet(): void;
 
     /**
      * This ensures that the recordId, if existent, is retrieved from the document
@@ -335,10 +403,11 @@ abstract class AbstractDocument
      *
      * @abstract
      *
-     * @param int $pid: ID of the configuration page with the recordId config
+     * @param int $pid ID of the configuration page with the recordId config
      *
+     * @return void
      */
-    protected abstract function establishRecordId($pid);
+    abstract protected function establishRecordId(int $pid): void;
 
     /**
      * Source document PHP object which is represented by a Document instance
@@ -350,46 +419,108 @@ abstract class AbstractDocument
      * @return \SimpleXMLElement|IiifResourceInterface An PHP object representation of
      * the current document. SimpleXMLElement for METS, IiifResourceInterface for IIIF
      */
-    protected abstract function getDocument();
+    abstract protected function getDocument();
 
     /**
-     * This gets the location of a downloadable file for a physical page or track
+     * This builds an array of the document's physical structure
      *
-     * @access public
+     * @access protected
      *
      * @abstract
      *
-     * @param string $id: The "@ID" attribute of the file node (METS) or the "@id" property of the IIIF resource
-     *
-     * @return string    The file's location as URL
+     * @return array Array of physical elements' id, type, label and file representations ordered
+     * by "@ORDER" attribute / IIIF Sequence's Canvases
      */
-    public abstract function getDownloadLocation($id);
+    abstract protected function magicGetPhysicalStructure(): array;
 
     /**
-     * This gets the location of a file representing a physical page or track
+     * This returns the smLinks between logical and physical structMap (METS) and models the
+     * relation between IIIF Canvases and Manifests / Ranges in the same way
      *
-     * @access public
+     * @access protected
      *
      * @abstract
      *
-     * @param string $id: The "@ID" attribute of the file node (METS) or the "@id" property of the IIIF resource
-     *
-     * @return string The file's location as URL
+     * @return array The links between logical and physical nodes / Range, Manifest and Canvas
      */
-    public abstract function getFileLocation($id);
+    abstract protected function magicGetSmLinks(): array;
 
     /**
-     * This gets the MIME type of a file representing a physical page or track
+     * This returns the document's thumbnail location
      *
-     * @access public
+     * @access protected
      *
      * @abstract
      *
-     * @param string $id: The "@ID" attribute of the file node
+     * @param bool $forceReload Force reloading the thumbnail instead of returning the cached value
      *
-     * @return string The file's MIME type
+     * @return string The document's thumbnail location
      */
-    public abstract function getFileMimeType($id);
+    abstract protected function magicGetThumbnail(bool $forceReload = false): string;
+
+    /**
+     * This returns the ID of the toplevel logical structure node
+     *
+     * @access protected
+     *
+     * @abstract
+     *
+     * @return string The logical structure node's ID
+     */
+    abstract protected function magicGetToplevelId(): string;
+
+    /**
+     * This sets some basic class properties
+     *
+     * @access protected
+     *
+     * @abstract
+     *
+     * @param string $location The location URL of the XML file to parse
+     * @param array $settings The extension settings
+     *
+     * @return void
+     */
+    abstract protected function init(string $location, array $settings): void;
+
+    /**
+     * METS/IIIF specific part of loading a location
+     *
+     * @access protected
+     *
+     * @abstract
+     *
+     * @param string $location The URL of the file to load
+     *
+     * @return bool true on success or false on failure
+     */
+    abstract protected function loadLocation(string $location): bool;
+
+    /**
+     * Format specific part of building the document's metadata array
+     *
+     * @access protected
+     *
+     * @abstract
+     *
+     * @param int $cPid
+     *
+     * @return void
+     */
+    abstract protected function prepareMetadataArray(int $cPid): void;
+
+    /**
+     * Reuse any document object that might have been already loaded to determine whether document is METS or IIIF
+     *
+     * @access protected
+     *
+     * @abstract
+     *
+     * @param \SimpleXMLElement|IiifResourceInterface $preloadedDocument any instance that has already been loaded
+     *
+     * @return bool true if $preloadedDocument can actually be reused, false if it has to be loaded again
+     */
+    abstract protected function setPreloadedDocument($preloadedDocument): bool;
 
     /**
      * This is a singleton class, thus an instance must be created by this method
@@ -398,24 +529,27 @@ abstract class AbstractDocument
      *
      * @static
      *
-     * @param string $location: The URL of XML file or the IRI of the IIIF resource
+     * @param string $location The URL of XML file or the IRI of the IIIF resource
      * @param array $settings
-     * @param bool $forceReload: Force reloading the document instead of returning the cached instance
+     * @param bool $forceReload Force reloading the document instead of returning the cached instance
      *
      * @return AbstractDocument|null Instance of this class, either MetsDocument or IiifManifest
      */
-    public static function &getInstance($location, $settings = [], $forceReload = false)
+    public static function &getInstance(string $location, array $settings = [], bool $forceReload = false)
     {
         // Create new instance depending on format (METS or IIIF) ...
         $documentFormat = null;
         $xml = null;
         $iiif = null;
 
-        if ($instance = self::getDocCache($location) && !$forceReload) {
-            return $instance;
-        } else {
-            $instance = null;
+        if (!$forceReload) {
+            $instance = self::getDocumentCache($location);
+            if ($instance !== false) {
+                return $instance;
+            }
         }
+
+        $instance = null;
 
         // Try to load a file from the url
         if (GeneralUtility::isValidUrl($location)) {
@@ -449,59 +583,45 @@ abstract class AbstractDocument
         // Sanitize input.
         $pid = max(intval($settings['storagePid']), 0);
         if ($documentFormat == 'METS') {
-            $instance = new MetsDocument($location, $pid, $xml);
+            $instance = new MetsDocument($pid, $location, $xml, $settings);
         } elseif ($documentFormat == 'IIIF') {
-            $instance = new IiifManifest($location, $pid, $iiif);
+            // TODO: Parameter $preloadedDocument of class Kitodo\Dlf\Common\IiifManifest constructor expects SimpleXMLElement|Ubl\Iiif\Presentation\Common\Model\Resources\IiifResourceInterface, Ubl\Iiif\Presentation\Common\Model\AbstractIiifEntity|null given.
+            // @phpstan-ignore-next-line
+            $instance = new IiifManifest($pid, $location, $iiif);
         }
 
-        if ($instance) {
-            self::setDocCache($location, $instance);
+        if (!is_null($instance)) {
+            self::setDocumentCache($location, $instance);
         }
 
         return $instance;
     }
 
     /**
-     * This gets details about a logical structure element
+     * This clears the static registry to prevent memory exhaustion
      *
      * @access public
      *
-     * @abstract
+     * @static
      *
-     * @param string $id: The "@ID" attribute of the logical structure node (METS) or
-     * the "@id" property of the Manifest / Range (IIIF)
-     * @param bool $recursive: Whether to include the child elements / resources
-     *
-     * @return array Array of the element's id, label, type and physical page indexes/mptr link
+     * @return void
      */
-    public abstract function getLogicalStructure($id, $recursive = false);
-
-    /**
-     * This extracts all the metadata for a logical structure node
-     *
-     * @access public
-     *
-     * @abstract
-     *
-     * @param string $id: The "@ID" attribute of the logical structure node (METS) or the "@id" property
-     * of the Manifest / Range (IIIF)
-     * @param int $cPid: The PID for the metadata definitions
-     *                       (defaults to $this->cPid or $this->pid)
-     *
-     * @return array The logical structure node's / the IIIF resource's parsed metadata array
-     */
-    public abstract function getMetadata($id, $cPid = 0);
+    public static function clearRegistry(): void
+    {
+        // Reset registry array.
+        self::$registry = [];
+    }
 
     /**
      * This returns the first corresponding physical page number of a given logical page label
      *
      * @access public
      *
-     * @param string $logicalPage: The label (or a part of the label) of the logical page
+     * @param string $logicalPage The label (or a part of the label) of the logical page
      *
      * @return int The physical page number
      */
-    public function getPhysicalPage($logicalPage)
+    public function getPhysicalPage(string $logicalPage): int
     {
         if (
             !empty($this->lastSearchedPhysicalPage['logicalPage'])
@@ -523,37 +643,22 @@ abstract class AbstractDocument
     }
 
     /**
-     * This extracts the OCR full text for a physical structure node / IIIF Manifest / Canvas. Text might be
-     * given as ALTO for METS or as annotations or ALTO for IIIF resources.
-     *
-     * @access public
-     *
-     * @abstract
-     *
-     * @param string $id: The "@ID" attribute of the physical structure node (METS) or the "@id" property
-     * of the Manifest / Range (IIIF)
-     *
-     * @return string The OCR full text
-     */
-    public abstract function getFullText($id);
-
-    /**
      * This extracts the OCR full text for a physical structure node / IIIF Manifest / Canvas from an
      * XML full text representation (currently only ALTO). For IIIF manifests, ALTO documents have
      * to be given in the Canvas' / Manifest's "seeAlso" property.
      *
-     * @param string $id: The "@ID" attribute of the physical structure node (METS) or the "@id" property
+     * @param string $id The "@ID" attribute of the physical structure node (METS) or the "@id" property
      * of the Manifest / Range (IIIF)
      *
      * @return string The OCR full text
      */
-    protected function getFullTextFromXml($id)
+    protected function getFullTextFromXml(string $id): string
     {
         $fullText = '';
         // Load available text formats, ...
         $this->loadFormats();
         // ... physical structure ...
-        $this->_getPhysicalStructure();
+        $this->magicGetPhysicalStructure();
         // ... and extension configuration.
         $extConf = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get(self::$extKey);
         $fileGrpsFulltext = GeneralUtility::trimExplode(',', $extConf['fileGrpFulltext']);
@@ -607,11 +712,11 @@ abstract class AbstractDocument
      *
      * @access private
      *
-     * @param string $fileContent: content of the XML file
+     * @param string $fileContent content of the XML file
      *
      * @return string The format of the OCR full text
      */
-    private function getTextFormat($fileContent)
+    private function getTextFormat(string $fileContent): string
     {
         $xml = Helper::getXmlFileAsString($fileContent);
 
@@ -630,12 +735,12 @@ abstract class AbstractDocument
      *
      * @static
      *
-     * @param int $uid: The UID of the document
-     * @param bool $recursive: Search superior documents for a title, too?
+     * @param int $uid The UID of the document
+     * @param bool $recursive Search superior documents for a title, too?
      *
      * @return string The title of the document itself or a parent document
      */
-    public static function getTitle($uid, $recursive = false)
+    public static function getTitle(int $uid, bool $recursive = false): string
     {
         $title = '';
         // Sanitize input.
@@ -684,30 +789,27 @@ abstract class AbstractDocument
      *
      * @access public
      *
-     * @param int $cPid: The PID for the metadata definitions
+     * @param int $cPid The PID for the metadata definitions
      *
      * @return array The logical structure node's / resource's parsed metadata array
      */
-    public function getTitledata($cPid = 0)
+    public function getToplevelMetadata(int $cPid = 0): array
     {
-        $titledata = $this->getMetadata($this->_getToplevelId(), $cPid);
-        // Add information from METS structural map to titledata array.
+        $toplevelMetadata = $this->getMetadata($this->magicGetToplevelId(), $cPid);
+        // Add information from METS structural map to toplevel metadata array.
         if ($this instanceof MetsDocument) {
-            $this->addMetadataFromMets($titledata, $this->_getToplevelId());
+            $this->addMetadataFromMets($toplevelMetadata, $this->magicGetToplevelId());
         }
         // Set record identifier for METS file / IIIF manifest if not present.
-        if (
-            is_array($titledata)
-            && array_key_exists('record_id', $titledata)
-        ) {
+        if (array_key_exists('record_id', $toplevelMetadata)) {
             if (
                 !empty($this->recordId)
-                && !in_array($this->recordId, $titledata['record_id'])
+                && !in_array($this->recordId, $toplevelMetadata['record_id'])
             ) {
-                array_unshift($titledata['record_id'], $this->recordId);
+                array_unshift($toplevelMetadata['record_id'], $this->recordId);
             }
         }
-        return $titledata;
+        return $toplevelMetadata;
     }
 
     /**
@@ -715,14 +817,14 @@ abstract class AbstractDocument
      *
      * @access protected
      *
-     * @param array $structure: logical structure array
-     * @param int $depth: current tree depth
-     * @param string $logId: ID of the logical structure whose depth is requested
+     * @param array $structure logical structure array
+     * @param int $depth current tree depth
+     * @param string $logId ID of the logical structure whose depth is requested
      *
-     * @return int|bool: false if structure with $logId is not a child of this substructure,
+     * @return int|bool false if structure with $logId is not a child of this substructure,
      * or the actual depth.
      */
-    protected function getTreeDepth($structure, $depth, $logId)
+    protected function getTreeDepth(array $structure, int $depth, string $logId)
     {
         foreach ($structure as $element) {
             if ($element['id'] == $logId) {
@@ -742,63 +844,25 @@ abstract class AbstractDocument
      *
      * @access public
      *
-     * @param string $logId: The id of the logical structure element whose depth is requested
+     * @param string $logId The id of the logical structure element whose depth is requested
+     *
      * @return int|bool tree depth as integer or false if no element with $logId exists within the TOC.
      */
-    public function getStructureDepth($logId)
+    public function getStructureDepth(string $logId)
     {
-        return $this->getTreeDepth($this->_getTableOfContents(), 1, $logId);
+        return $this->getTreeDepth($this->magicGetTableOfContents(), 1, $logId);
     }
-
-    /**
-     * This sets some basic class properties
-     *
-     * @access protected
-     *
-     * @abstract
-     *
-     * @param string $location:The location URL of the XML file to parse
-     *
-     * @return void
-     */
-    protected abstract function init($location);
-
-    /**
-     * Reuse any document object that might have been already loaded to determine whether document is METS or IIIF
-     *
-     * @access protected
-     *
-     * @abstract
-     *
-     * @param \SimpleXMLElement|IiifResourceInterface $preloadedDocument: any instance that has already been loaded
-     *
-     * @return bool true if $preloadedDocument can actually be reused, false if it has to be loaded again
-     */
-    protected abstract function setPreloadedDocument($preloadedDocument);
-
-    /**
-     * METS/IIIF specific part of loading a location
-     *
-     * @access protected
-     *
-     * @abstract
-     *
-     * @param string $location: The URL of the file to load
-     *
-     * @return bool true on success or false on failure
-     */
-    protected abstract function loadLocation($location);
 
     /**
      * Load XML file / IIIF resource from URL
      *
      * @access protected
      *
-     * @param string $location: The URL of the file to load
+     * @param string $location The URL of the file to load
      *
      * @return bool true on success or false on failure
      */
-    protected function load($location)
+    protected function load(string $location): bool
     {
         // Load XML / JSON-LD file.
         if (GeneralUtility::isValidUrl($location)) {
@@ -811,22 +875,13 @@ abstract class AbstractDocument
     }
 
     /**
-     * Analyze the document if it contains any fulltext that needs to be indexed.
-     *
-     * @access protected
-     *
-     * @abstract
-     */
-    protected abstract function ensureHasFulltextIsSet();
-
-    /**
      * Register all available data formats
      *
      * @access protected
      *
      * @return void
      */
-    protected function loadFormats()
+    protected function loadFormats(): void
     {
         if (!$this->formatsLoaded) {
             $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)
@@ -863,11 +918,11 @@ abstract class AbstractDocument
      *
      * @access public
      *
-     * @param \SimpleXMLElement|\DOMXPath &$obj: \SimpleXMLElement or \DOMXPath object
+     * @param \SimpleXMLElement|\DOMXPath &$obj \SimpleXMLElement or \DOMXPath object
      *
      * @return void
      */
-    public function registerNamespaces(&$obj)
+    public function registerNamespaces(&$obj): void
     {
         // TODO Check usage. XML specific method does not seem to be used anywhere outside this class within the project, but it is public and may be used by extensions.
         $this->loadFormats();
@@ -895,7 +950,7 @@ abstract class AbstractDocument
      *
      * @return array
      */
-    protected function initializeMetadata($format) {
+    protected function initializeMetadata(string $format): array {
         return [
             'title' => [],
             'title_sorting' => [],
@@ -934,7 +989,7 @@ abstract class AbstractDocument
      *
      * @return int The PID of the metadata definitions
      */
-    protected function _getCPid()
+    protected function magicGetCPid(): int
     {
         return $this->cPid;
     }
@@ -946,22 +1001,11 @@ abstract class AbstractDocument
      *
      * @return bool Are there any fulltext files available?
      */
-    protected function _getHasFulltext()
+    protected function magicGetHasFulltext(): bool
     {
         $this->ensureHasFulltextIsSet();
         return $this->hasFulltext;
     }
-
-    /**
-     * Format specific part of building the document's metadata array
-     *
-     * @access protected
-     *
-     * @abstract
-     *
-     * @param int $cPid
-     */
-    protected abstract function prepareMetadataArray($cPid);
 
     /**
      * This builds an array of the document's metadata
@@ -970,7 +1014,7 @@ abstract class AbstractDocument
      *
      * @return array Array of metadata with their corresponding logical structure node ID as key
      */
-    protected function _getMetadataArray()
+    protected function magicGetMetadataArray(): array
     {
         // Set metadata definitions' PID.
         $cPid = ($this->cPid ? $this->cPid : $this->pid);
@@ -996,9 +1040,9 @@ abstract class AbstractDocument
      *
      * @return int The total number of pages and/or tracks
      */
-    protected function _getNumPages()
+    protected function magicGetNumPages(): int
     {
-        $this->_getPhysicalStructure();
+        $this->magicGetPhysicalStructure();
         return $this->numPages;
     }
 
@@ -1009,22 +1053,10 @@ abstract class AbstractDocument
      *
      * @return int The UID of the parent document or zero if not applicable
      */
-    protected function _getParentId()
+    protected function magicGetParentId(): int
     {
         return $this->parentId;
     }
-
-    /**
-     * This builds an array of the document's physical structure
-     *
-     * @access protected
-     *
-     * @abstract
-     *
-     * @return array Array of physical elements' id, type, label and file representations ordered
-     * by "@ORDER" attribute / IIIF Sequence's Canvases
-     */
-    protected abstract function _getPhysicalStructure();
 
     /**
      * This gives an array of the document's physical structure metadata
@@ -1033,12 +1065,12 @@ abstract class AbstractDocument
      *
      * @return array Array of elements' type, label and file representations ordered by "@ID" attribute / Canvas order
      */
-    protected function _getPhysicalStructureInfo()
+    protected function magicGetPhysicalStructureInfo(): array
     {
         // Is there no physical structure array yet?
         if (!$this->physicalStructureLoaded) {
             // Build physical structure array.
-            $this->_getPhysicalStructure();
+            $this->magicGetPhysicalStructure();
         }
         return $this->physicalStructureInfo;
     }
@@ -1050,7 +1082,7 @@ abstract class AbstractDocument
      *
      * @return int The PID of the document or zero if not in database
      */
-    protected function _getPid()
+    protected function magicGetPid(): int
     {
         return $this->pid;
     }
@@ -1062,7 +1094,7 @@ abstract class AbstractDocument
      *
      * @return bool Is the document instantiated successfully?
      */
-    protected function _getReady()
+    protected function magicGetReady(): bool
     {
         return $this->ready;
     }
@@ -1074,7 +1106,7 @@ abstract class AbstractDocument
      *
      * @return mixed The METS file's / IIIF manifest's record identifier
      */
-    protected function _getRecordId()
+    protected function magicGetRecordId()
     {
         return $this->recordId;
     }
@@ -1086,10 +1118,12 @@ abstract class AbstractDocument
      *
      * @return int The UID of the root document or zero if not applicable
      */
-    protected function _getRootId()
+    protected function magicGetRootId(): int
     {
         if (!$this->rootIdLoaded) {
             if ($this->parentId) {
+                // TODO: Parameter $location of static method AbstractDocument::getInstance() expects string, int<min, -1>|int<1, max> given.
+                // @phpstan-ignore-next-line
                 $parent = self::getInstance($this->parentId, ['storagePid' => $this->pid]);
                 $this->rootId = $parent->rootId;
             }
@@ -1099,25 +1133,13 @@ abstract class AbstractDocument
     }
 
     /**
-     * This returns the smLinks between logical and physical structMap (METS) and models the
-     * relation between IIIF Canvases and Manifests / Ranges in the same way
-     *
-     * @access protected
-     *
-     * @abstract
-     *
-     * @return array The links between logical and physical nodes / Range, Manifest and Canvas
-     */
-    protected abstract function _getSmLinks();
-
-    /**
      * This builds an array of the document's logical structure
      *
      * @access protected
      *
      * @return array Array of structure nodes' id, label, type and physical page indexes/mptr / Canvas link with original hierarchy preserved
      */
-    protected function _getTableOfContents()
+    protected function magicGetTableOfContents(): array
     {
         // Is there no logical structure array yet?
         if (!$this->tableOfContentsLoaded) {
@@ -1129,39 +1151,15 @@ abstract class AbstractDocument
     }
 
     /**
-     * This returns the document's thumbnail location
-     *
-     * @access protected
-     *
-     * @abstract
-     *
-     * @param bool $forceReload: Force reloading the thumbnail instead of returning the cached value
-     *
-     * @return string The document's thumbnail location
-     */
-    protected abstract function _getThumbnail($forceReload = false);
-
-    /**
-     * This returns the ID of the toplevel logical structure node
-     *
-     * @access protected
-     *
-     * @abstract
-     *
-     * @return string The logical structure node's ID
-     */
-    protected abstract function _getToplevelId();
-
-    /**
      * This sets $this->cPid via __set()
      *
      * @access protected
      *
-     * @param int $value: The new PID for the metadata definitions
+     * @param int $value The new PID for the metadata definitions
      *
      * @return void
      */
-    protected function _setCPid($value)
+    protected function _setCPid(int $value): void
     {
         $this->cPid = max(intval($value), 0);
     }
@@ -1172,20 +1170,19 @@ abstract class AbstractDocument
      *
      * @access protected
      *
-     * @param string $location: The location URL of the XML file to parse
-     * @param int $pid: If > 0, then only document with this PID gets loaded
-     * @param \SimpleXMLElement|IiifResourceInterface $preloadedDocument: Either null or the \SimpleXMLElement
+     * @param int $pid If > 0, then only document with this PID gets loaded
+     * @param string $location The location URL of the XML file to parse
+     * @param \SimpleXMLElement|IiifResourceInterface $preloadedDocument Either null or the \SimpleXMLElement
      * or IiifResourceInterface that has been loaded to determine the basic document format.
      *
      * @return void
      */
-    protected function __construct($location, $pid, $preloadedDocument)
+    protected function __construct(int $pid, string $location, $preloadedDocument, array $settings = [])
     {
         $this->pid = $pid;
         $this->setPreloadedDocument($preloadedDocument);
-        $this->init($location);
+        $this->init($location, $settings);
         $this->establishRecordId($pid);
-        return;
     }
 
     /**
@@ -1193,19 +1190,19 @@ abstract class AbstractDocument
      *
      * @access public
      *
-     * @param string $var: Name of variable to get
+     * @param string $var Name of variable to get
      *
      * @return mixed Value of $this->$var
      */
-    public function __get($var)
+    public function __get(string $var)
     {
-        $method = '_get' . ucfirst($var);
+        $method = 'magicGet' . ucfirst($var);
         if (
             !property_exists($this, $var)
             || !method_exists($this, $method)
         ) {
             $this->logger->warning('There is no getter function for property "' . $var . '"');
-            return;
+            return null;
         } else {
             return $this->$method();
         }
@@ -1216,11 +1213,11 @@ abstract class AbstractDocument
      *
      * @access public
      *
-     * @param string $var: Name of variable to check
+     * @param string $var Name of variable to check
      *
      * @return bool true if variable is set and not empty, false otherwise
      */
-    public function __isset($var)
+    public function __isset(string $var): bool
     {
         return !empty($this->__get($var));
     }
@@ -1230,12 +1227,12 @@ abstract class AbstractDocument
      *
      * @access public
      *
-     * @param string $var: Name of variable to set
-     * @param mixed $value: New value of variable
+     * @param string $var Name of variable to set
+     * @param mixed $value New value of variable
      *
      * @return void
      */
-    public function __set($var, $value)
+    public function __set(string $var, $value): void
     {
         $method = '_set' . ucfirst($var);
         if (
@@ -1249,12 +1246,17 @@ abstract class AbstractDocument
     }
 
     /**
-     * get Cache Hit for $doc
+     * Get Cache Hit for document instance
+     *
+     * @access private
+     *
+     * @static
      *
      * @param string $location
-     * @return Doc|false
+     *
+     * @return AbstractDocument|false
      */
-    private static function getDocCache(string $location)
+    private static function getDocumentCache(string $location)
     {
         $cacheIdentifier = md5($location);
         $cache = GeneralUtility::makeInstance(CacheManager::class)->getCache('tx_dlf_doc');
@@ -1264,13 +1266,18 @@ abstract class AbstractDocument
     }
 
     /**
-     * set Cache for $doc
+     * Set Cache for document instance
+     *
+     * @access private
+     *
+     * @static
      *
      * @param string $location
      * @param AbstractDocument $currentDocument
+     *
      * @return void
      */
-    private static function setDocCache(string $location, AbstractDocument $currentDocument)
+    private static function setDocumentCache(string $location, AbstractDocument $currentDocument): void
     {
         $cacheIdentifier = md5($location);
         $cache = GeneralUtility::makeInstance(CacheManager::class)->getCache('tx_dlf_doc');

@@ -14,6 +14,7 @@ namespace Kitodo\Dlf\Controller;
 use Kitodo\Dlf\Common\AbstractDocument;
 use Kitodo\Dlf\Common\Helper;
 use Kitodo\Dlf\Common\IiifManifest;
+use Kitodo\Dlf\Common\MetsDocument;
 use Kitodo\Dlf\Domain\Repository\CollectionRepository;
 use Kitodo\Dlf\Domain\Repository\MetadataRepository;
 use Kitodo\Dlf\Domain\Repository\StructureRepository;
@@ -22,61 +23,85 @@ use Ubl\Iiif\Context\IRI;
 /**
  * Controller class for the plugin 'Metadata'.
  *
- * @author Sebastian Meyer <sebastian.meyer@slub-dresden.de>
  * @package TYPO3
  * @subpackage dlf
+ *
  * @access public
  */
 class MetadataController extends AbstractController
 {
     /**
-     * @var Doc
+     * @access private
+     * @var AbstractDocument
      */
-    private $doc;
+    private $currentDocument;
 
     /**
+     * @access private
+     * @var bool
+     */
+    private $useOriginalIiifManifestMetadata;
+
+    /**
+     * @access protected
      * @var CollectionRepository
      */
-    protected $collectionRepository;
+    protected CollectionRepository $collectionRepository;
 
     /**
+     * @access public
+     *
      * @param CollectionRepository $collectionRepository
+     *
+     * @return void
      */
-    public function injectCollectionRepository(CollectionRepository $collectionRepository)
+    public function injectCollectionRepository(CollectionRepository $collectionRepository): void
     {
         $this->collectionRepository = $collectionRepository;
     }
 
     /**
+     * @access protected
      * @var MetadataRepository
      */
-    protected $metadataRepository;
+    protected MetadataRepository $metadataRepository;
 
     /**
+     * @access public
+     *
      * @param MetadataRepository $metadataRepository
+     *
+     * @return void
      */
-    public function injectMetadataRepository(MetadataRepository $metadataRepository)
+    public function injectMetadataRepository(MetadataRepository $metadataRepository): void
     {
         $this->metadataRepository = $metadataRepository;
     }
 
     /**
+     * @access protected
      * @var StructureRepository
      */
-    protected $structureRepository;
+    protected StructureRepository $structureRepository;
 
     /**
+     * @access public
+     *
      * @param StructureRepository $structureRepository
+     *
+     * @return void
      */
-    public function injectStructureRepository(StructureRepository $structureRepository)
+    public function injectStructureRepository(StructureRepository $structureRepository): void
     {
         $this->structureRepository = $structureRepository;
     }
 
     /**
+     * @access public
+     *
      * @return void
      */
-    public function mainAction()
+    public function mainAction(): void
     {
         // Load current document.
         $this->loadDocument();
@@ -92,23 +117,31 @@ class MetadataController extends AbstractController
             $this->setDefault('displayIiifLinks', 1);
         }
 
-        $this->doc = $this->document->getCurrentDocument();
+        $this->currentDocument = $this->document->getCurrentDocument();
+        $this->useOriginalIiifManifestMetadata = $this->settings['originalIiifMetadata'] == 1 && $this->currentDocument instanceof IiifManifest;
 
-        $useOriginalIiifManifestMetadata = $this->settings['originalIiifMetadata'] == 1 && $this->doc instanceof IiifManifest;
         $metadata = $this->getMetadata();
-        // Get titledata?
-        if (empty($metadata) || ($this->settings['rootline'] == 1 && $metadata[0]['_id'] != $this->doc->toplevelId)) {
-            $data = $useOriginalIiifManifestMetadata ? $this->doc->getManifestMetadata($this->doc->toplevelId, $this->settings['storagePid']) : $this->doc->getTitledata($this->settings['storagePid']);
-            $data['_id'] = $this->doc->toplevelId;
+        $topLevelId = $this->currentDocument->toplevelId;
+        // Get toplevel metadata?
+        if (!$metadata || ($this->settings['rootline'] == 1 && $metadata[0]['_id'] != $topLevelId)) {
+            $data = [];
+            if ($this->useOriginalIiifManifestMetadata) {
+                // @phpstan-ignore-next-line
+                $data = $this->currentDocument->getManifestMetadata($topLevelId, $this->settings['storagePid']);
+            } else {
+                $data = $this->currentDocument->getToplevelMetadata($this->settings['storagePid']);
+            }
+            $data['_id'] = $topLevelId;
             array_unshift($metadata, $data);
         }
-        if (empty($metadata)) {
+        // @phpstan-ignore-next-line
+        if (!$metadata) {
             $this->logger->warning('No metadata found for document with UID ' . $this->document->getUid());
             return;
         }
         ksort($metadata);
 
-        $this->printMetadata($metadata, $useOriginalIiifManifestMetadata);
+        $this->printMetadata($metadata);
     }
 
     /**
@@ -116,17 +149,15 @@ class MetadataController extends AbstractController
      *
      * @access protected
      *
-     * @param array $metadata: The metadata array
-     * @param bool $useOriginalIiifManifestMetadata: Output IIIF metadata as simple key/value pairs?
+     * @param array $metadata The metadata array
      *
-     * @return string The metadata array ready for output
+     * @return void
      */
-    protected function printMetadata(array $metadata, $useOriginalIiifManifestMetadata = false)
+    protected function printMetadata(array $metadata): void
     {
-        if ($useOriginalIiifManifestMetadata) {
-            $iiifData = $this->buildIiifData($metadata);
+        if ($this->useOriginalIiifManifestMetadata) {
             $this->view->assign('useIiif', true);
-            $this->view->assign('iiifData', $iiifData);
+            $this->view->assign('iiifData', $this->buildIiifData($metadata));
         } else {
             // findBySettings also sorts entries by the `sorting` field
             $metadataResult = $this->metadataRepository->findBySettings([
@@ -210,7 +241,8 @@ class MetadataController extends AbstractController
     private function buildIiifDataGroup(string $label, string $value): array
     {
         // NOTE: Labels are to be escaped in Fluid template
-        if (IRI::isAbsoluteIri($value) && ($scheme = (new IRI($value))->getScheme()) == 'http' || $scheme == 'https') {
+        $scheme = (new IRI($value))->getScheme();
+        if (IRI::isAbsoluteIri($value) && ($scheme == 'http' || $scheme == 'https')) {
             //TODO: should really label be converted to empty string if equal to value?
             $label = $value == $label ? '' : $label;
             $buildUrl = true;
@@ -235,7 +267,7 @@ class MetadataController extends AbstractController
      *
      * @return array The raw metadata array ready for output
      */
-    private function buildMetaCObjData(array $metadata)
+    private function buildMetaCObjData(array $metadata): array
     {
         $metaCObjData = [];
 
@@ -261,13 +293,13 @@ class MetadataController extends AbstractController
      *
      * @return array URLs
      */
-    private function buildUrlFromMetadata(array $metadata)
+    private function buildUrlFromMetadata(array $metadata): array
     {
         $buildUrl = [];
 
         foreach ($metadata as $i => $section) {
             if ($this->settings['linkTitle'] && $section['_id'] && isset($section['title']) && !empty($section['title'])) {
-                $details = $this->doc->getLogicalStructure($section['_id']);
+                $details = $this->currentDocument->getLogicalStructure($section['_id']);
                 $buildUrl[$i]['title'] = [
                     'id' => $this->document->getUid(),
                     'page' => (!empty($details['points']) ? intval($details['points']) : 1),
@@ -288,7 +320,7 @@ class MetadataController extends AbstractController
      *
      * @return array external URLs
      */
-    private function buildExternalUrlFromMetadata(array $metadata)
+    private function buildExternalUrlFromMetadata(array $metadata): array
     {
         $externalUrl = [];
 
@@ -320,7 +352,8 @@ class MetadataController extends AbstractController
      *
      * @return void
      */
-    private function parseMetadata(int $i, string $name, $value, array &$metadata) : void {
+    private function parseMetadata(int $i, string $name, $value, array &$metadata) : void
+    {
         if ($name == 'title') {
             // Get title of parent document if needed.
             if (empty(implode('', $value)) && $this->settings['getTitle'] && $this->document->getPartof()) {
@@ -366,15 +399,16 @@ class MetadataController extends AbstractController
      *
      * @return array metadata
      */
-    private function getMetadata()
+    private function getMetadata(): array
     {
         $metadata = [];
         if ($this->settings['rootline'] < 2) {
             // Get current structure's @ID.
             $ids = [];
-            if (!empty($this->doc->physicalStructure[$this->requestData['page']]) && !empty($this->doc->smLinks['p2l'][$this->doc->physicalStructure[$this->requestData['page']]])) {
-                foreach ($this->doc->smLinks['p2l'][$this->doc->physicalStructure[$this->requestData['page']]] as $logId) {
-                    $count = $this->doc->getStructureDepth($logId);
+            $page = $this->currentDocument->physicalStructure[$this->requestData['page']];
+            if (!empty($page) && !empty($this->currentDocument->smLinks['p2l'][$page])) {
+                foreach ($this->currentDocument->smLinks['p2l'][$page] as $logId) {
+                    $count = $this->currentDocument->getStructureDepth($logId);
                     $ids[$count][] = $logId;
                 }
             }
@@ -400,19 +434,19 @@ class MetadataController extends AbstractController
      *
      * @access private
      *
-     * @param array $id: An array with ids
-     * @param array $metadata: An array with metadata
+     * @param array $id An array with ids
+     * @param array $metadata An array with metadata
      *
      * @return array metadata
      */
-    private function getMetadataForIds($id, $metadata)
+    private function getMetadataForIds(array $id, array $metadata): array
     {
-        $useOriginalIiifManifestMetadata = $this->settings['originalIiifMetadata'] == 1 && $this->doc instanceof IiifManifest;
         foreach ($id as $sid) {
-            if ($useOriginalIiifManifestMetadata) {
-                $data = $this->doc->getManifestMetadata($sid, $this->settings['storagePid']);
+            if ($this->useOriginalIiifManifestMetadata) {
+                // @phpstan-ignore-next-line
+                $data = $this->currentDocument->getManifestMetadata($sid, $this->settings['storagePid']);
             } else {
-                $data = $this->doc->getMetadata($sid, $this->settings['storagePid']);
+                $data = $this->currentDocument->getMetadata($sid, $this->settings['storagePid']);
             }
             if (!empty($data)) {
                 $data['_id'] = $sid;
@@ -432,7 +466,8 @@ class MetadataController extends AbstractController
      *
      * @return void
      */
-    private function setDefault($setting, $value) {
+    private function setDefault(string $setting, int $value): void
+    {
         if (!isset($this->settings[$setting])) {
             $this->settings[$setting] = $value;
         }
