@@ -305,6 +305,17 @@ class ToolboxController extends AbstractController
     }
 
     /**
+     * Renders the updated-METS download tool
+     *
+     * @return void
+     */
+    public function updatedMetsdownloadtool() : void {
+        $mets=FullTextGenerator::getNewDocLocalPath(\Kitodo\Dlf\Common\Doc::$extKey, $this->document);
+        //todo: host is missing
+        $this->view->assign('metslinktemp', $mets);
+    }
+
+    /**
      * Get page's download link
      *
      * @access protected

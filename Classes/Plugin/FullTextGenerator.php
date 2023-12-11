@@ -109,6 +109,25 @@ class FullTextGenerator {
   }
 
   /**
+   * Returns local path to the updated "new" doc's page
+   * 
+   * (eg.: "fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/ocrd-basic/log59088.xml")
+   * 
+   * @access public
+   *
+   * @param string extKey
+   * @param Document document
+   *
+   * @return string
+   */
+  public static function getNewDocLocalPath(string $extKey, Document $document):string {
+    $outputFolderPath = self::getDocLocalPath($extKey, $document);
+    $ocrEngine = PageViewController::getOCRengine($extKey);
+    $pageId = self::getDocLocalId($document->getDoc());
+    return "$outputFolderPath/$ocrEngine/$pageId.xml";
+  }
+
+  /**
    * Checks whether local fulltext is present
    * 
    * @access public
