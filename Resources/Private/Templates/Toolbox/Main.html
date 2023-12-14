@@ -194,6 +194,18 @@
             </li>
         </f:then>
     </f:if>
+
+    <f:if condition="{updatedMetsdownloadtool}">
+        <f:then>
+            <f:if condition="{metslinktemp}">
+                <li>
+                    <f:link.external uri="{metslinktemp}" class="download-document">
+                        Updated METS <i>[{ocrEngine}]</i> (XML)
+                    </f:link.external>
+                </li>
+            </f:if>
+        </f:then>
+    </f:if>
 </ul>
 
 </html>
