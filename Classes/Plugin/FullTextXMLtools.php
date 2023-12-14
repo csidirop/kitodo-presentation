@@ -179,7 +179,7 @@ class FullTextXMLtools {
       $writer->writeAttribute('SOFTWARE', "DFG-Viewer-5-OCR-$ocr_script");
       $writer->startElement('mets:FLocat'); // <mets:FLocat LOCTYPE="URL" xlink:href="https://digi.bib.uni-mannheim.de/fileadmin/digi/log59088/alto/log59088_431.xml"/>
         $writer->writeAttribute('LOCTYPE', 'URL');
-        $writer->writeAttribute('xlink:href', "http://".$_SERVER['HTTP_HOST']."/".$alto_path);
+        $writer->writeAttribute('xlink:href', PageViewController::getServerUrl()."/".$alto_path);
       $writer->endElement();
     $writer->endElement();
   }
