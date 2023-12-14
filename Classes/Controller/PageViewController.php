@@ -176,14 +176,7 @@ class PageViewController extends AbstractController
         //check if local fulltext exists:
         if (PageViewController::getOCRengine(Doc::$extKey) != "originalremote") {
             if (FullTextGenerator::checkLocal(Doc::$extKey, $this->document, $page)) { //fulltext is locally present
-                //check server protocol (https://stackoverflow.com/a/14270161):
-                if ( isset($_SERVER['HTTPS'])  &&  ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1)
-                    ||  isset($_SERVER['HTTP_X_FORWARDED_PROTO'])  &&  $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
-                    $protocol = 'https://';
-                } else {
-                    $protocol = 'http://';
-                }
-                $fulltext['url'] = $protocol . $_SERVER['HTTP_HOST'] . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document, $page);
+                $fulltext['url'] = PageViewController::getServerUrl() . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document, $page);
                 $fulltext['mimetype'] = "text/xml";
             }
         }
@@ -433,6 +426,25 @@ class PageViewController extends AbstractController
 
         // OCR only this page:
         FullTextGenerator::createPageFullText(Doc::$extKey, $this->document, $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], $engine);
+    }
+
+    /**
+     * Returns the server URL (including networkprotocol: http or https)
+     * eg. https://www.example.com
+     * 
+     * @access public
+     * 
+     * @return string The server URL
+     */
+    public static function getServerUrl():string {
+        //check server protocol (parts from https://stackoverflow.com/a/14270161):
+        if (GeneralUtility::getIndpEnv('TYPO3_SSL') == true
+            || isset($_SERVER['HTTPS'])  &&  ($_SERVER['HTTPS'] == 'on'  ||  $_SERVER['HTTPS'] == 1)
+            || isset($_SERVER['HTTP_X_FORWARDED_PROTO'])  &&  $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https') {
+            return 'https://' . $_SERVER['HTTP_HOST'];
+        } else {
+            return 'http://'. $_SERVER['HTTP_HOST'];
+        }
     }
 
     /**
