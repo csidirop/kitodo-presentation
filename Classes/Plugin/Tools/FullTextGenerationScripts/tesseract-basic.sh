@@ -28,9 +28,9 @@ done
 # Parse URL or Path and run tesseract:
 regex='(https?|ftp|file)://[-[:alnum:]\+&@#/%?=~_|!:,.;]*[-[:alnum:]\+&@#/%=~_|]' #Regex for URL validation ( https://stackoverflow.com/a/3184819 )
 if [[ (${imagePath} =~ $regex) || (-f ${imagePath}) ]] ; then # If imagePath is a valid URL or a local file
-	echo "Running OCR: tesseract $imagePath $outputPath -l alto"
+	echo "Running OCR: tesseract $imagePath $outputPath alto"
 
-	tesseract $imagePath $outputPath -l alto
+	tesseract $imagePath $outputPath alto
 
 	exit 0
 else
