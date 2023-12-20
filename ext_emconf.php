@@ -11,9 +11,9 @@
  */
 
 $EM_CONF[$_EXTKEY] = [
-    'title' => 'Kitodo.Presentation',
+    'title' => 'Kitodo.Presentation - OCR-On-Demand',
     'description' => 'Base plugins, modules, services and API of the Digital Library Framework. It is part of the community-based Kitodo Digitization Suite.',
-    'version' => '4.0.1',
+    'version' => '4.0.1-ocr',
     'category' => 'misc',
     'constraints' => [
         'depends' => [
@@ -23,7 +23,7 @@ $EM_CONF[$_EXTKEY] = [
         'conflicts' => [],
         'suggests' => []
     ],
-    'state' => 'stable',
+    'state' => 'dev',
     'uploadfolder' => false,
     'clearCacheOnLoad' => false,
     'author' => 'Sebastian Meyer (Maintainer)',
