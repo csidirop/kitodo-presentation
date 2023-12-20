@@ -144,6 +144,8 @@ class PageViewController extends AbstractController
         // Get fulltext link:
         $fileGrpsFulltext = GeneralUtility::trimExplode(',', $this->extConf['fileGrpFulltext']);
 
+        $ocrEngine = PageViewController::getOCRengine(Doc::$extKey);
+
         //check if remote fulltext exists:
         while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) { 
             if (!empty($this->document->getDoc()->physicalStructureInfo[$this->document->getDoc()->physicalStructure[$page]]['files'][$fileGrpFulltext])) { //fulltext is remote present
@@ -170,11 +172,14 @@ class PageViewController extends AbstractController
             } else { //no fulltext present
                 $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
                 setcookie('tx-dlf-ocr-remotepresent', "N", ['SameSite' => 'lax']);
+                if($ocrEngine === "originalremote") {
+                    $ocrEngine = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get(Doc::$extKey)['ocrEngine'];
+                }
             }
         }
 
         //check if local fulltext exists:
-        if (PageViewController::getOCRengine(Doc::$extKey) != "originalremote") {
+        if ($ocrEngine != "originalremote") {
             if (FullTextGenerator::checkLocal(Doc::$extKey, $this->document, $page)) { //fulltext is locally present
                 $fulltext['url'] = PageViewController::getServerUrl() . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document, $page);
                 $fulltext['mimetype'] = "text/xml";
@@ -397,7 +402,7 @@ class PageViewController extends AbstractController
         if(!is_null($_COOKIE['tx-dlf-ocrEngine']) && (str_contains(self::$ocrEngines, $ocrEngine=$_COOKIE['tx-dlf-ocrEngine']) || $ocrEngine == "originalremote")){
             return $ocrEngine;
         } else {
-            return $conf['ocrEngine'] ; //get default default value
+            return "originalremote" ; //get default value
         }
     }
 
