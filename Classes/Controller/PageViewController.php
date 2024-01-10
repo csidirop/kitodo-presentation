@@ -11,13 +11,13 @@
 
 namespace Kitodo\Dlf\Controller;
 
-use Kitodo\Dlf\Common\Doc;
+use Kitodo\Dlf\Common\AbstractDocument;
 use Kitodo\Dlf\Common\IiifManifest;
-use Kitodo\Dlf\Domain\Model\Document;
+// use Kitodo\Dlf\Domain\Model\Document;
 use Kitodo\Dlf\Plugin\FullTextGenerator;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\MathUtility;
+// use TYPO3\CMS\Core\Utility\MathUtility;
 use Ubl\Iiif\Presentation\Common\Model\Resources\ManifestInterface;
 use Ubl\Iiif\Presentation\Common\Vocabulary\Motivation;
 
@@ -127,14 +127,14 @@ class PageViewController extends AbstractController
         $fulltext = [];
         // Get fulltext link:
         $fileGrpsFulltext = GeneralUtility::trimExplode(',', $this->extConf['fileGrpFulltext']);
-        $ocrEngine = PageViewController::getOCRengine(Doc::$extKey);
+        $ocrEngine = PageViewController::getOCRengine(AbstractDocument::$extKey);
 
         //check if remote fulltext exists:
         while ($fileGrpFulltext = array_shift($fileGrpsFulltext)) {
             $physicalStructureInfo = $this->document->getCurrentDocument()->physicalStructureInfo[$this->document->getCurrentDocument()->physicalStructure[$page]];
             $fileId = $physicalStructureInfo['files'][$fileGrpFulltext];
             if (!empty($fileId)) { //fulltext is remote present
-                if (PageViewController::getOCRengine(Doc::$extKey) == "originalremote") {
+                if (PageViewController::getOCRengine(AbstractDocument::$extKey) == "originalremote") {
                     $file = $this->document->getCurrentDocument()->getFileInfo($fileId);
                     $fulltext['url'] = $file['location'];
                     if ($this->settings['useInternalProxy']) {
@@ -148,15 +148,15 @@ class PageViewController extends AbstractController
                 $this->logger->notice('No full-text file found for page "' . $page . '" in fileGrp "' . $fileGrpFulltext . '"');
                 setcookie('tx-dlf-ocr-remotepresent', "N", ['SameSite' => 'lax']);
                 if($ocrEngine === "originalremote") {
-                    $ocrEngine = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get(Doc::$extKey)['ocrEngine'];
+                    $ocrEngine = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get(AbstractDocument::$extKey)['ocrEngine'];
                 }
             }
         }
 
         //check if local fulltext exists:
         if ($ocrEngine != "originalremote") {
-            if (FullTextGenerator::checkLocal(Doc::$extKey, $this->document, $page)) { //fulltext is locally present
-                $fulltext['url'] = PageViewController::getServerUrl() . "/" . FullTextGenerator::getPageLocalPath(Doc::$extKey, $this->document, $page);
+            if (FullTextGenerator::checkLocal(AbstractDocument::$extKey, $this->document, $page)) { //fulltext is locally present
+                $fulltext['url'] = PageViewController::getServerUrl() . "/" . FullTextGenerator::getPageLocalPath(AbstractDocument::$extKey, $this->document, $page);
                 $fulltext['mimetype'] = "text/xml";
             }
         }
@@ -341,8 +341,8 @@ class PageViewController extends AbstractController
         $ocrEnginesArray = json_decode(self::$ocrEngines, true)['ocrEngines'];
         $resArray = array();
 
-        $path = FullTextGenerator::getDocLocalPath(Doc::$extKey, $this->document);
-        $topLevelId = $this->document->getDoc()->toplevelId; // (eg. "log59088")
+        $path = FullTextGenerator::getDocLocalPath(AbstractDocument::$extKey, $this->document);
+        $topLevelId = $this->document->getCurrentDocument()->toplevelId; // (eg. "log59088")
 
         //check if path exists:
         for($i=0; $i<count($ocrEnginesArray); $i++){
@@ -381,7 +381,7 @@ class PageViewController extends AbstractController
      * @return void
      */
     protected function generateFullText():void {
-        if(($engine = PageViewController::getOCRengine(Doc::$extKey)) == "originalremote") {
+        if(($engine = PageViewController::getOCRengine(AbstractDocument::$extKey)) == "originalremote") {
             return;
         }
 
@@ -389,15 +389,15 @@ class PageViewController extends AbstractController
         if($_POST["request"]["type"] == "book") {
             //collect all image urls:
             $images = array();
-            for ($i=1; $i <= $this->document->getDoc()->numPages; $i++) {
+            for ($i=1; $i <= $this->document->getCurrentDocument()->numPages; $i++) {
                 $images[$i] = $this->getImage($i)["url"];
             }
-            FullTextGenerator::createBookFullText(Doc::$extKey, $this->document, $images, $engine);
+            FullTextGenerator::createBookFullText(AbstractDocument::$extKey, $this->document, $images, $engine);
             return;
         }
 
         // OCR only this page:
-        FullTextGenerator::createPageFullText(Doc::$extKey, $this->document, $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], $engine);
+        FullTextGenerator::createPageFullText(AbstractDocument::$extKey, $this->document, $this->getImage($this->requestData['page'])["url"], $this->requestData['page'], $engine);
     }
 
     /**

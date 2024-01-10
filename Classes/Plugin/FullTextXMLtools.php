@@ -9,10 +9,10 @@ use XMLReaderIterator;
 use XMLWritingIteration;
 use DateTimeImmutable;
 
-use Kitodo\Dlf\Common\Doc;
+// use Kitodo\Dlf\Common\AbstractDocument;
 use Kitodo\Dlf\Domain\Model\Document;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
-use TYPO3\CMS\Core\Log\LogLevel;
+// use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+// use TYPO3\CMS\Core\Log\LogLevel;
 
 /**
  * Plugin 'FullText XMLtools' for the 'dlf' extension

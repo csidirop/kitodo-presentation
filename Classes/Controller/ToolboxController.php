@@ -190,7 +190,7 @@ class ToolboxController extends AbstractController
 
         $this->setPage();
 
-        if (!$this->isFullTextEmpty() || FullTextGenerator::checkLocal(\Kitodo\Dlf\Common\Doc::$extKey, $this->document, $this->requestData['page'])) {
+        if (!$this->isFullTextEmpty() || FullTextGenerator::checkLocal(AbstractDocument::$extKey, $this->document, $this->requestData['page'])) {
             $this->view->assign('fulltext', true);
             $this->view->assign('activateFullTextInitially', MathUtility::forceIntegerInRange($this->settings['activateFullTextInitially'], 0, 1, 0));
         } else {
