@@ -13,6 +13,7 @@ namespace Kitodo\Dlf\Controller;
 
 use Kitodo\Dlf\Common\AbstractDocument;
 use Kitodo\Dlf\Common\Helper;
+use Kitodo\Dlf\Plugin\FullTextGenerator;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 
@@ -189,7 +190,7 @@ class ToolboxController extends AbstractController
 
         $this->setPage();
 
-        if (!$this->isFullTextEmpty()) {
+        if (!$this->isFullTextEmpty() || FullTextGenerator::checkLocal(\Kitodo\Dlf\Common\Doc::$extKey, $this->document, $this->requestData['page'])) {
             $this->view->assign('fulltext', true);
             $this->view->assign('activateFullTextInitially', MathUtility::forceIntegerInRange($this->settings['activateFullTextInitially'], 0, 1, 0));
         } else {

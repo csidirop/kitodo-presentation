@@ -689,6 +689,22 @@
                 <source><![CDATA[Apache Solr not reachable with given configuration.]]></source>
                 <target><![CDATA[Apache Solr ist mit der gegebenen Konfiguration nicht erreichbar.]]></target>
             </trans-unit>
-		</body>
-	</file>
+            <trans-unit id="ocrd.error" approved="yes">
+                <source><![CDATA[Apache OCR-D not reachable with given configuration.]]></source>
+                <target><![CDATA[Apache OCR-D ist mit der gegebenen Konfiguration nicht erreichbar.]]></target>
+            </trans-unit>
+            <trans-unit id="ocrd.status" approved="yes">
+                <source><![CDATA[Apache OCR-D is running and taking requests.]]></source>
+                <target><![CDATA[Apache OCR-D ist verfügbar und nimmt Anfragen entgegen.]]></target>
+            </trans-unit>
+            <trans-unit id="ocrd.connected" approved="yes">
+                <source><![CDATA[Connection established!]]></source>
+                <target><![CDATA[Verbindung hergestellt!]]></target>
+            </trans-unit>
+            <trans-unit id="ocrd.notConnected" approved="yes">
+                <source><![CDATA[Connection failed!]]></source>
+                <target><![CDATA[Verbindung fehlgeschlagen!]]></target>
+            </trans-unit>
+        </body>
+    </file>
 </xliff>

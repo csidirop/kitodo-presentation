@@ -685,6 +685,82 @@
 				<target>Audio fileGrp: Komma-getrennte Liste der @USE Attributwerte der Audiodateien nach absteigender Priorität sortiert (Standard ist "AUDIO")</target>
 				<source>Audio fileGrp: comma-separated list of @USE attribute values ordered by decreasing priority (default is "AUDIO")</source>
 			</trans-unit>
+			<trans-unit id="config.fulltextFolder">
+				<target>Verzeichnis für die erzeugten Volltexte</target>
+				<source>Directory for the generated OCR fulltexts</source>
+			</trans-unit>
+			<trans-unit id="config.fulltextTempFolder">
+				<target>Temporäres Verzeichnis für die in Bearbeitung befindlichen Volltexte</target>
+				<source>Temporary directory for OCR fulltexts in progress</source>
+			</trans-unit>
+			<trans-unit id="config.fulltextImagesFolder">
+				<target>Temporäres Verzeichnis für die zur Bearbeitung benötigten Bilder (wird nicht benötigt, falls 'ocrDwnlTempImage' gesetzt)</target>
+				<source>Temporary directory for the images needed for processing (not needed if 'ocrDwnlTempImage' is set)</source>
+			</trans-unit>
+			<trans-unit id="config.fulltextLockFolder">
+				<target>Temporäres Verzeichnis, das die Locks zum Sperren der laufenden OCR enthält</target>
+				<source>Temporary directory which holds the locks for locking the OCR in progress</source>
+			</trans-unit>
+			<trans-unit id="config.ocrPlaceholder">
+				<target>Erstelle eine leere ALTO Datei als Platzhalter</target>
+				<source>Create a blank ALTO file as a placeholder</source>
+			</trans-unit>
+			<trans-unit id="config.ocrPlaceholderText">
+				<target>Definiert den Text der ALTO Platzhalter Datei</target>
+				<source>Defines the text of the ALTO placeholder file</source>
+			</trans-unit>
+			<trans-unit id="config.ocrLoadActiveOCREngines">
+				<target>Alle aktiven OCR Engines: Geladen aus der in 'ocrEngines' angegebenen JSON-Datei</target>
+				<source>All active OCR Engines: Loaded from the json set in 'ocrEngines' entry</source>
+			</trans-unit>
+			<trans-unit id="config.ocrdConnect">
+				<target>OCR-D Verbindung</target>
+				<source>OCR-D Connection</source>
+			</trans-unit>
+			<trans-unit id="config.ocrdHost">
+				<target>OCR-D Server SSH config</target>
+				<source>OCR-D server SSH config</source>
+			</trans-unit>
+			<trans-unit id="config.ocrEngine">
+				<target>Standardmäßige OCR-Engine</target>
+				<source>Default OCR-Engine</source>
+			</trans-unit>
+			<trans-unit id="config.ocrEngines">
+				<target>Pfad zu allen OCR-Engines: Relativer Pfad von "/var/www/typo3/public/"</target>
+				<source>Path to all OCR Engines: Relative path from "/var/www/typo3/public/"</source>
+			</trans-unit>
+			<trans-unit id="config.ocrEnginesConfig">
+				<target>Pfad oder Dateiname zum Konfigurations-JSON mit allen aktiven OCR-Engines: Relativer Pfad von dem in `ocrEngines` angegebenen Pfad</target>
+				<source>Path or filename to the config JSON with all active OCR Engines: Relative path from path given in `ocrEngines`</source>
+			</trans-unit>
+			<trans-unit id="config.ocrDelay">
+				<target>Verzögerung bis zum Start der OCR (in Sekunden)</target>
+				<source>Delay until OCR start (in seconds)</source>
+			</trans-unit>
+			<trans-unit id="config.ocrThreads">
+				<target>Anzahl der max. gleichzeitig laufenden OCR Prozesse</target>
+				<source>Max. number of OCR processes running simultaneously</source>
+			</trans-unit>
+			<trans-unit id="config.ocrTimeout">
+				<target>Maximale Laufzeit der Volltexterkennung (in Sekunden): Zur Orientierung: Während die schnellsten OCR-Engines mit einfachen Layouts in weniger als 2 Sekunden fertig werden können, können komplexere Layouts und andere Engines 260s und mehr benötigen!</target>
+				<source>Timeout for OCR processes (in seconds): For reference: While the fastest OCR Engines with easy layouts can complete in under 2 sec, more complex layouts and other engines may use 260s and more!</source>
+			</trans-unit>
+			<trans-unit id="config.ocrDebug">
+				<target>Unterbrechende Debugging-Warnungen für das Backend anzeigen</target>
+				<source>Show interupting debugging alerts for backend</source>
+			</trans-unit>
+			<trans-unit id="config.ocrUpdateMets">
+				<target>METS-Dateien mit den on demand erstellten ALTO-Volltextdateien aktualisieren</target>
+				<source>Update METS files with the on demand created ALTO fulltext files</source>
+			</trans-unit>
+			<trans-unit id="config.ocrIndexMets">
+				<target>Indiziere aktualisierte METS-Dateien (Solr erforderlich): Nur relevant, wenn 'ocrUpdateMets' aktiv ist.</target>
+				<source>Index updated METS files (solr needed): Only affected if 'ocrUpdateMets' is active.</source>
+			</trans-unit>
+			<trans-unit id="config.ocrDwnlTempImage">
+				<target>Bilder für lokale OCR-Engines (wie Tesseract) herunterladen</target>
+				<source>Download images localy for local OCR engines (like tesseract)</source>
+			</trans-unit>
 			<trans-unit id="config.indexAnnotations">
 				<target>IIIF-Annotationen mit Motivation "painting" als Volltext behandeln?: Als Volltext behandelte Annotationen werden im Suchid idiert (Standard ist "FALSE")</target>
 				<source>Handle IIIF annotations with motivation "painting" as fulltext?: Handling annotations as fulltexts means they are ided (default is "FALSE")</source>

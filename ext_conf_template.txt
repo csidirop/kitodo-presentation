@@ -24,6 +24,45 @@ fileGrpDownload = DOWNLOAD
 fileGrpFulltext = FULLTEXT
 # cat=Files; type=string; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.fileGrpAudio
 fileGrpAudio = AUDIO
+#//OCR-On-Demand
+# cat=Fulltext-OCR-general; type=string; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.fulltextFolder
+fulltextFolder = fileadmin/fulltextFolder
+# cat=Fulltext-OCR-general; type=string; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.fulltextTempFolder
+fulltextTempFolder = fileadmin/_temp_/ocrTempFolder/fulltext
+# cat=Fulltext-OCR-general; type=string; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.fulltextImagesFolder
+fulltextImagesFolder = fileadmin/_temp_/ocrTempFolder/images
+# cat=Fulltext-OCR-general; type=string; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.fulltextLockFolder
+fulltextLockFolder = fileadmin/_temp_/ocrTempFolder/lock
+# cat=Fulltext-OCR-general; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrDebug
+ocrDebug=0
+# cat=Fulltext-OCR-Engines; type=string; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrEngines
+ocrEngines = typo3conf/ext/dlf/Classes/Plugin/Tools/FullTextGenerationScripts/
+# cat=Fulltext-OCR-Engines; type=string; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrEnginesConfig
+ocrEnginesConfig = ocrEngines.json
+# cat=Fulltext-OCR-Engines; type=user[Kitodo\Dlf\Hooks\ConfigurationForm->printActiveOCREngines]; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrLoadActiveOCREngines
+ocrLoadActiveOCREngines = 0
+# cat=Fulltext-OCR-Engines; type=string; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrEngine
+ocrEngine=tesseract-basic
+# cat=Fulltext-OCR-Engines; type=user[Kitodo\Dlf\Hooks\ConfigurationForm->checkOCRDConnection]; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrdConnect
+ocrdConnect = 0
+# cat=Fulltext-OCR-Engines; type=string; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrdHost
+ocrdHost = 
+# cat=Fulltext-OCR-Engines; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrPlaceholder
+ocrPlaceholder=1
+# cat=Fulltext-OCR-Engines; type=string; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrPlaceholderText
+ocrPlaceholderText=OCR is being prepared, please try to refresh the page
+# cat=Fulltext-OCR-Engines; type=int; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrDelay
+ocrDelay=2
+# cat=Fulltext-OCR-Engines; type=int; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrThreads
+ocrThreads=4
+# cat=Fulltext-OCR-Engines; type=int; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrTimeout
+ocrTimeout=600
+# cat=Fulltext-OCR-Engines; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrUpdateMets
+ocrUpdateMets=0
+# cat=Fulltext-OCR-Engines; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrIndexMets
+ocrIndexMets=0
+# cat=Fulltext-OCR-Engines; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.ocrDwnlTempImage
+ocrDwnlTempImage=0
 # cat=IIIF; type=boolean; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.indexAnnotations
 indexAnnotations = 0
 # cat=IIIF; type=int[1-2000]; label=LLL:EXT:dlf/Resources/Private/Language/locallang_labels.xlf:config.iiifThumbnailWidth

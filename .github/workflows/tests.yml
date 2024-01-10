@@ -2,9 +2,9 @@ name: Unit and Functional Testing
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "4.x-ocr" ]
   pull_request:
-    branches: [ "master" ]
+    branches: [ "master", "4.x-ocr" ]
 
 jobs:
   test:

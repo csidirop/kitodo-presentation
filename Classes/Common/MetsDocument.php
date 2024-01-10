@@ -715,6 +715,17 @@ final class MetsDocument extends AbstractDocument
     }
 
     /**
+     * Return an array which holds the logical units.
+     * @see \Kitodo\Dlf\Common\Document::logicalUnits
+     * 
+     * @access public
+     * @return string An array which holds the logical units 
+     */
+    public function getLogicalUnits(){
+        return $this->logicalUnits;
+    }
+
+    /**
      * @see AbstractDocument::init()
      */
     protected function init(string $location, array $settings): void
