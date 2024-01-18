@@ -214,8 +214,8 @@ class FullTextGenerator {
     $newMetsPath      = $outputFolderPath."/".self::getDocLocalId($doc).".xml"; //Path to updated METS (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088.xml)
     $outputPath       = "$outputFolderPath/$pageId.xml";              //Fulltextfile path (eg. fileadmin/fulltextFolder/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_295.xml)
     $tmpOutputFolderPath = $conf['fulltextTempFolder'] . self::generateUniqueDocLocalPath($document) . "/$ocrEngine"; //(eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic)
-    $tmpImagePath     = $conf['fulltextImagesFolder'] . self::generateUniqueDocLocalPath($document) . "/$pageId"; //Imagefile path (eg. fileadmin/_temp_/ocrTempFolder/images/URN/nbn/de/bsz/180/digosi/30/log59088_1)
-    $tmpOutputPath    = $tmpOutputFolderPath . "/$pageId";            //Fulltextfile temporary path (eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_295)
+    $tmpImagePath     = $conf['fulltextImagesFolder'] . self::generateUniqueDocLocalPath($document); //Imagefile path (eg. fileadmin/_temp_/ocrTempFolder/images/URN/nbn/de/bsz/180/digosi/30/)
+    $tmpOutputPath    = $tmpOutputFolderPath . "/$pageId.xml";        //Fulltextfile temporary path (eg. fileadmin/_temp_/ocrTempFolder/fulltext/URN/nbn/de/bsz/180/digosi/30/tesseract-basic/log59088_295.xml)
     $lockFolder       = $conf['fulltextLockFolder'] . "/";            //Folder used to store locks
     $lockFile         = $lockFolder . hash("md5", $imageUrl);         //File used to lock OCR command
     $imageDownloadCommand =":";                                       //non empty command without effect //TODO: find better solution
