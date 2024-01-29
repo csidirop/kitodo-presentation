@@ -9,15 +9,20 @@ services:
 
   Kitodo\Dlf\Command\HarvestCommand:
     tags:
-      - name: 'console.command'
+      - name: console.command
         command: 'kitodo:harvest'
 
   Kitodo\Dlf\Command\IndexCommand:
     tags:
-      - name: 'console.command'
+      - name: console.command
         command: 'kitodo:index'
+
+  Kitodo\Dlf\Command\NewTenantCommand:
+    tags:
+      - name: console.command
+        command: 'kitodo:newtenant'
 
   Kitodo\Dlf\Command\ReindexCommand:
     tags:
-      - name: 'console.command'
+      - name: console.command
         command: 'kitodo:reindex'
