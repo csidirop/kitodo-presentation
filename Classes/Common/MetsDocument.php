@@ -432,6 +432,9 @@ final class MetsDocument extends AbstractDocument
      */
     public function getMetadata(string $id, int $cPid = 0): array
     {
+        if(!is_null($this->io)){
+            $this->io->info("MetsDocument::getMetadata() called with id: $id");
+        }
         // Make sure $cPid is a non-negative integer.
         $cPid = max((int) $cPid, 0);
         // If $cPid is not given, try to get it elsewhere.
@@ -450,14 +453,22 @@ final class MetsDocument extends AbstractDocument
             !empty($this->metadataArray[$id])
             && $this->metadataArray[0] == $cPid
         ) {
+            if(!is_null($this->io)){
+                $this->io->info("MetsDocument::getMetadata() end");
+            }
             return $this->metadataArray[$id];
         }
 
         $metadata = $this->initializeMetadata('METS');
 
+        $this->io->info("MetsDocument::getMetadata(): metadata pre: " . json_encode($metadata));
+
         $mdIds = $this->getMetadataIds($id);
         if (empty($mdIds)) {
             // There is no metadata section for this structure node.
+            if(!is_null($this->io)){
+                $this->io->info("MetsDocument::getMetadata() end");
+            }
             return [];
         }
         // Associative array used as set of available section types (dmdSec, techMD, ...)
@@ -474,9 +485,10 @@ final class MetsDocument extends AbstractDocument
                 $metadata['type'] = [(string) $struct[0]];
             }
         }
+        $this->io->info("MetsDocument::getMetadata(): metadata 1: type: " . json_encode($metadata));
         foreach ($mdIds as $dmdId) {
             $mdSectionType = $this->mdSec[$dmdId]['section'];
-
+            $this->io->info("MetsDocument::getMetadata(): metadata 1: mdSectionType: " . json_encode($mdSectionType));
             // To preserve behavior of previous Kitodo versions, extract metadata only from first supported dmdSec
             // However, we want to extract, for example, all techMD sections (VIDEOMD, AUDIOMD)
             if ($mdSectionType === 'dmdSec' && isset($hasMetadataSection['dmdSec'])) {
@@ -489,6 +501,7 @@ final class MetsDocument extends AbstractDocument
             }
 
             $additionalMetadata = $this->getAdditionalMetadataFromDatabase((int) $cPid, $dmdId);
+            $this->io->info("MetsDocument::getMetadata(): metadata 1: additionalMetadata: " . json_encode($additionalMetadata));
             // We need a \DOMDocument here, because SimpleXML doesn't support XPath functions properly.
             $domNode = dom_import_simplexml($this->mdSec[$dmdId]['xml']);
             $domXPath = new \DOMXPath($domNode->ownerDocument);
@@ -547,26 +560,41 @@ final class MetsDocument extends AbstractDocument
 
             $hasMetadataSection[$mdSectionType] = true;
         }
+        $this->io->info("MetsDocument::getMetadata(): metadata 2: title: " . json_encode($metadata));
         // Set title to empty string if not present.
         if (empty($metadata['title'][0])) {
             $metadata['title'][0] = '';
             $metadata['title_sorting'][0] = '';
+            $this->io->info("MetsDocument::getMetadata(): metadata 3: title: " . json_encode($metadata));
         }
         // Set title_sorting to title as default.
         if (empty($metadata['title_sorting'][0])) {
             $metadata['title_sorting'][0] = $metadata['title'][0];
+            $this->io->info("MetsDocument::getMetadata(): metadata 4: titlesorting: " . json_encode($metadata));
+
         }
         // Set date to empty string if not present.
         if (empty($metadata['date'][0])) {
             $metadata['date'][0] = '';
+            $this->io->info("MetsDocument::getMetadata(): metadata 5: date: " . json_encode($metadata));
         }
 
         // Files are not expected to reference a dmdSec
         if (isset($this->fileInfos[$id]) || isset($hasMetadataSection['dmdSec'])) {
+            if(!is_null($this->io)){
+                $this->io->info("MetsDocument::getMetadata() end");
+            }
             return $metadata;
         } else {
+            if(!is_null($this->io)){
+                $this->io->info("MetsDocument::getMetadata() end");
+            }
             $this->logger->warning('No supported descriptive metadata found for logical structure with @ID "' . $id . '"');
             return [];
+        }
+
+        if(!is_null($this->io)){
+            $this->io->info("MetsDocument::getMetadata() called with id: $id end");
         }
     }
 
@@ -1120,6 +1148,9 @@ final class MetsDocument extends AbstractDocument
      */
     protected function magicGetThumbnail(bool $forceReload = false): string
     {
+        if(!is_null($this->io)){
+            $this->io->info("MetsDocument::magicGetThumbnail()");
+        }
         if (
             !$this->thumbnailLoaded
             || $forceReload
@@ -1190,6 +1221,9 @@ final class MetsDocument extends AbstractDocument
                 $this->logger->error('No structure of type "' . $metadata['type'][0] . '" found in database');
             }
             $this->thumbnailLoaded = true;
+        }
+        if(!is_null($this->io)){
+            $this->io->info("MetsDocument::magicGetThumbnail() end");
         }
         return $this->thumbnail;
     }

@@ -288,6 +288,12 @@ abstract class AbstractDocument
      */
     protected \SimpleXMLElement $xml;
 
+    public \Symfony\Component\Console\Style\SymfonyStyle $io;
+
+    public function setIO($io){
+        $this->io = $io;
+    }
+
     /**
      * This gets the location of a downloadable file for a physical page or track
      *
@@ -814,9 +820,17 @@ abstract class AbstractDocument
      *
      * @return array The logical structure node's / resource's parsed metadata array
      */
-    public function getToplevelMetadata(int $cPid = 0): array
+    public function getToplevelMetadata(int $cPid = 0, $io = null): array
     {
+        if(!is_null($this->io)){
+            $this->io->info("AbstractDocument::getToplevelMetadata()");
+        }
         $toplevelMetadata = $this->getMetadata($this->magicGetToplevelId(), $cPid);
+
+        if(!is_null($this->io)){
+            $this->io->info("AbstractDocument::getToplevelMetadata(): toplevelMetadata: " . json_encode($toplevelMetadata));
+        }
+
         // Add information from METS structural map to toplevel metadata array.
         if ($this instanceof MetsDocument) {
             $this->addMetadataFromMets($toplevelMetadata, $this->magicGetToplevelId());
@@ -829,6 +843,9 @@ abstract class AbstractDocument
             ) {
                 array_unshift($toplevelMetadata['record_id'], $this->recordId);
             }
+        }
+        if(!is_null($this->io)){
+            $this->io->info("AbstractDocument::getToplevelMetadata() end");
         }
         return $toplevelMetadata;
     }

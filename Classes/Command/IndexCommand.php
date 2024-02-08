@@ -168,7 +168,7 @@ class IndexCommand extends BaseCommand
         } else if (GeneralUtility::isValidUrl($input->getOption('doc'))) {
             $doc = AbstractDocument::getInstance($input->getOption('doc'), ['storagePid' => $this->storagePid], true);
 
-            $document = $this->getDocumentFromUrl($doc, $input->getOption('doc'));
+            $document = $this->getDocumentFromUrl($doc, $input->getOption('doc'), $io);
         }
 
         if ($doc === null) {
@@ -186,7 +186,9 @@ class IndexCommand extends BaseCommand
             }
             $document->setCurrentDocument($doc);
             // save to database
-            $this->saveToDatabase($document);
+            $io->info("IndexComand->execute(): pre saveToDatabase() ");
+            $this->saveToDatabase($document, $io);
+            $io->info("IndexComand->execute(): After saveToDatabase(): prodId: ".$document->getProdId());
             // add to index
             Indexer::add($document, $this->documentRepository);
         }
@@ -206,25 +208,33 @@ class IndexCommand extends BaseCommand
      *
      * @return Document
      */
-    private function getDocumentFromUrl($doc, string $url): Document
+    private function getDocumentFromUrl($doc, string $url, SymfonyStyle $io): Document
     {
         $document = null;
 
         if ($doc->recordId) {
+            $io->info("Document with recordId " . $doc->recordId . " found.");
             $document = $this->documentRepository->findOneByRecordId($doc->recordId);
         } else {
+            $io->info("Document with recordId " . $doc->recordId . " not found.");
             $document = $this->documentRepository->findOneByLocation($url);
         }
 
         if ($document === null) {
             // create new Document object
+            $io->info("Creating new Document object for " . $url);
             $document = GeneralUtility::makeInstance(Document::class);
         }
 
         // now there must exist a document object
         if ($document) {
+            $io->info("Document with UID " . $document->getUid() . " found.");
             $document->setLocation($url);
         }
+
+        // $io->info("prodId: ".$document->getProdId());
+
+        $io->info("finished.");
 
         return $document;
     }

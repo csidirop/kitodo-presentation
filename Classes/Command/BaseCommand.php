@@ -196,8 +196,10 @@ class BaseCommand extends Command
      *
      * @return bool true on success, false otherwise
      */
-    protected function saveToDatabase(Document $document): bool
+    protected function saveToDatabase(Document $document, \Symfony\Component\Console\Style\SymfonyStyle $io): bool
     {
+        $io->info("BaseCommand::saveToDatabase()");
+
         $doc = $document->getCurrentDocument();
         if ($doc === null) {
             return false;
@@ -205,7 +207,10 @@ class BaseCommand extends Command
         $persistenceManager = GeneralUtility::makeInstance(PersistenceManager::class);
         $doc->cPid = $this->storagePid;
 
-        $metadata = $doc->getToplevelMetadata($this->storagePid);
+        $doc->setIO($io);
+        $metadata = $doc->getToplevelMetadata($this->storagePid, $io);
+
+        $io->info("BaseCommand::saveToDatabase(): metadata prod_id: " . $metadata['prod_id'][0]);
 
         // set title data
         $document->setTitle($metadata['title'][0] ? : '');
@@ -231,7 +236,7 @@ class BaseCommand extends Command
         }
 
         // set identifiers
-        $document->setProdId($metadata['prod_id'][0] ? : '');
+        $document->setProdId($metadata['prod_id'][0]."XXXXXXXXXXXXXXXXXXXX" ? : '');
         $document->setOpacId($metadata['opac_id'][0] ? : '');
         $document->setUnionId($metadata['union_id'][0] ? : '');
 
@@ -269,6 +274,8 @@ class BaseCommand extends Command
         }
 
         $persistenceManager->persistAll();
+
+        $io->info("BaseCommand::saveToDatabase() end");
 
         return true;
     }
