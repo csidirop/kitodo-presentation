@@ -21,6 +21,7 @@ use TYPO3\CMS\Extbase\Persistence\Generic\PersistenceManager;
 
 class SolrSearchQueryTest extends FunctionalTestCase
 {
+    private $solrCoreRepository;
 
     private static array $databaseFixtures = [
         __DIR__ . '/../../Fixtures/Common/documents_1.csv',
@@ -49,7 +50,7 @@ class SolrSearchQueryTest extends FunctionalTestCase
         $settings = ['solrcore' => 4, 'storagePid' => 0];
 
         $params = ['query' => '10 Keyboard pieces'];
-        $search = new SolrSearch($documentRepository, null, $settings, $params);
+        $search = new SolrSearch($documentRepository, [], $settings, $params);
         $search->prepare();
         $solrSearchQuery = $search->getQuery();
         $result = $solrSearchQuery->execute();

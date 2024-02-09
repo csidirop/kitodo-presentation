@@ -140,7 +140,7 @@ class ToolboxController extends AbstractController
         $annotationContainers = $this->currentDocument->physicalStructureInfo[$this->currentDocument->physicalStructure[$this->requestData['page']]]['annotationContainers'];
         if (
             $annotationContainers != null
-            && sizeof($annotationContainers) > 0
+            && count($annotationContainers) > 0
         ) {
             $this->view->assign('annotationTool', true);
         } else {
