@@ -166,8 +166,11 @@ The following code is an example of an routeEnhancer for the workview page on ui
 .. _configuration-solr:
 
 *****************
-Solr Installation
+Solr Setup
 *****************
+
+Solr Installation
+=================
 
 This extension doesn't include Solr, but just a prepared configuration set.
 To setup Apache Solr, perform the following steps:
@@ -201,3 +204,16 @@ To setup Apache Solr, perform the following steps:
 
 
 .. _configuration-typoscript:
+
+
+Solr Configuration
+==================
+
+Its important to finish the Tenant Configuration in the TYPO3 backend before!
+If not already done go to the Extension Configuration and setup the connection so SOLR:
+
+* Go to the Extension Configuration (:file:`ADMIN TOOLS -> Settings -> Extension Configuration`)
+* Open :file:`dlf -> solr`
+* Setup your connection to the Solr server
+* Check and save the configuration
+* :file:`Solr Connection` should be green if the connection is successful
