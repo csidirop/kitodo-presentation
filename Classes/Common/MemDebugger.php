@@ -15,18 +15,20 @@ namespace Kitodo\Dlf\Common;
 class MemDebugger
 {
     private $io;
-    private int $last = 0;
+    private int $last = 0; # in bytes
     
     public function __construct($io){
         $this->io = $io;
         $this->last = memory_get_usage();
+        $this->io->writeln('Setup MemDebugger');
     }
 
     public function print(string $msg='')
     {
-        $now = memory_get_usage();
+        $now = memory_get_usage(); # in bytes
         $delta = 100.*($now - $this->last)/$this->last;
         $this->last = $now;
+        // $now = number_format($now/1024/1024, 2) . ' MB';
         $outstr = 'Mem usage: ' . $now
                 . ' (' . ($delta > 0 ? '<fg=red>+' : '<fg=green>')
                 . number_format($delta, 4) . '%</>)';
