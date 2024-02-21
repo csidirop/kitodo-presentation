@@ -192,7 +192,7 @@ class IndexCommand extends BaseCommand
             // save to database
             $this->saveToDatabase($document, $md);
             // add to index
-            Indexer::add($document, $this->documentRepository);
+            Indexer::add($document, $this->documentRepository, $md);
         }
 
         $io->success('All done!');
