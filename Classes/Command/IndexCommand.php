@@ -15,6 +15,7 @@ namespace Kitodo\Dlf\Command;
 use Kitodo\Dlf\Common\AbstractDocument;
 use Kitodo\Dlf\Command\BaseCommand;
 use Kitodo\Dlf\Common\Indexer;
+use Kitodo\Dlf\Common\MemDebugger;
 use Kitodo\Dlf\Domain\Model\Document;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -94,6 +95,9 @@ class IndexCommand extends BaseCommand
 
         $io = new SymfonyStyle($input, $output);
         $io->title($this->getDescription());
+
+        $md = new MemDebugger($io);
+        $md->print("Start of execution");
 
         $this->initializeRepositories($input->getOption('pid'));
 
@@ -186,7 +190,7 @@ class IndexCommand extends BaseCommand
             }
             $document->setCurrentDocument($doc);
             // save to database
-            $this->saveToDatabase($document);
+            $this->saveToDatabase($document, $md);
             // add to index
             Indexer::add($document, $this->documentRepository);
         }
