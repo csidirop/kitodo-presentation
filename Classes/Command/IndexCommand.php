@@ -23,6 +23,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 
+use Kitodo\Dlf\Common\MemDebugger;
+
 /**
  * CLI Command for indexing single documents into database and Solr.
  *
@@ -95,6 +97,9 @@ class IndexCommand extends BaseCommand
         $io = new SymfonyStyle($input, $output);
         $io->title($this->getDescription());
 
+        $md = new MemDebugger($io);
+        $md->print("Start of execution");
+
         $this->initializeRepositories($input->getOption('pid'));
 
         if ($this->storagePid == 0) {
@@ -127,7 +132,7 @@ class IndexCommand extends BaseCommand
             $io->error('ERROR: Required parameter --solr|-s is missing or array.');
             return BaseCommand::FAILURE;
         }
-
+        $md->print(str_replace('/var/www/typo3/public/typo3conf/ext/', '', __FILE__) . ':' . __LINE__);
         if (
             empty($input->getOption('doc'))
             || is_array($input->getOption('doc'))
@@ -153,6 +158,8 @@ class IndexCommand extends BaseCommand
         $document = null;
         $doc = null;
 
+
+        $md->print(str_replace('/var/www/typo3/public/typo3conf/ext/', '', __FILE__) . ':' . __LINE__ . ' try to find existing document in database');
         // Try to find existing document in database
         if (MathUtility::canBeInterpretedAsInteger($input->getOption('doc'))) {
 
@@ -181,14 +188,15 @@ class IndexCommand extends BaseCommand
         if ($dryRun) {
             $io->section('DRY RUN: Would index ' . $document->getUid() . ' ("' . $document->getLocation() . '") on PID ' . $this->storagePid . ' and Solr core ' . $solrCoreUid . '.');
         } else {
+            $md->print(str_replace('/var/www/typo3/public/typo3conf/ext/', '', __FILE__) . ':' . __LINE__ . ' indexing document');
             if ($io->isVerbose()) {
                 $io->section('Indexing ' . $document->getUid() . ' ("' . $document->getLocation() . '") on PID ' . $this->storagePid . ' and Solr core ' . $solrCoreUid . '.');
             }
             $document->setCurrentDocument($doc);
             // save to database
-            $this->saveToDatabase($document);
+            $this->saveToDatabase($document, $md);
             // add to index
-            Indexer::add($document, $this->documentRepository);
+            Indexer::add($document, $this->documentRepository, $md);
         }
 
         $io->success('All done!');

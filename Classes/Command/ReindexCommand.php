@@ -22,6 +22,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\MathUtility;
 
+use Kitodo\Dlf\Common\MemDebugger;
+
 /**
  * CLI Command for re-indexing collections into database and Solr.
  *
@@ -110,6 +112,9 @@ class ReindexCommand extends BaseCommand
 
         $io = new SymfonyStyle($input, $output);
         $io->title($this->getDescription());
+
+        $md = new MemDebugger($io);
+        $md->print("Start of execution");
 
         $this->initializeRepositories($input->getOption('pid'));
 
@@ -201,9 +206,9 @@ class ReindexCommand extends BaseCommand
                 }
                 $document->setCurrentDocument($doc);
                 // save to database
-                $this->saveToDatabase($document);
+                $this->saveToDatabase($document, $md);
                 // add to index
-                Indexer::add($document, $this->documentRepository);
+                Indexer::add($document, $this->documentRepository, $md);
             }
             // Clear document cache to prevent memory exhaustion.
             AbstractDocument::clearDocumentCache();

@@ -94,11 +94,13 @@ class Indexer
      *
      * @return bool true on success or false on failure
      */
-    public static function add(Document $document, DocumentRepository $documentRepository): bool
+    public static function add(Document $document, DocumentRepository $documentRepository, $md): bool
     {
+        $md->print("Indexer::add");
         if (in_array($document->getUid(), self::$processedDocs)) {
             return true;
         } elseif (self::solrConnect($document->getSolrcore(), $document->getPid())) {
+            $md->print(str_replace('/var/www/typo3/public/typo3conf/ext/', '', __FILE__) . ':' . __LINE__);
             $success = true;
             Helper::getLanguageService()->includeLLFile('EXT:dlf/Resources/Private/Language/locallang_be.xlf');
             // Handle multi-volume documents.
@@ -111,7 +113,7 @@ class Indexer
                     $doc = AbstractDocument::getInstance($parent->getLocation(), ['storagePid' => $parent->getPid()], true);
                     if ($doc !== null) {
                         $parent->setCurrentDocument($doc);
-                        $success = self::add($parent, $documentRepository);
+                        $success = self::add($parent, $documentRepository, $md);
                     } else {
                         Helper::log('Could not load parent document with UID ' . $document->getCurrentDocument()->parentId, LOG_SEVERITY_ERROR);
                         return false;
@@ -119,12 +121,14 @@ class Indexer
                 }
             }
             try {
+                $md->print(str_replace('/var/www/typo3/public/typo3conf/ext/', '', __FILE__) . ':' . __LINE__);
                 // Add document to list of processed documents.
                 self::$processedDocs[] = $document->getUid();
                 // Delete old Solr documents.
                 self::deleteDocument('uid', (string) $document->getUid());
 
                 // Index every logical unit as separate Solr document.
+                $md->print(str_replace('/var/www/typo3/public/typo3conf/ext/', '', __FILE__) . ':' . __LINE__);
                 foreach ($document->getCurrentDocument()->tableOfContents as $logicalUnit) {
                     if ($success) {
                         $success = self::processLogical($document, $logicalUnit);
@@ -133,6 +137,7 @@ class Indexer
                     }
                 }
                 // Index full text files if available.
+                $md->print(str_replace('/var/www/typo3/public/typo3conf/ext/', '', __FILE__) . ':' . __LINE__);
                 if ($document->getCurrentDocument()->hasFulltext) {
                     foreach ($document->getCurrentDocument()->physicalStructure as $pageNumber => $xmlId) {
                         if ($success) {
@@ -143,10 +148,12 @@ class Indexer
                     }
                 }
                 // Commit all changes.
+                $md->print(str_replace('/var/www/typo3/public/typo3conf/ext/', '', __FILE__) . ':' . __LINE__);
                 $updateQuery = self::$solr->service->createUpdate();
                 $updateQuery->addCommit();
                 self::$solr->service->update($updateQuery);
 
+                $md->print(str_replace('/var/www/typo3/public/typo3conf/ext/', '', __FILE__) . ':' . __LINE__);
                 if (!(Environment::isCli())) {
                     if ($success) {
                         self::addMessage(
