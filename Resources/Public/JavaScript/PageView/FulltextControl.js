@@ -436,10 +436,9 @@ dlfViewerFullTextControl.prototype.scrollToText = function(element, fullTextScro
 };
 
 /**
- * Activate Fulltext Features
+ * Activate Fulltext Features: Shows sidebar and with fulltext
  */
 dlfViewerFullTextControl.prototype.activate = function() {
-
     var controlEl = $('#tx-dlf-tools-fulltext');
 
     this.showFulltext(this.textblockFeatures_);
@@ -458,7 +457,6 @@ dlfViewerFullTextControl.prototype.activate = function() {
  * Deactivate Fulltext Features
  */
 dlfViewerFullTextControl.prototype.deactivate = function() {
-
     var controlEl = $('#tx-dlf-tools-fulltext');
 
     // deactivate fulltext
