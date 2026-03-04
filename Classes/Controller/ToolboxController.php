@@ -14,6 +14,7 @@ namespace Kitodo\Dlf\Controller;
 use Kitodo\Dlf\Common\AbstractDocument;
 use Kitodo\Dlf\Common\Helper;
 use Kitodo\Dlf\Middleware\Embedded3dViewer;
+use Kitodo\Dlf\Plugin\FullTextGenerator;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Configuration\Loader\YamlFileLoader;
 use TYPO3\CMS\Core\Resource\Exception\InsufficientFolderAccessPermissionsException;
@@ -291,7 +292,7 @@ class ToolboxController extends AbstractController
 
         $this->setPage();
 
-        if (!$this->isFullTextEmpty()) {
+        if (!$this->isFullTextEmpty() || FullTextGenerator::checkLocal(\Kitodo\Dlf\Common\Doc::$extKey, $this->document, $this->requestData['page'])) {
             $this->view->assign('fulltext', true);
             $this->view->assign('activateFullTextInitially', MathUtility::forceIntegerInRange($this->settings['activateFullTextInitially'], 0, 1, 0));
         } else {

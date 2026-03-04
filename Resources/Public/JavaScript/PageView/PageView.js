@@ -477,6 +477,7 @@ dlfViewer.prototype.addCustomControls = function() {
             });
     } else {
         $('#tx-dlf-tools-fulltext').remove();
+        // $('.fulltext').remove(); //?? //OCR-Test
     }
 
     if (this.scoresLoaded_ !== undefined && this.scoresLoaded_ !== null) {
@@ -600,22 +601,139 @@ dlfViewer.prototype.addCustomControls = function() {
 	}
 
 
-    if (this.annotationContainers[0] !== undefined && this.annotationContainers[0].annotationContainers !== undefined
-        && this.annotationContainers[0].annotationContainers.length > 0 && this.images.length === 1) {
+    if (this.scoresLoaded_ !== undefined && this.scoresLoaded_ !== null) {
+        var context = this;
+        const scoreControl = new dlfViewerScoreControl(this, this.pagebeginning, this.imageUrls.length);
+        this.scoresLoaded_.then(function (scoreData) {
+            scoreControl.loadScoreData(scoreData, tk);
+
+            // Add synchronisation control
+            context.syncControl = new dlfViewerSyncControl(context);
+            context.syncControl.addSyncControl();
+
+        }).catch(function () {
+            scoreControl.deactivate();
+        });
+
+        //
+        // Show measure boxes if coordinates are available
+        //
+        if (this.measureCoords) {
+            // Add measure layer for facsimile
+            if (!dlfUtils.exists(this.measureLayer)) {
+                this.measureLayer = new ol.layer.Vector({
+                    'source': new ol.source.Vector(),
+                    'style': dlfViewerOLStyles.invisibleStyle,
+                    'id': 'measureLayer'
+                });
+                this.map.addLayer(this.measureLayer);
+            }
+            this.measureLayer.getSource().clear();
+
+            var map = this.map;
+            var measureLayer = this.measureLayer;
+
+            var i = 0, xLow = 0, xHigh = 0, yLow = 0, yHigh = 0;
+
+            $.each(this.measureCoords, function(key, value) {
+                var splitValue = value.split(","),
+                    x1 = splitValue[0],
+                    y1 = splitValue[1],
+                    x2 = splitValue[2],
+                    y2 = splitValue[3],
+                    coordinatesWithoutScale = [[[x1, -y1], [x2, -y1], [x2, -y2], [x1, -y2], [x1, -y1]]],
+                    width = x1 - x2,
+                    height = y1 - y2;
+
+                if (i === 0) {
+                    xLow = x1;
+                    yLow = y1;
+                }
+                xHigh = x2;
+                yHigh = y2;
+
+                var geometry = new ol.geom.Polygon(coordinatesWithoutScale);
+                var feature = new ol.Feature(geometry);
+                feature.setId(key);
+                feature.setProperties({
+                    width,
+                    height,
+                    x1,
+                    y1
+                });
+                measureLayer.getSource().addFeature(feature);
+
+                if (key === context.currentMeasureId) {
+                    feature.setStyle(dlfViewerOLStyles.selectStyle());
+                    context.facsimileMeasureActive = feature;
+                }
+
+                i++;
+
+            });
+
+            map.on('singleclick', function (evt) {
+                if (context.facsimileMeasureActive !== null) {
+                    context.verovioMeasureActive.removeClass('active');
+                    context.facsimileMeasureActive.setStyle(undefined);
+                    context.facsimileMeasureActive = null;
+                }
+                map.forEachFeatureAtPixel(evt.pixel, function(feature, layer) {
+                    if (feature !== null) {
+                        // show ajax spinner if exists
+                        if ($('#overlay .ajax-spinner')) {
+                            $('#overlay').fadeIn(300);
+                        }
+
+                        context.facsimileMeasureActive = feature;
+                        context.verovioMeasureActive = $('#tx-dlf-score-'+context.counter+' #' + feature.getId() + ' rect').addClass('active');
+                        if (context.measureIdLinks[feature.getId()]) {
+                            window.location.replace(context.measureIdLinks[feature.getId()]);
+                        }
+                        return true;
+                    }
+                });
+            });
+
+            map.on('pointermove', function (e) {
+                if (context.facsimileMeasureHover !== null) {
+                    context.facsimileMeasureHover.setStyle(undefined);
+                    context.facsimileMeasureHover = null;
+                    context.verovioMeasureHover.removeClass('hover');
+
+                    if (context.facsimileMeasureActive !== null) {
+                        context.facsimileMeasureActive.setStyle(dlfViewerOLStyles.selectStyle());
+                    }
+                }
+
+                map.forEachFeatureAtPixel(e.pixel, function (f) {
+                    context.facsimileMeasureHover = f;
+                    dlfViewerOLStyles.hoverStyle().getFill().setColor(f.get('COLOR') || '#eeeeee');
+                    f.setStyle(dlfViewerOLStyles.hoverStyle());
+
+                    context.verovioMeasureHover = $('#tx-dlf-score-'+context.counter+' #' + context.facsimileMeasureHover.getId() + ' rect').addClass('hover');
+                    return true;
+                });
+            });
+        }
+
+	} else {
+		$('#tx-dlf-tools-score').remove();
+	}
+
+
+    if (this.annotationContainers[0] !== undefined && this.annotationContainers[0].annotationContainers !== undefined && this.annotationContainers[0].annotationContainers.length > 0 && this.images.length === 1) {
         // Adds annotation behavior only if there are annotations available and view is single page
         annotationControl = new DlfAnnotationControl(this.map, this.images[0], this.annotationContainers[0]);
         if (fulltextControl !== undefined) {
             $(fulltextControl).on("activate-fulltext", $.proxy(annotationControl.deactivate, annotationControl));
             $(annotationControl).on("activate-annotations", $.proxy(fulltextControl.deactivate, fulltextControl));
         }
-    }
-    else {
+    } else {
         $('#tx-dlf-tools-annotations').remove();
     }
 
-    //
     // Add image manipulation tool if container is added.
-    //
     if ($('#tx-dlf-tools-imagetools').length > 0) {
 
         // Should be called if CORS is enabled
@@ -629,15 +747,15 @@ dlfViewer.prototype.addCustomControls = function() {
         if (fulltextControl !== undefined) {
             $(imageManipulationControl).on("activate-imagemanipulation", $.proxy(fulltextControl.deactivate, fulltextControl));
             $(fulltextControl).on("activate-fulltext", $.proxy(imageManipulationControl.deactivate, imageManipulationControl));
+        } else {
         }
         if (annotationControl !== undefined) {
             $(imageManipulationControl).on("activate-imagemanipulation", $.proxy(annotationControl.deactivate, annotationControl));
             $(annotationControl).on("activate-annotations", $.proxy(imageManipulationControl.deactivate, imageManipulationControl));
-        }
+        } 
 
         // Set on object scope
         this.imageManipulationControl = imageManipulationControl;
-
     }
 
 };
