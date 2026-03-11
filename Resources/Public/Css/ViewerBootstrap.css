@@ -1,0 +1,112 @@
+.dlf-bootstrap-site {
+    color: #1b1f23;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.dlf-bootstrap-site__header {
+    border-bottom: 1px solid #d8dde3;
+    padding: 1rem 1.5rem;
+}
+
+.dlf-bootstrap-site__title {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.dlf-bootstrap-site__content {
+    padding: 1.5rem;
+}
+
+.dlf-bootstrap-viewer {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: minmax(16rem, 24rem) minmax(0, 1fr);
+    min-height: calc(100vh - 6rem);
+}
+
+.dlf-bootstrap-viewer__sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.dlf-bootstrap-panel {
+    background: #f8fafc;
+    border: 1px solid #d8dde3;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.dlf-bootstrap-panel__title {
+    border-bottom: 1px solid #d8dde3;
+    font-size: 1rem;
+    margin: 0;
+    padding: 0.75rem 1rem;
+}
+
+.dlf-bootstrap-panel .tx-dlf-metadata,
+.dlf-bootstrap-panel .tx-dlf-table-of-contents {
+    padding: 1rem;
+}
+
+.dlf-bootstrap-viewer__main {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.dlf-bootstrap-stage {
+    background: #fff;
+    border: 1px solid #d8dde3;
+    border-radius: 0.5rem;
+    min-height: 40rem;
+    overflow: hidden;
+    padding: 1rem;
+}
+
+.dlf-bootstrap-stage__viewer {
+    min-height: 100%;
+}
+
+.dlf-bootstrap-stage__viewer .tx-dlf-map {
+    min-height: 36rem;
+}
+
+.dlf-bootstrap-toolbar {
+    background: #f8fafc;
+    border: 1px solid #d8dde3;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+}
+
+.dlf-bootstrap-toolbar ul,
+.dlf-bootstrap-tool-list {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.dlf-bootstrap-tool-list__item > ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+@media (max-width: 960px) {
+    .dlf-bootstrap-viewer {
+        grid-template-columns: 1fr;
+    }
+
+    .dlf-bootstrap-stage {
+        min-height: 28rem;
+    }
+
+    .dlf-bootstrap-stage__viewer .tx-dlf-map {
+        min-height: 24rem;
+    }
+}

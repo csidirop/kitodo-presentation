@@ -1,0 +1,42 @@
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+      data-namespace-typo3-fluid="true"
+      lang="en">
+
+<div class="dlf-bootstrap-viewer">
+    <aside class="dlf-bootstrap-viewer__sidebar">
+        <section class="dlf-bootstrap-panel">
+            <h2 class="dlf-bootstrap-panel__title">Metadata</h2>
+            <f:cObject typoscriptObjectPath="plugin.tx_dlf_metadata" />
+        </section>
+
+        <section class="dlf-bootstrap-panel">
+            <h2 class="dlf-bootstrap-panel__title">Contents</h2>
+            <f:cObject typoscriptObjectPath="plugin.tx_dlf_tableofcontents" />
+        </section>
+    </aside>
+
+    <main class="dlf-bootstrap-viewer__main">
+        <div class="dlf-bootstrap-toolbar dlf-bootstrap-toolbar--top">
+            <f:cObject typoscriptObjectPath="lib.kitodoBootstrap.navigation.pagecontrol" />
+        </div>
+
+        <section class="dlf-bootstrap-stage">
+            <div class="dlf-bootstrap-stage__viewer">
+                <f:cObject typoscriptObjectPath="plugin.tx_dlf_pageview" />
+                <f:cObject typoscriptObjectPath="plugin.tx_dlf_audioplayer" />
+                <f:cObject typoscriptObjectPath="plugin.tx_dlf_embedded3dviewer" />
+            </div>
+        </section>
+
+        <div class="dlf-bootstrap-toolbar dlf-bootstrap-toolbar--bottom">
+            <ul class="dlf-bootstrap-tool-list">
+                <f:cObject typoscriptObjectPath="lib.kitodoBootstrap.navigation.viewfunction" />
+                <li class="dlf-bootstrap-tool-list__item">
+                    <f:cObject typoscriptObjectPath="plugin.tx_dlf_toolbox" />
+                </li>
+            </ul>
+        </div>
+    </main>
+</div>
+
+</html>
