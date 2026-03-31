@@ -565,6 +565,26 @@
                 <source><![CDATA[New Tenant Module]]></source>
                 <target><![CDATA[Modul Neuer Mandant]]></target>
             </trans-unit>
+            <trans-unit id="newTenant.createInitialSetup" approved="yes">
+                <source><![CDATA[Create initial setup]]></source>
+                <target><![CDATA[Initiales Setup anlegen]]></target>
+            </trans-unit>
+            <trans-unit id="newTenant.initialSetupOkay" approved="yes">
+                <source><![CDATA[Initial setup found!]]></source>
+                <target><![CDATA[Initiales Setup gefunden!]]></target>
+            </trans-unit>
+            <trans-unit id="newTenant.initialSetupOkayMsg" approved="yes">
+                <source><![CDATA[The selected page already contains the Kitodo configuration folder, viewer page, template and starter plugins.]]></source>
+                <target><![CDATA[Die gewählte Seite enthält bereits den Kitodo-Konfigurationsordner, die Viewer-Seite, das Template und die Start-Plugins.]]></target>
+            </trans-unit>
+            <trans-unit id="newTenant.initialSetupNotOkay" approved="yes">
+                <source><![CDATA[Initial setup missing!]]></source>
+                <target><![CDATA[Initiales Setup fehlt!]]></target>
+            </trans-unit>
+            <trans-unit id="newTenant.initialSetupNotOkayMsg" approved="yes">
+                <source><![CDATA[The selected page is missing the dfg-viewer-like starter structure. It can be created automatically below this page.]]></source>
+                <target><![CDATA[Unter der gewählten Seite fehlt noch die dfg-viewer-ähnliche Startstruktur. Sie kann automatisch angelegt werden.]]></target>
+            </trans-unit>
             <trans-unit id="newTenant.createFormat" approved="yes">
                 <source><![CDATA[Create default namespaces]]></source>
                 <target><![CDATA[Standard-Namensräume anlegen]]></target>
@@ -630,12 +650,12 @@
                 <target><![CDATA[Es wurde kein Solr Kern gefunden. Ohne Solr Kern kann das Plugin zur Recherche in den Meta- und Strukturdaten nicht verwendet werden. Ein Solr Kern kann automatisch angelegt werden.]]></target>
             </trans-unit>
             <trans-unit id="newTenant.wrongPageType" approved="yes">
-                <source><![CDATA[Page is no Folder!]]></source>
-                <target><![CDATA[Seite ist kein Ordner!]]></target>
+                <source><![CDATA[No valid page selected!]]></source>
+                <target><![CDATA[Keine gueltige Seite ausgewaehlt!]]></target>
             </trans-unit>
             <trans-unit id="newTenant.wrongPageTypeMsg" approved="yes">
-                <source><![CDATA[The configuration records of Kitodo.Presentation need to be stored in a Folder.]]></source>
-                <target><![CDATA[Die Konfigurationsdatensätze von Kitodo.Presentation müssen in Ordnern abgelegt werden.]]></target>
+                <source><![CDATA[Select a regular page to create the initial setup or select the Kitodo configuration folder to manage its records.]]></source>
+                <target><![CDATA[Waehlen Sie eine normale Seite fuer das initiale Setup oder den Kitodo-Konfigurationsordner zur Verwaltung der Datensaetze aus.]]></target>
             </trans-unit>
             <trans-unit id="newTenant.structureOkay" approved="yes">
                 <source><![CDATA[Structures found!]]></source>
