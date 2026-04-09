@@ -7,6 +7,16 @@ services:
   Kitodo\Dlf\:
     resource: '../Classes/*'
 
+  Kitodo\Dlf\EventListener\FinalizeInstallBootstrap:
+    tags:
+      - name: event.listener
+        identifier: 'dlf/finalize-install-bootstrap'
+
+  Kitodo\Dlf\EventListener\FinalizeSetupBootstrap:
+    tags:
+      - name: event.listener
+        identifier: 'dlf/finalize-setup-bootstrap'
+
   Kitodo\Dlf\Command\DbDocsCommand:
     tags:
       - name: console.command
