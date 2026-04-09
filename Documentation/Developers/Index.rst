@@ -10,3 +10,4 @@ These pages are aimed at developers working on Kitodo.Presentation.
    Database
    Validation
    Embedded3DViewer
+   BootstrapViewerSetup
