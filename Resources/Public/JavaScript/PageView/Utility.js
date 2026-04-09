@@ -327,7 +327,7 @@ dlfUtils.fetchStaticImageData = function (imageSourceObj, loadingIndicator) {
 
     // Use deferred for async behavior
     var deferredResponse = new $.Deferred();
-    var imageKey = imageSourceObj.url;
+    var imageKey = imageSourceObj.url || imageSourceObj.src || "";
 
     var loadFailed = function () {
         loadingIndicator.done(imageKey);
@@ -376,6 +376,12 @@ dlfUtils.fetchStaticImageData = function (imageSourceObj, loadingIndicator) {
             image.src = src;
         }
     };
+
+    if ((imageSourceObj.url || "").indexOf("eID=tx_dlf_pageview_proxy") !== -1) {
+        loadingIndicator.indeterminate(imageKey);
+        makeImage(imageSourceObj.url, imageSourceObj.mimetype);
+        return deferredResponse;
+    }
 
     var xhr = new XMLHttpRequest();
     xhr.responseType = 'blob';
