@@ -13,6 +13,12 @@
       xmlns:kitodo="http://typo3.org/ns/Kitodo/Dlf/ViewHelpers"
       data-namespace-typo3-fluid="true">
 
+<f:if condition="{internalProxyMisconfigured}">
+    <div class="tx-dlf-pageview-warning" role="status">
+        The internal proxy is disabled in the extension configuration. Images and other protected viewer resources may not load until
+        <code>EXTENSIONS.dlf.general.enableInternalProxy</code> is enabled.
+    </div>
+</f:if>
 <div id="tx-dlf-map" class="tx-dlf-map" data-dic="overview-map:{f:translate(key: 'pageview.overview-map')}">
     <div id="tx-dlf-annotationselection"></div>
 </div>

@@ -110,6 +110,15 @@ class PageViewController extends AbstractController
         $this->view->assign('docId', $this->requestData['id']);
         $this->view->assign('page', $page);
 
+        $internalProxyMisconfigured = !empty($this->settings['useInternalProxy'])
+            && empty($this->extConf['general']['enableInternalProxy']);
+        if ($internalProxyMisconfigured) {
+            $message = 'The page view is configured to use internal proxy URLs, but EXTENSIONS.dlf.general.enableInternalProxy is disabled. '
+                . 'The default viewer may fail to load protected image, score, or fulltext resources until the setting is enabled.';
+            $this->logger->error($message);
+        }
+        $this->view->assign('internalProxyMisconfigured', $internalProxyMisconfigured);
+
         // Get the controls for the map.
         $this->controls = explode(',', $this->settings['features'] ?? '');
         $this->requestData['double'] = MathUtility::forceIntegerInRange($this->requestData['double'], 0, 1, 0);

@@ -227,6 +227,26 @@ body.tx-dlf-default-viewer-page {
   margin-bottom: 0;
 }
 
+
+.tx-dlf-pageview-warning {
+  position: absolute;
+  top: 92px;
+  left: 18px;
+  right: 18px;
+  z-index: 35;
+  padding: 12px 14px;
+  border: 1px solid rgba(169, 118, 0, 0.32);
+  border-radius: 10px;
+  background: khaki;
+  color: var(--bootstrap-ink);
+  box-shadow: var(--bootstrap-shadow);
+  line-height: 1.5;
+}
+
+.tx-dlf-pageview-warning code {
+  font-size: 0.95em;
+}
+
 .tx-dlf-default-viewer-document-functions {
   position: absolute;
   inset: 0 0 auto;
