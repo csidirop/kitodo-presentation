@@ -18,9 +18,42 @@ page {
 
             documentId = TEXT
             documentId.data = GP:tx_dlf|id
+
+            landingContentAvailable = CONTENT
+            landingContentAvailable {
+                table = tt_content
+                select {
+                    pidInList.data = TSFE:id
+                    where = {#colPos}=0
+                    orderBy = sorting
+                    max = 1
+                    languageField = sys_language_uid
+                }
+                renderObj = TEXT
+                renderObj.value = 1
+            }
+
+            landingContentRendererAvailable = TEXT
+            landingContentRendererAvailable.value = 0
+
+            landingContent = CONTENT
+            landingContent {
+                table = tt_content
+                select {
+                    pidInList.data = TSFE:id
+                    where = {#colPos}=0
+                    orderBy = sorting
+                    languageField = sys_language_uid
+                }
+                renderObj =< tt_content
+            }
         }
     }
 }
+
+[extensionLoaded('fluid_styled_content')]
+page.10.variables.landingContentRendererAvailable.value = 1
+[END]
 
 plugin.tx_dlf_navigation = EXTBASEPLUGIN
 plugin.tx_dlf_navigation {
