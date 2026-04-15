@@ -7,21 +7,17 @@ services:
   Kitodo\Dlf\:
     resource: '../Classes/*'
 
-  Kitodo\Dlf\EventListener\FinalizeInstallBootstrap:
-    tags:
-      - name: event.listener
-        identifier: 'dlf/finalize-install-bootstrap'
-
-  Kitodo\Dlf\EventListener\FinalizeSetupBootstrap:
-    tags:
-      - name: event.listener
-        identifier: 'dlf/finalize-setup-bootstrap'
-
   Kitodo\Dlf\Command\DbDocsCommand:
     tags:
       - name: console.command
         command: 'kitodo:dbdocs'
         description: 'Generate database rst file.'
+
+  Kitodo\Dlf\Command\BootstrapSetupCommand:
+    tags:
+      - name: console.command
+        command: 'kitodo:setup'
+        description: 'Create the shipped bootstrap root page tree and viewer setup manually.'
 
   Kitodo\Dlf\Command\DeleteCommand:
     tags:
