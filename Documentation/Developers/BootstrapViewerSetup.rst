@@ -2,15 +2,15 @@
 Bootstrap Default Viewer Setup
 ######################
 
-This document summarizes the bootstrap viewer work that was added to make Kitodo.Presentation usable directly after extension installation, without requiring ``dfg-viewer`` or ``slub_digitalcollections`` as additional setup extensions.
+This document summarizes the bootstrap viewer work that was added to make Kitodo.Presentation usable through an explicit CLI setup step, without requiring ``dfg-viewer`` or ``slub_digitalcollections`` as additional setup extensions.
 
 Scope
 =====
 
 The implementation covers the first setup step only:
 
-* create a usable page tree on installation/setup
-* ship a bootstrap site configuration scaffold
+* create a usable page tree through the CLI setup command
+* write a bootstrap site configuration during the CLI setup command
 * seed the configuration folder with a reduced DFG-viewer-style default dataset
 * provide a working standalone viewer page
 * make remote images work through the internal proxy
@@ -18,63 +18,108 @@ The implementation covers the first setup step only:
 Overview
 ========
 
-The bootstrap flow now has four main parts:
+The bootstrap flow now has three main parts:
 
-1. initial data import
-2. post-import bootstrap service
-3. standalone viewer templates and TypoScript
-4. runtime fixes needed for remote documents, fulltext and navigation
+1. manual CLI root setup
+2. standalone viewer templates and TypoScript
+3. bootstrap configuration seeding
 
 What Was Added and Why
 ======================
 
-Initial installation payload
-----------------------------
+Manual root-page creation
+-------------------------
 
 Files:
 
-* ``Initialisation/data.xml``
-* ``Initialisation/Site/kitodo-presentation/config.yaml``
+* ``Classes/Service/BootstrapRootSetupService.php``
+* ``Resources/Private/Data/BootstrapSiteConfig.yaml``
 
 What changed:
 
-* ``data.xml`` now creates the initial page tree used by the bootstrap setup.
-* The page tree includes a root page, a viewer page and a configuration folder.
-* A site configuration scaffold is shipped for the bootstrap site.
+* The bootstrap root page, viewer page and configuration folder are created directly by the CLI setup service.
+* The bootstrap site configuration is written from a template during the same command run.
+* The extension no longer ships ``Initialisation`` payload files that TYPO3 imports automatically during extension setup.
 
 Why:
 
-* TYPO3 needs real pages and a site to render the viewer immediately after installation.
-* The previous state required manual setup or external helper extensions.
+* Extension setup should stay inert.
+* The page tree and site setup must now happen only when the CLI command is executed explicitly.
 
-Install/setup event listeners
------------------------------
+Manual setup trigger
+--------------------
 
 Files:
 
 * ``Configuration/Services.yaml``
-* ``Classes/EventListener/FinalizeInstallBootstrap.php``
-* ``Classes/EventListener/FinalizeSetupBootstrap.php``
+* ``Classes/Command/BootstrapSetupCommand.php``
+* ``Classes/Service/BootstrapRootSetupService.php``
 
 What changed:
 
-* Two event listeners are registered to run the bootstrap finalization logic.
+* Added the ``kitodo:setup`` CLI command as the explicit bootstrap trigger.
+* Removed the automatic install/setup event listeners.
+* The bootstrap service now creates the shipped bootstrap root page tree itself instead of relying on TYPO3 ``Initialisation`` imports.
+* The command supports both a default auto-generated setup mode and optional custom parameters for identifier, base path, root title and slugs.
 
 Why:
 
-* TYPO3 can reach this extension through different installation/setup paths.
-* The bootstrap work needs to run after the basic import happened, regardless of whether that import was triggered by package installation or extension setup.
+* Bootstrap setup should no longer run implicitly during extension installation, even when the shipped bootstrap page tree already exists.
+* The backend workflow can later reuse the same service logic behind a manual UI.
+
+Default command
+^^^^^^^^^^^^^^^
+
+::
+
+   php /var/www/typo3/vendor/bin/typo3 kitodo:setup
+
+This creates a new bootstrap group with generated values for:
+
+* site identifier
+* site base
+* root page title
+* root page slug
+* viewer page slug
+
+Custom command
+^^^^^^^^^^^^^^
+
+::
+
+   php /var/www/typo3/vendor/bin/typo3 kitodo:setup \
+     --identifier=my-instance \
+     --base=/my-instance/ \
+     --root-title="My Instance" \
+     --root-slug=/ \
+     --viewer-slug=/viewer
+
+Available options:
+
+* ``--identifier`` for a custom site identifier
+* ``--base`` for a custom site base path
+* ``--root-title`` for a custom root page title
+* ``--root-slug`` for a custom root page slug
+* ``--viewer-slug`` for a custom viewer page slug
+
+Validation notes:
+
+* ``--identifier`` only accepts lowercase letters, digits and hyphens.
+* ``--base`` must start with ``/``.
+* ``--root-slug`` and ``--viewer-slug`` must start with ``/``.
+* In the current multi-site setup model, custom ``--root-slug`` values are only allowed together with the root base ``/``.
 
 Bootstrap finalization service
 ------------------------------
 
 Files:
 
-* ``Classes/Service/InstallBootstrapService.php``
+* ``Classes/Service/BootstrapRootSetupService.php``
 
 What changed:
 
-* Resolves the imported root page and child pages.
+* Creates or reuses the bootstrap root page and child pages.
+* Writes the bootstrap site configuration from a template.
 * Ensures a root ``sys_template`` exists.
 * Forces inclusion of both the base and bootstrap static TypoScript.
 * Rewrites template constants to the imported page IDs.
@@ -84,7 +129,7 @@ What changed:
 
 Why:
 
-* The XML import alone is not enough because imported UIDs and runtime configuration vary per instance.
+* The CLI setup must now work without TYPO3 automatic extension imports.
 * The viewer page must be functional without manual TypoScript, plugin or extension-configuration work.
 
 DFG-Viewer-style bootstrap dataset
