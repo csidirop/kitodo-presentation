@@ -24,7 +24,7 @@ final class BootstrapSetupCommand extends Command
 
     public function configure(): void
     {
-        $this->setDescription('Create the shipped bootstrap root page tree and viewer setup manually.');
+        $this->setDescription('Create the root page tree and viewer setup manually.');
         $this->addOption('identifier', null, InputOption::VALUE_REQUIRED, 'Custom site identifier.');
         $this->addOption('base', null, InputOption::VALUE_REQUIRED, 'Custom site base path, for example /my-instance/.');
         $this->addOption('root-title', null, InputOption::VALUE_REQUIRED, 'Custom root page title.');
@@ -35,7 +35,7 @@ final class BootstrapSetupCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->title('Manual bootstrap root setup');
+        $io->title('Page setup');
 
         try {
             $result = $this->bootstrapRootSetupService->runSetup([
@@ -59,7 +59,7 @@ final class BootstrapSetupCommand extends Command
             ['Template record' => (string)$result['templateId']],
             ['Solr core' => $result['solrCoreUid'] !== null ? (string)$result['solrCoreUid'] : 'not created']
         );
-        $io->success('Bootstrap root page setup completed.');
+        $io->success('Default page setup completed.');
 
         return Command::SUCCESS;
     }
