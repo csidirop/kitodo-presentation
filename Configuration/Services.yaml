@@ -17,7 +17,13 @@ services:
     tags:
       - name: console.command
         command: 'kitodo:setup'
-        description: 'Create the shipped bootstrap root page tree and viewer setup manually.'
+        description: 'Create the root page tree and viewer setup manually.'
+
+  Kitodo\Dlf\Command\TenantSetupCommand:
+    tags:
+      - name: console.command
+        command: 'kitodo:tenantSetup'
+        description: 'Run the tenant setup for an existing configuration folder.'
 
   Kitodo\Dlf\Command\DeleteCommand:
     tags:
