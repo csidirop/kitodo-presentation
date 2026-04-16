@@ -122,10 +122,126 @@ Tip: Use the admin backend module: Settings -> Configure Installation-Wide Optio
 TypoScript Basic Configuration
 ------------------------------
 
-Please include the Template "Basic Configuration (dlf)". This template adds
+Please include the Template "Basic Configuration". This template adds
 jQuery to your page by setting the following typoscript:
 
 :typoscript:`page.includeJSlibs.jQuery`
+
+
+Manual Viewer Setup
+----------------------------
+
+The regular viewer is a TYPO3 page built from the ``Page View`` plugin together with additional
+plugins such as ``Navigation``, ``Toolbox``, ``Metadata`` and ``Table Of Contents``.
+
+Recommended minimum setup
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. Create a dedicated TYPO3 data folder, for example ``Kitodo Configuration``.
+2. Create a dedicated TYPO3 page for the viewer, for example ``/viewer`` or ``/show``.
+3. Create or edit a TYPO3 template record on that page and include the
+   TypoScript template ``Basic Configuration``.
+   Do this in the template record itself, for example via the TYPO3
+   ``Template`` module or by editing the ``Site Set/TypoScript Template``
+   record. The field shown in the page properties under ``Resources`` is for
+   static Page TSconfig and is not the correct place for this step.
+4. Set the TypoScript constant ``plugin.tx_dlf.persistence.storagePid`` to the Kitodo Configuration data folder.
+   Set this constant in the Constant Editor or in your site package TypoScript
+   constants to the page UID of the data folder created in step 1.
+5. Place the plugin ``Page View`` on the viewer page.
+6. Place the plugin ``Navigation`` on the same page.
+7. Optionally place ``Toolbox``, ``Metadata`` and ``Table Of Contents`` on the same page as well.
+
+The ``Page View`` plugin renders the actual image viewer. The surrounding
+viewer functionality is then added by the other plugins.
+
+Viewer page plugins
+~~~~~~~~~~~~~~~~~~~
+
+The following combination is a good starting point for a normal document
+viewer page:
+
+* ``Page View`` for the OpenLayers based image viewer
+* ``Navigation`` for paging, page selection and double-page mode
+* ``Toolbox`` for tools such as fulltext, image download, rotation or
+  search-in-document
+* ``Metadata`` for descriptive metadata
+* ``Table Of Contents`` for the document structure
+
+If you want only a minimal page, ``Page View`` and ``Navigation`` are usually
+enough.
+
+Important plugin settings
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``Page View``
+   Keep the default ``elementId`` unless you also adjust your template.
+   ``useInternalProxy`` is optional and mainly relevant when remote files need
+   to be proxied through TYPO3.
+
+``Navigation``
+   Configure the features you want to expose. If you activate the ``listView``
+   feature, set ``targetPid`` to the page that contains the ``List View``
+   plugin.
+
+``Toolbox``
+   Add the tools you want to offer. Some tools need additional data:
+
+   * ``searchInDocumentTool`` requires a Solr core configuration.
+   * ``fulltextTool`` and ``fulltextDownloadTool`` only work if the document
+     provides fulltext files.
+   * ``imageDownloadTool`` and ``pdfDownloadTool`` depend on matching METS file
+     groups.
+
+``Metadata`` and ``Table Of Contents``
+   If these plugins should link back to the viewer page, set their
+   ``targetPid`` to the UID of the viewer page.
+
+Corresponding pages
+~~~~~~~~~~~~~~~~~~~
+
+The viewer page is usually only one part of the complete frontend setup.
+Related pages should point to it explicitly:
+
+* ``Search`` should set ``targetPidPageView`` to the viewer page.
+* ``Collection`` and ``List View`` should also link to the viewer page where
+  appropriate.
+* ``Navigation`` may point back to a separate result list page via
+  ``targetPid`` when the ``listView`` feature is enabled.
+
+This way, search results, metadata links and structure links all resolve to the
+same document viewer page.
+
+Request parameters
+~~~~~~~~~~~~~~~~~~
+
+The regular viewer is driven by ``tx_dlf`` request parameters. The most common
+ones are:
+
+* ``tx_dlf[id]``: document identifier or document URL
+* ``tx_dlf[page]``: physical page number
+* ``tx_dlf[double]``: enable double-page mode with ``1``
+* ``tx_dlf[highlight_word]``: highlight a word in the page view
+
+Example URLs:
+
+.. code-block:: text
+
+   /viewer?tx_dlf[id]=https%3A%2F%2Fexample.org%2Fmets.xml
+   /viewer?tx_dlf[id]=https%3A%2F%2Fexample.org%2Fmets.xml&tx_dlf[page]=12
+   /viewer?tx_dlf[id]=https%3A%2F%2Fexample.org%2Fmets.xml&tx_dlf[page]=12&tx_dlf[double]=1
+
+Manual test checklist
+~~~~~~~~~~~~~~~~~~~~~
+
+After finishing the setup, verify the following:
+
+* Opening the viewer page with ``tx_dlf[id]`` loads the document.
+* Changing ``tx_dlf[page]`` changes the displayed page.
+* The navigation buttons keep the user on the intended viewer page.
+* Metadata and table-of-contents links point to the same viewer page.
+* Fulltext and toolbox functions only appear when the current document
+  provides the required files.
 
 
 Slug Configuration
