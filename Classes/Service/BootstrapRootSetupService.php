@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Kitodo\Dlf\Service;
 
-use Kitodo\Dlf\Common\Solr\Solr;
 use Symfony\Component\Yaml\Yaml;
 use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Configuration\SiteConfiguration;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Service class for running the manual bootstrap root setup.
+ * Service class for creating a new bootstrap root page tree.
  */
 final class BootstrapRootSetupService
 {
@@ -26,26 +26,18 @@ final class BootstrapRootSetupService
     private const BASIC_STATIC_FILE = 'EXT:dlf/Configuration/TypoScript/';
     private const BOOTSTRAP_STATIC_FILE = 'EXT:dlf/Configuration/TypoScript/Bootstrap/';
     private const SITE_CONFIGURATION_TEMPLATE = 'EXT:dlf/Resources/Private/Data/BootstrapSiteConfig.yaml';
-    private const LEGACY_VIEWER_PLUGIN_TYPES = [
-        'dlf_navigation',
-        'dlf_toolbox',
-        'dlf_pageview',
-        'dlf_tableofcontents',
-        'dlf_metadata',
-    ];
 
     public function __construct(
         private readonly ConnectionPool $connectionPool,
         private readonly SiteConfiguration $siteConfiguration,
         private readonly CacheManager $cacheManager,
-        private readonly BootstrapConfigurationImportService $bootstrapConfigurationImportService,
     ) {}
 
     /**
-     * Runs the manual setup for a new bootstrap root page tree.
+     * Runs the setup for a new bootstrap root page tree.
      *
      * @param array{identifier?:mixed,base?:mixed,rootTitle?:mixed,rootSlug?:mixed,viewerSlug?:mixed} $options
-     * @return array{siteIdentifier:string,siteBase:string,rootPageId:int,viewerPageId:int,configurationPageId:int,templateId:int,solrCoreUid:?int}
+     * @return array{siteIdentifier:string,siteBase:string,rootPageId:int,viewerPageId:int,configurationPageId:int,templateId:int}
      */
     public function runSetup(array $options = []): array
     {
@@ -64,15 +56,11 @@ final class BootstrapRootSetupService
         ]);
 
         $templateId = $this->ensureTemplate($rootPageId);
-        $this->bootstrapConfigurationImportService->seed($configurationPageId);
-        $solrCoreUid = $this->ensureSolrCore($configurationPageId);
-        $this->cleanupLegacyViewerContentElements($viewerPageId);
         $this->updateTemplate(
             $templateId,
             $rootPageId,
             $viewerPageId,
             $configurationPageId,
-            $solrCoreUid
         );
         $this->cacheManager->flushCaches();
 
@@ -83,7 +71,6 @@ final class BootstrapRootSetupService
             'viewerPageId' => $viewerPageId,
             'configurationPageId' => $configurationPageId,
             'templateId' => $templateId,
-            'solrCoreUid' => $solrCoreUid,
         ];
     }
 
@@ -91,7 +78,7 @@ final class BootstrapRootSetupService
      * Determines the next unique bootstrap site identifier, titles and slugs.
      *
      * @param array{identifier?:mixed,base?:mixed,rootTitle?:mixed,rootSlug?:mixed,viewerSlug?:mixed} $options
-     * @return array{index:int,siteIdentifier:string,siteBase:string,defaultLanguageBase:string,englishLanguageBase:string,rootPageTitle:string,rootPageSlug:string,viewerPageSlug:string}
+     * @return array{siteIdentifier:string,siteBase:string,defaultLanguageBase:string,englishLanguageBase:string,rootPageTitle:string,rootPageSlug:string,viewerPageSlug:string}
      */
     private function buildSetupContext(array $options): array
     {
@@ -105,9 +92,10 @@ final class BootstrapRootSetupService
         $siteIdentifier = $customIdentifier ?? ($nextIndex === 1
             ? self::SITE_IDENTIFIER_PREFIX
             : self::SITE_IDENTIFIER_PREFIX . '-' . $nextIndex);
-        $siteBase = $customBase ?? ($customIdentifier !== null
-            ? '/' . $siteIdentifier . '/'
-            : ($nextIndex === 1 ? '/' : '/' . $siteIdentifier . '/'));
+        $defaultBase = ($customIdentifier === null && $nextIndex === 1 && !$this->siteBaseExists('/'))
+            ? '/'
+            : '/' . $siteIdentifier . '/';
+        $siteBase = $customBase ?? $defaultBase;
         $rootPageTitle = $customRootTitle ?? ($nextIndex === 1
             ? self::ROOT_PAGE_TITLE_PREFIX
             : self::ROOT_PAGE_TITLE_PREFIX . ' ' . $nextIndex);
@@ -116,10 +104,10 @@ final class BootstrapRootSetupService
 
         $this->assertSiteIdentifierAvailable($siteIdentifier);
         $this->assertRootTitleAvailable($rootPageTitle);
+        $this->assertSiteBaseAvailable($siteBase);
         $this->assertBaseCompatibleWithSlugs($siteBase, $rootPageSlug, $viewerPageSlug);
 
         return [
-            'index' => $nextIndex,
             'siteIdentifier' => $siteIdentifier,
             'siteBase' => $siteBase,
             'defaultLanguageBase' => $siteBase,
@@ -243,9 +231,6 @@ final class BootstrapRootSetupService
         $this->siteConfiguration->write($context['siteIdentifier'], $configuration);
     }
 
-    /**
-     * Ensures the chosen site identifier does not already exist.
-     */
     private function assertSiteIdentifierAvailable(string $siteIdentifier): void
     {
         $siteDirectory = Environment::getConfigPath() . '/sites/' . $siteIdentifier;
@@ -254,9 +239,24 @@ final class BootstrapRootSetupService
         }
     }
 
-    /**
-     * Ensures the chosen root title is not already used by another root page.
-     */
+    private function assertSiteBaseAvailable(string $siteBase): void
+    {
+        if ($this->siteBaseExists($siteBase)) {
+            throw new \RuntimeException(sprintf('The site base "%s" is already in use.', $siteBase));
+        }
+    }
+
+    private function siteBaseExists(string $siteBase): bool
+    {
+        foreach ($this->siteConfiguration->getAllExistingSites() as $site) {
+            if ($site instanceof Site && (string)$site->getBase() === $siteBase) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function assertRootTitleAvailable(string $rootPageTitle): void
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
@@ -276,9 +276,6 @@ final class BootstrapRootSetupService
         }
     }
 
-    /**
-     * Validates the optional base/slug combination conservatively.
-     */
     private function assertBaseCompatibleWithSlugs(string $siteBase, string $rootSlug, string $viewerSlug): void
     {
         if ($siteBase !== '/' && $rootSlug !== '/') {
@@ -384,64 +381,13 @@ final class BootstrapRootSetupService
     }
 
     /**
-     * Creates a default Solr core record for the bootstrap configuration folder if possible.
-     */
-    private function ensureSolrCore(int $configurationPageId): ?int
-    {
-        $existing = $this->findOneByPid('tx_dlf_solrcores', $configurationPageId);
-        if ($existing !== null) {
-            return (int)$existing['uid'];
-        }
-
-        try {
-            $indexName = Solr::createCore('');
-        } catch (\Throwable) {
-            return null;
-        }
-
-        if ($indexName === '') {
-            return null;
-        }
-
-        return $this->insertRow('tx_dlf_solrcores', [
-            'pid' => $configurationPageId,
-            'tstamp' => time(),
-            'crdate' => time(),
-            'cruser_id' => 0,
-            'deleted' => 0,
-            'label' => 'Default Solr Core (PID ' . $configurationPageId . ')',
-            'index_name' => $indexName,
-        ]);
-    }
-
-    /**
-     * Removes legacy bootstrap viewer content elements that are no longer used.
-     */
-    private function cleanupLegacyViewerContentElements(int $viewerPageId): void
-    {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
-        $queryBuilder
-            ->delete('tt_content')
-            ->where(
-                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($viewerPageId, Connection::PARAM_INT)),
-                $queryBuilder->expr()->eq('CType', $queryBuilder->createNamedParameter('list')),
-                $queryBuilder->expr()->in(
-                    'list_type',
-                    $queryBuilder->createNamedParameter(self::LEGACY_VIEWER_PLUGIN_TYPES, Connection::PARAM_STR_ARRAY)
-                )
-            )
-            ->executeStatement();
-    }
-
-    /**
-     * Rewrites the bootstrap template constants to the imported page IDs and optional Solr core.
+     * Rewrites the bootstrap template constants to the imported page IDs.
      */
     private function updateTemplate(
         int $templateId,
         int $rootPageId,
         int $viewerPageId,
         int $configurationPageId,
-        ?int $solrCoreUid
     ): void {
         $existingTemplate = $this->findByUid('sys_template', $templateId);
         $constants = [
@@ -450,32 +396,11 @@ final class BootstrapRootSetupService
             'plugin.tx_dlf.bootstrap.viewerPid = ' . $viewerPageId,
         ];
 
-        if ($solrCoreUid !== null) {
-            $constants[] = 'plugin.tx_dlf.persistence.solrCoreUid = ' . $solrCoreUid;
-        }
-
         $this->updateRow('sys_template', $templateId, [
             'tstamp' => time(),
             'include_static_file' => $this->mergeStaticFiles((string)($existingTemplate['include_static_file'] ?? '')),
             'constants' => implode(PHP_EOL, $constants),
         ]);
-    }
-
-    private function findOneByPid(string $table, int $pid): ?array
-    {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable($table);
-        $row = $queryBuilder
-            ->select('uid')
-            ->from($table)
-            ->where(
-                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, Connection::PARAM_INT)),
-                $queryBuilder->expr()->eq('deleted', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
-            )
-            ->setMaxResults(1)
-            ->executeQuery()
-            ->fetchAssociative();
-
-        return $row !== false ? $row : null;
     }
 
     private function findByUid(string $table, int $uid): ?array
@@ -494,9 +419,6 @@ final class BootstrapRootSetupService
         return $row !== false ? $row : null;
     }
 
-    /**
-     * Returns the next sorting value below a page.
-     */
     private function nextSortingForPid(int $pid): int
     {
         $queryBuilder = $this->connectionPool->getQueryBuilderForTable('pages');
@@ -532,9 +454,6 @@ final class BootstrapRootSetupService
         $connection->update($table, $data, ['uid' => $uid]);
     }
 
-    /**
-     * Merges the required base and bootstrap static TypoScript includes into the template record.
-     */
     private function mergeStaticFiles(string $includeStaticFile): string
     {
         $files = array_filter(array_map('trim', explode(',', $includeStaticFile)));

@@ -11,3 +11,4 @@ These pages are aimed at developers working on Kitodo.Presentation.
    Validation
    Embedded3DViewer
    BootstrapViewerSetup
+   TenantSetup
