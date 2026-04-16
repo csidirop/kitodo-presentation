@@ -4,17 +4,17 @@ declare(strict_types=1);
 
 namespace Kitodo\Dlf\Service;
 
-use Kitodo\Dlf\Common\Solr\Solr;
 use Symfony\Component\Yaml\Yaml;
 use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Configuration\SiteConfiguration;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Service class for running the manual bootstrap root setup.
+ * Service class for creating a new bootstrap root page tree.
  */
 final class BootstrapRootSetupService
 {
@@ -26,26 +26,18 @@ final class BootstrapRootSetupService
     private const BASIC_STATIC_FILE = 'EXT:dlf/Configuration/TypoScript/';
     private const BOOTSTRAP_STATIC_FILE = 'EXT:dlf/Configuration/TypoScript/Bootstrap/';
     private const SITE_CONFIGURATION_TEMPLATE = 'EXT:dlf/Resources/Private/Data/BootstrapSiteConfig.yaml';
-    private const LEGACY_VIEWER_PLUGIN_TYPES = [
-        'dlf_navigation',
-        'dlf_toolbox',
-        'dlf_pageview',
-        'dlf_tableofcontents',
-        'dlf_metadata',
-    ];
 
     public function __construct(
         private readonly ConnectionPool $connectionPool,
         private readonly SiteConfiguration $siteConfiguration,
         private readonly CacheManager $cacheManager,
-        private readonly BootstrapConfigurationImportService $bootstrapConfigurationImportService,
     ) {}
 
     /**
-     * Runs the manual setup for a new bootstrap root page tree.
+     * Runs the setup for a new bootstrap root page tree.
      *
      * @param array{identifier?:mixed,base?:mixed,rootTitle?:mixed,rootSlug?:mixed,viewerSlug?:mixed} $options
-     * @return array{siteIdentifier:string,siteBase:string,rootPageId:int,viewerPageId:int,configurationPageId:int,templateId:int,solrCoreUid:?int}
+     * @return array{siteIdentifier:string,siteBase:string,rootPageId:int,viewerPageId:int,configurationPageId:int,templateId:int}
      */
     public function runSetup(array $options = []): array
     {
@@ -54,25 +46,15 @@ final class BootstrapRootSetupService
         $rootPageId = $this->createRootPage($context);
         $this->writeSiteConfiguration($context, $rootPageId);
 
-        $configurationPageId = $this->createPage($rootPageId, self::CONFIGURATION_PAGE_TITLE, [
-            'doktype' => 254,
-            'sorting' => 256,
-        ]);
-        $viewerPageId = $this->createPage($rootPageId, self::VIEWER_PAGE_TITLE, [
-            'slug' => $context['viewerPageSlug'],
-            'sorting' => 512,
-        ]);
+        $configurationPageId = $this->createPage($rootPageId, self::CONFIGURATION_PAGE_TITLE, ['doktype' => 254,'sorting' => 256,]);
+        $viewerPageId = $this->createPage($rootPageId, self::VIEWER_PAGE_TITLE, ['slug' => $context['viewerPageSlug'], 'sorting' => 512,]);
 
         $templateId = $this->ensureTemplate($rootPageId);
-        $this->bootstrapConfigurationImportService->seed($configurationPageId);
-        $solrCoreUid = $this->ensureSolrCore($configurationPageId);
-        $this->cleanupLegacyViewerContentElements($viewerPageId);
         $this->updateTemplate(
             $templateId,
             $rootPageId,
             $viewerPageId,
             $configurationPageId,
-            $solrCoreUid
         );
         $this->cacheManager->flushCaches();
 
@@ -83,7 +65,6 @@ final class BootstrapRootSetupService
             'viewerPageId' => $viewerPageId,
             'configurationPageId' => $configurationPageId,
             'templateId' => $templateId,
-            'solrCoreUid' => $solrCoreUid,
         ];
     }
 
@@ -91,7 +72,7 @@ final class BootstrapRootSetupService
      * Determines the next unique bootstrap site identifier, titles and slugs.
      *
      * @param array{identifier?:mixed,base?:mixed,rootTitle?:mixed,rootSlug?:mixed,viewerSlug?:mixed} $options
-     * @return array{index:int,siteIdentifier:string,siteBase:string,defaultLanguageBase:string,englishLanguageBase:string,rootPageTitle:string,rootPageSlug:string,viewerPageSlug:string}
+     * @return array{siteIdentifier:string,siteBase:string,rootPageTitle:string,rootPageSlug:string,viewerPageSlug:string}
      */
     private function buildSetupContext(array $options): array
     {
@@ -102,28 +83,23 @@ final class BootstrapRootSetupService
         $customRootSlug = $this->normalizeSlugOption($options['rootSlug'] ?? null, 'root-slug');
         $customViewerSlug = $this->normalizeSlugOption($options['viewerSlug'] ?? null, 'viewer-slug');
 
-        $siteIdentifier = $customIdentifier ?? ($nextIndex === 1
-            ? self::SITE_IDENTIFIER_PREFIX
-            : self::SITE_IDENTIFIER_PREFIX . '-' . $nextIndex);
-        $siteBase = $customBase ?? ($customIdentifier !== null
-            ? '/' . $siteIdentifier . '/'
-            : ($nextIndex === 1 ? '/' : '/' . $siteIdentifier . '/'));
-        $rootPageTitle = $customRootTitle ?? ($nextIndex === 1
-            ? self::ROOT_PAGE_TITLE_PREFIX
-            : self::ROOT_PAGE_TITLE_PREFIX . ' ' . $nextIndex);
+        $siteIdentifier = $customIdentifier ?? ($nextIndex === 1 ? self::SITE_IDENTIFIER_PREFIX : self::SITE_IDENTIFIER_PREFIX . '-' . $nextIndex);
+        $defaultBase = ($customIdentifier === null && $nextIndex === 1 && !$this->siteBaseExists('/')) ? '/' : '/' . $siteIdentifier . '/';
+        $siteBase = $customBase ?? $defaultBase;
+        $rootPageTitle = $customRootTitle ?? ($nextIndex === 1 ? self::ROOT_PAGE_TITLE_PREFIX : self::ROOT_PAGE_TITLE_PREFIX . ' ' . $nextIndex);
         $rootPageSlug = $customRootSlug ?? '/';
         $viewerPageSlug = $customViewerSlug ?? '/viewer';
 
         $this->assertSiteIdentifierAvailable($siteIdentifier);
         $this->assertRootTitleAvailable($rootPageTitle);
+        if ($this->siteBaseExists($siteBase)) {
+            throw new \RuntimeException(sprintf('The site base "%s" is already in use.', $siteBase));
+        }
         $this->assertBaseCompatibleWithSlugs($siteBase, $rootPageSlug, $viewerPageSlug);
 
         return [
-            'index' => $nextIndex,
             'siteIdentifier' => $siteIdentifier,
             'siteBase' => $siteBase,
-            'defaultLanguageBase' => $siteBase,
-            'englishLanguageBase' => rtrim($siteBase, '/') . '/en/',
             'rootPageTitle' => $rootPageTitle,
             'rootPageSlug' => $rootPageSlug,
             'viewerPageSlug' => $viewerPageSlug,
@@ -132,22 +108,28 @@ final class BootstrapRootSetupService
 
     /**
      * Finds the next free numeric index for bootstrap groups by inspecting existing site folders and root pages.
+     * 
+     * @return int The next available index, starting from 1. If no existing groups are found, returns 1.
      */
     private function determineNextGroupIndex(): int
     {
         $maxIndex = 0;
         $sitesPath = Environment::getConfigPath() . '/sites';
         if (is_dir($sitesPath)) {
+            // Look for existing site folders with the defined prefix and extract the highest index:
             foreach ((array)scandir($sitesPath) as $entry) {
+                // Skip non-string entries and special directories:
                 if (!is_string($entry) || $entry === '.' || $entry === '..') {
                     continue;
                 }
 
+                // Check for exact prefix match (index 1) or prefix followed by a numeric suffix:
                 if ($entry === self::SITE_IDENTIFIER_PREFIX) {
                     $maxIndex = max($maxIndex, 1);
                     continue;
                 }
 
+                // Check for entries matching the pattern "prefix-{number}" and extract the number:
                 if (preg_match('/^' . preg_quote(self::SITE_IDENTIFIER_PREFIX, '/') . '-(\d+)$/', $entry, $matches) === 1) {
                     $maxIndex = max($maxIndex, (int)$matches[1]);
                 }
@@ -183,6 +165,7 @@ final class BootstrapRootSetupService
      * Creates a fresh bootstrap root page for the next group.
      *
      * @param array{rootPageTitle:string,rootPageSlug:string} $context
+     * @return int The uid of the created root page
      */
     private function createRootPage(array $context): int
     {
@@ -203,7 +186,10 @@ final class BootstrapRootSetupService
     /**
      * Creates a child page below a freshly created bootstrap root page.
      *
-     * @param array<string, int|string> $data
+     * @param int $pid
+     * @param string $title
+     * @param array<string, mixed> $data
+     * @return int
      */
     private function createPage(int $pid, string $title, array $data): int
     {
@@ -221,7 +207,9 @@ final class BootstrapRootSetupService
     /**
      * Writes a unique bootstrap site configuration for the freshly created root page.
      *
-     * @param array{siteIdentifier:string,siteBase:string,defaultLanguageBase:string,englishLanguageBase:string} $context
+     * @param array{siteIdentifier:string,siteBase:string} $context
+     * @param int $rootPageId
+     * @return void
      */
     private function writeSiteConfiguration(array $context, int $rootPageId): void
     {
@@ -233,18 +221,15 @@ final class BootstrapRootSetupService
 
         $configuration['base'] = $context['siteBase'];
         $configuration['rootPageId'] = $rootPageId;
-        if (isset($configuration['languages'][0]) && is_array($configuration['languages'][0])) {
-            $configuration['languages'][0]['base'] = $context['defaultLanguageBase'];
-        }
-        if (isset($configuration['languages'][1]) && is_array($configuration['languages'][1])) {
-            $configuration['languages'][1]['base'] = $context['englishLanguageBase'];
-        }
 
         $this->siteConfiguration->write($context['siteIdentifier'], $configuration);
     }
 
     /**
-     * Ensures the chosen site identifier does not already exist.
+     * Asserts that the given site identifier is available (no existing site folder with the same name).
+     * 
+     * @param string $siteIdentifier
+     * @return void
      */
     private function assertSiteIdentifierAvailable(string $siteIdentifier): void
     {
@@ -255,7 +240,27 @@ final class BootstrapRootSetupService
     }
 
     /**
-     * Ensures the chosen root title is not already used by another root page.
+     * Checks if any existing site configuration uses the given site base.
+     * 
+     * @param string $siteBase
+     * @return bool
+     */
+    private function siteBaseExists(string $siteBase): bool
+    {
+        foreach ($this->siteConfiguration->getAllExistingSites() as $site) {
+            if ($site instanceof Site && (string)$site->getBase() === $siteBase) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Asserts that the given root page title is available (no existing root page with the same title).
+     * 
+     * @param string $rootPageTitle
+     * @return void
      */
     private function assertRootTitleAvailable(string $rootPageTitle): void
     {
@@ -277,7 +282,12 @@ final class BootstrapRootSetupService
     }
 
     /**
-     * Validates the optional base/slug combination conservatively.
+     * Asserts that custom root and viewer slugs are only used together with the root site base "/" to avoid conflicts with existing pages.
+     * 
+     * @param string $siteBase
+     * @param string $rootSlug
+     * @param string $viewerSlug
+      * @return void
      */
     private function assertBaseCompatibleWithSlugs(string $siteBase, string $rootSlug, string $viewerSlug): void
     {
@@ -289,6 +299,12 @@ final class BootstrapRootSetupService
         }
     }
 
+    /**
+     * Normalizes and validates the custom site identifier option. It must only contain lowercase letters, numbers and hyphens.
+     * 
+     * @param mixed $value
+     * @return string|null The normalized identifier or null if no valid value is provided.
+     */
     private function normalizeIdentifierOption(mixed $value): ?string
     {
         $value = $this->normalizeTextOption($value);
@@ -301,6 +317,12 @@ final class BootstrapRootSetupService
         return $value;
     }
 
+    /**
+     * Normalizes and validates the custom site base option. It must start with a slash and end with a slash (unless it's just "/").
+     * 
+     * @param mixed $value
+     * @return string|null The normalized base or null if no valid value is provided.
+     */
     private function normalizeBaseOption(mixed $value): ?string
     {
         $value = $this->normalizeTextOption($value);
@@ -316,6 +338,13 @@ final class BootstrapRootSetupService
         return $value;
     }
 
+    /**
+     * Normalizes and validates the custom slug options. They must start with a slash and must not end with a slash (unless it's just "/").
+     * 
+     * @param mixed $value
+     * @param string $optionName The name of the option for error messages.
+     * @return string|null The normalized slug or null if no valid value is provided.
+     */
     private function normalizeSlugOption(mixed $value, string $optionName): ?string
     {
         $value = $this->normalizeTextOption($value);
@@ -339,6 +368,9 @@ final class BootstrapRootSetupService
 
     /**
      * Creates or updates the root template and ensures the required static TypoScript includes are present.
+     * 
+     * @param int $rootPageId The UID of the root page.
+     * @return int The uid of the created or updated template record.
      */
     private function ensureTemplate(int $rootPageId): int
     {
@@ -384,118 +416,33 @@ final class BootstrapRootSetupService
     }
 
     /**
-     * Creates a default Solr core record for the bootstrap configuration folder if possible.
+     * Rewrites the bootstrap template constants to the imported page IDs.
+     * 
+     * @param int $templateId The uid of the template record to update.
+     * @param int $rootPageId The UID of the root page.
+     * @param int $viewerPageId The UID of the viewer page.
+     * @param int $configurationPageId The UID of the configuration page.
+     * @return void
      */
-    private function ensureSolrCore(int $configurationPageId): ?int
+    private function updateTemplate(int $templateId, int $rootPageId, int $viewerPageId, int $configurationPageId,): void 
     {
-        $existing = $this->findOneByPid('tx_dlf_solrcores', $configurationPageId);
-        if ($existing !== null) {
-            return (int)$existing['uid'];
-        }
-
-        try {
-            $indexName = Solr::createCore('');
-        } catch (\Throwable) {
-            return null;
-        }
-
-        if ($indexName === '') {
-            return null;
-        }
-
-        return $this->insertRow('tx_dlf_solrcores', [
-            'pid' => $configurationPageId,
-            'tstamp' => time(),
-            'crdate' => time(),
-            'cruser_id' => 0,
-            'deleted' => 0,
-            'label' => 'Default Solr Core (PID ' . $configurationPageId . ')',
-            'index_name' => $indexName,
-        ]);
-    }
-
-    /**
-     * Removes legacy bootstrap viewer content elements that are no longer used.
-     */
-    private function cleanupLegacyViewerContentElements(int $viewerPageId): void
-    {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable('tt_content');
-        $queryBuilder
-            ->delete('tt_content')
-            ->where(
-                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($viewerPageId, Connection::PARAM_INT)),
-                $queryBuilder->expr()->eq('CType', $queryBuilder->createNamedParameter('list')),
-                $queryBuilder->expr()->in(
-                    'list_type',
-                    $queryBuilder->createNamedParameter(self::LEGACY_VIEWER_PLUGIN_TYPES, Connection::PARAM_STR_ARRAY)
-                )
-            )
-            ->executeStatement();
-    }
-
-    /**
-     * Rewrites the bootstrap template constants to the imported page IDs and optional Solr core.
-     */
-    private function updateTemplate(
-        int $templateId,
-        int $rootPageId,
-        int $viewerPageId,
-        int $configurationPageId,
-        ?int $solrCoreUid
-    ): void {
-        $existingTemplate = $this->findByUid('sys_template', $templateId);
         $constants = [
             'plugin.tx_dlf.persistence.storagePid = ' . $configurationPageId,
             'plugin.tx_dlf.bootstrap.rootPid = ' . $rootPageId,
             'plugin.tx_dlf.bootstrap.viewerPid = ' . $viewerPageId,
         ];
 
-        if ($solrCoreUid !== null) {
-            $constants[] = 'plugin.tx_dlf.persistence.solrCoreUid = ' . $solrCoreUid;
-        }
-
         $this->updateRow('sys_template', $templateId, [
             'tstamp' => time(),
-            'include_static_file' => $this->mergeStaticFiles((string)($existingTemplate['include_static_file'] ?? '')),
             'constants' => implode(PHP_EOL, $constants),
         ]);
     }
 
-    private function findOneByPid(string $table, int $pid): ?array
-    {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable($table);
-        $row = $queryBuilder
-            ->select('uid')
-            ->from($table)
-            ->where(
-                $queryBuilder->expr()->eq('pid', $queryBuilder->createNamedParameter($pid, Connection::PARAM_INT)),
-                $queryBuilder->expr()->eq('deleted', $queryBuilder->createNamedParameter(0, Connection::PARAM_INT))
-            )
-            ->setMaxResults(1)
-            ->executeQuery()
-            ->fetchAssociative();
-
-        return $row !== false ? $row : null;
-    }
-
-    private function findByUid(string $table, int $uid): ?array
-    {
-        $queryBuilder = $this->connectionPool->getQueryBuilderForTable($table);
-        $row = $queryBuilder
-            ->select('*')
-            ->from($table)
-            ->where(
-                $queryBuilder->expr()->eq('uid', $queryBuilder->createNamedParameter($uid, Connection::PARAM_INT))
-            )
-            ->setMaxResults(1)
-            ->executeQuery()
-            ->fetchAssociative();
-
-        return $row !== false ? $row : null;
-    }
-
     /**
-     * Returns the next sorting value below a page.
+     * Determines the next sorting value for a new page under the given parent page by finding the current maximum sorting value and adding 256.
+     * 
+     * @param int $pid
+     * @return int The next sorting value to use for a new page under the given parent page.
      */
     private function nextSortingForPid(int $pid): int
     {
@@ -514,7 +461,11 @@ final class BootstrapRootSetupService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * Inserts a new row into the given table with the provided data and returns the uid of the newly created record.
+     * 
+     * @param string $table The name of the table to insert into.
+     * @param array<string, mixed> $data The data to insert.
+     * @return int The uid of the newly created record.
      */
     private function insertRow(string $table, array $data): int
     {
@@ -524,7 +475,12 @@ final class BootstrapRootSetupService
     }
 
     /**
-     * @param array<string, mixed> $data
+     * Updates a row in the given table with the provided data.
+     * 
+     * @param string $table The name of the table to update.
+     * @param int $uid The uid of the row to update.
+     * @param array<string, mixed> $data The data to update.
+     * @return void
      */
     private function updateRow(string $table, int $uid, array $data): void
     {
@@ -533,7 +489,10 @@ final class BootstrapRootSetupService
     }
 
     /**
-     * Merges the required base and bootstrap static TypoScript includes into the template record.
+     * Merges the required static TypoScript files with any existing includes, ensuring there are no duplicates and that the required files are included.
+     * 
+     * @param string $includeStaticFile The existing include_static_file value from the template record.
+     * @return string The merged include_static_file value with required files included.
      */
     private function mergeStaticFiles(string $includeStaticFile): string
     {
