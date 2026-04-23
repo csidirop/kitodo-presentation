@@ -39,7 +39,7 @@ final class TenantSetupCommand extends Command
         $io->title('Tenant setup');
 
         $configurationPage = $input->getOption('config-page');
-        if (!is_string($configurationPage) || trim($configurationPage) === '' || !ctype_digit(trim($configurationPage))) {
+        if (!is_string($configurationPage) || trim($configurationPage) === '' || !ctype_digit(trim($configurationPage))) { // Validate that the configuration page option is provided and is a numeric string
             $io->error('The --config-page option is required and must be a numeric page uid.');
             return Command::FAILURE;
         }

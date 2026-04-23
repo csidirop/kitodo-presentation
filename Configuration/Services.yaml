@@ -17,7 +17,7 @@ services:
     tags:
       - name: console.command
         command: 'kitodo:setup'
-        description: 'Create the root page tree and viewer setup manually.'
+        description: 'Create a default root page tree and viewer setup.'
 
   Kitodo\Dlf\Command\TenantSetupCommand:
     tags:

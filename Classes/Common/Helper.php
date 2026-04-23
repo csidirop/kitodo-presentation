@@ -559,7 +559,7 @@ class Helper
         $isCli = Environment::isCli();
         $isBackendRequest = isset($GLOBALS['TYPO3_REQUEST']) && ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isBackend();
 
-        if ($isCli) {
+        if ($isCli) { // Initialize CLI user if not already done (e.g. by a CommandController)
             if (!isset($GLOBALS['BE_USER'])) {
                 Bootstrap::initializeBackendUser(CommandLineUserAuthentication::class);
             }
