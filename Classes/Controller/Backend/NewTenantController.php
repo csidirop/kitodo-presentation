@@ -13,6 +13,7 @@
 namespace Kitodo\Dlf\Controller\Backend;
 
 use Kitodo\Dlf\Controller\AbstractController;
+use Kitodo\Dlf\Service\BootstrapRootSetupService;
 use Kitodo\Dlf\Service\TenantDefaultsSetupService;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
@@ -56,6 +57,19 @@ class NewTenantController extends AbstractController
     }
 
     /**
+     * @access protected
+     */
+    protected BootstrapRootSetupService $bootstrapRootSetupService;
+
+    /**
+     * @access public
+     */
+    public function injectBootstrapRootSetupService(BootstrapRootSetupService $bootstrapRootSetupService): void
+    {
+        $this->bootstrapRootSetupService = $bootstrapRootSetupService;
+    }
+
+    /**
      * Returns a response object with either the given html string or the current rendered view as content.
      *
      * @access protected
@@ -66,7 +80,7 @@ class NewTenantController extends AbstractController
      *
      * @return ResponseInterface the response
      */
-    protected function templateResponse(bool $isError, array $extraData): ResponseInterface
+    protected function templateResponse(string $template, array $extraData): ResponseInterface
     {
         $flashMessageService = GeneralUtility::makeInstance(FlashMessageService::class);
         $messageQueue = $flashMessageService->getMessageQueueByIdentifier();
@@ -76,7 +90,6 @@ class NewTenantController extends AbstractController
         $moduleTemplate->assignMultiple($this->viewData);
         $moduleTemplate->assignMultiple($extraData);
         $moduleTemplate->setFlashMessageQueue($messageQueue);
-        $template = $isError ? 'Backend/NewTenant/Error' : 'Backend/NewTenant/Index';
         return $moduleTemplate->renderResponse($template);
     }
 
@@ -97,6 +110,22 @@ class NewTenantController extends AbstractController
 
     }
 
+
+    /**
+     * Action creating a default page tree from the virtual root page.
+     *
+     * @access public
+     */
+    public function createPagesAction(): ResponseInterface
+    {
+        if ($this->pid !== 0) {
+            return $this->redirect('error');
+        }
+
+        $this->bootstrapRootSetupService->runSetup();
+
+        return $this->redirect('index', null, null, ['refreshPageTree' => 1]);
+    }
 
     /**
      * Action adding formats records
@@ -185,6 +214,12 @@ class NewTenantController extends AbstractController
     {
         $recordInfos = [];
 
+        if ($this->pid === 0) {
+            return $this->templateResponse('Backend/NewTenant/Root', [
+                'refreshPageTree' => (bool)($this->request->getQueryParams()['refreshPageTree'] ?? false),
+            ]);
+        }
+
         $this->pageInfo = BackendUtility::readPageAccess($this->pid, $GLOBALS['BE_USER']->getPagePermsClause(1)) ?: [];
 
         if (!isset($this->pageInfo['doktype']) || $this->pageInfo['doktype'] != 254) {
@@ -204,7 +239,7 @@ class NewTenantController extends AbstractController
 
         $viewData = ['recordInfos' => $recordInfos];
 
-        return $this->templateResponse(false, $viewData);
+        return $this->templateResponse('Backend/NewTenant/Index', $viewData);
     }
 
     /**
@@ -216,7 +251,7 @@ class NewTenantController extends AbstractController
      */
     public function errorAction(): ResponseInterface
     {
-        return $this->templateResponse(true, []);
+        return $this->templateResponse('Backend/NewTenant/Error', []);
     }
 
     /**
