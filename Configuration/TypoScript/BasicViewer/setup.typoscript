@@ -1,6 +1,7 @@
 page = PAGE
 page {
     typeNum = 0
+    bodyTag = <body class="tx-dlf-default-viewer tx-dlf-default-viewer-landing-page">
     meta.viewport = width=device-width, initial-scale=1
     includeCSS.dlfBasicViewer = EXT:dlf/Resources/Public/Stylesheets/default-viewer.css
 
@@ -22,13 +23,22 @@ page {
     }
 }
 
-plugin.tx_dlf_navigation = EXTBASEPLUGIN
-plugin.tx_dlf_navigation {
+lib.tx_dlf_default_viewer.navigation.pagecontrol = EXTBASEPLUGIN
+lib.tx_dlf_default_viewer.navigation.pagecontrol {
     extensionName = Dlf
     pluginName = Navigation
     settings {
         pageStep = 10
-        features = pagesBackward,pageSelect,pagesForward
+        features = pagesBackward,pagesForward
+    }
+}
+
+lib.tx_dlf_default_viewer.navigation.viewfunction = EXTBASEPLUGIN
+lib.tx_dlf_default_viewer.navigation.viewfunction {
+    extensionName = Dlf
+    pluginName = Navigation
+    settings {
+        features = pageSelect
     }
 }
 
@@ -69,10 +79,17 @@ plugin.tx_dlf_toolbox {
     extensionName = Dlf
     pluginName = Toolbox
     settings {
-        tools = rotationTool,zoomTool,imageDownloadTool,pdfDownloadTool,fulltextTool,fulltextDownloadTool
+        tools = rotationTool,zoomTool,imageManipulationTool
         showAsList = 0
         activateFullTextInitially = 0
         fullTextScrollElement = #tx-dlf-toolbox-fulltext-selection
+    }
+}
+plugin.tx_dlf_imagemanipulationtool < plugin.tx_dlf_toolbox
+plugin.tx_dlf_imagemanipulationtool {
+    settings {
+        tools = rotationTool,zoomTool,imageManipulationTool
+        showAsList = 0
     }
 }
 
