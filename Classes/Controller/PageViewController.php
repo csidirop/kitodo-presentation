@@ -101,6 +101,12 @@ class PageViewController extends AbstractController
             return $this->multiviewRedirect();
         }
 
+        $documentType = $this->document->getCurrentDocument()->tableOfContents[0]['type'] ?? '';
+        $excludedDocumentTypes = GeneralUtility::trimExplode(',', $this->settings['excludedDocumentTypes'] ?? '', true);
+        if (in_array($documentType, $excludedDocumentTypes, true)) {
+            return $this->htmlResponse();
+        }
+
         $this->setPage();
 
         $page = $this->requestData['page'] ?? 0;

@@ -259,8 +259,8 @@ class Embedded3dViewer implements LoggerAwareInterface, MiddlewareInterface
         /** @var ResourceFactory $resourceFactory */
         $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
         $html = $resourceFactory->retrieveFileOrFolderObject('EXT:dlf/Resources/Public/Html/Embedded3dViewerStandalone.html')->getContents(); // @phpstan-ignore-line
-        $file = $resourceFactory->retrieveFileOrFolderObject('EXT:dlf/Resources/Public/JavaScript/Embedded3dViewer/model-viewer-4.1.0.min.js');
-        $html = str_replace('{{modelViewerJS}}', $file->getPublicUrl(), $html);
+        $modelViewerJavaScript = PathUtility::getPublicResourceWebPath('EXT:dlf/Resources/Public/JavaScript/Embedded3dViewer/model-viewer-4.1.0.min.js');
+        $html = str_replace('{{modelViewerJS}}', $modelViewerJavaScript, $html);
         $html = str_replace("{{modelUrl}}", $model, $html);
         return new HtmlResponse($html);
     }

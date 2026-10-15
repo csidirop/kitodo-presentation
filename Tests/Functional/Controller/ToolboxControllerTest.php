@@ -117,6 +117,25 @@ class ToolboxControllerTest extends AbstractControllerTestCase
     }
 
     #[Test]
+    public function doesNotOfferImageAsModelDownload()
+    {
+        $settings = [
+            'storagePid' => self::$storagePid,
+            'tools' => 'modelDownloadTool'
+        ];
+        $templateHtml = '<html>modelUrl:{modelUrl}</html>';
+        $controller = $this->setUpController(ToolboxController::class, $settings, $templateHtml);
+        $request = $this->setUpRequest('main', ['tx_dlf' => [ 'id' => 2002, 'page' => 1 ] ]);
+
+        $response = $controller->processRequest($request);
+
+        $response->getBody()->rewind();
+        $actual = $response->getBody()->getContents();
+        $expected = '<html>modelUrl:</html>';
+        $this->assertEquals($expected, $actual);
+    }
+
+    #[Test]
     public function canMainAction()
     {
         $settings = [

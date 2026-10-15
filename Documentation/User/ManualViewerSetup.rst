@@ -57,3 +57,13 @@ and resized independently.
 
 Multi-view can also be opened directly with ``tx_dlf[multiview]=1`` and one or more
 ``tx_dlf[multiViewSource][N]`` URL parameters.
+
+3D models
+=========
+
+The Basic Viewer renders documents with the top-level type ``object`` through
+the embedded 3D viewer. Its built-in viewer supports GLB and glTF models. The
+model must be referenced by the first physical page in the ``DEFAULT`` file
+group. Remote models are streamed through the signed internal proxy so the
+built-in browser viewer also works when the model server does not provide CORS
+headers. When a model is available, the toolbox also provides a model download.

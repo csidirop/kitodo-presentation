@@ -11,6 +11,13 @@ plugin.tx_dlf_documentopener {
     settings.defaultTargetPid = {$plugin.tx_dlf.basicViewer.viewerPid}
 }
 
+plugin.tx_dlf_embedded3dviewer = EXTBASEPLUGIN
+plugin.tx_dlf_embedded3dviewer {
+    extensionName = Dlf
+    pluginName = Embedded3dViewer
+    settings.useInternalProxy = 1
+}
+
 plugin.tx_dlf_navigation = EXTBASEPLUGIN
 plugin.tx_dlf_navigation {
     extensionName = Dlf
@@ -50,6 +57,7 @@ plugin.tx_dlf_pageview {
     settings {
         features =
         elementId = tx-dlf-map
+        excludedDocumentTypes = object
     }
 }
 
@@ -67,7 +75,7 @@ plugin.tx_dlf_toolbox {
     extensionName = Dlf
     pluginName = Toolbox
     settings {
-        tools = rotationTool,zoomTool,imageDownloadTool,pdfDownloadTool,fulltextTool,fulltextDownloadTool,multiViewAddSourceTool
+        tools = rotationTool,zoomTool,imageDownloadTool,pdfDownloadTool,fulltextTool,fulltextDownloadTool,modelDownloadTool,multiViewAddSourceTool
         showAsList = 0
         activateFullTextInitially = 0
         fullTextScrollElement = #tx-dlf-toolbox-fulltext-selection

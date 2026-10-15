@@ -47,6 +47,9 @@
                         <f:if condition="{documentId}">
                             <f:then>
                                 <f:cObject typoscriptObjectPath="plugin.tx_dlf_pageview" />
+                                <div class="tx-dlf-default-viewer-3d-view">
+                                    <f:cObject typoscriptObjectPath="plugin.tx_dlf_embedded3dviewer" />
+                                </div>
                             </f:then>
                             <f:else>
                                 <div class="tx-dlf-default-viewer-empty-state">

@@ -100,4 +100,24 @@ class PageViewControllerTest extends AbstractControllerTestCase
             $actual
         );
     }
+
+    #[Test]
+    public function doesNotInitializeViewerForExcludedDocumentType()
+    {
+        $settings = [
+            'storagePid' => self::$storagePid,
+            'solrcore' => self::$solrCoreId,
+            'excludedDocumentTypes' => 'manuscript'
+        ];
+
+        $templateHtml = '<html>viewerConfiguration:<f:format.raw>{viewerConfiguration}</f:format.raw></html>';
+        $controller = $this->setUpController(PageViewController::class, $settings, $templateHtml);
+        $request = $this->setUpRequest('main', ['tx_dlf' => [ 'id' => 2001, 'page' => 1 ] ]);
+
+        $response = $controller->processRequest($request);
+
+        $response->getBody()->rewind();
+        $actual = $response->getBody()->getContents();
+        $this->assertStringNotContainsString('new dlfViewer', $actual);
+    }
 }

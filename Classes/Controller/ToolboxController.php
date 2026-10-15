@@ -134,6 +134,11 @@ class ToolboxController extends AbstractController
                 $mimeType = $file['mimetype'] ?? '';
             }
         }
+        // The model and image use groups may both default to `DEFAULT`.
+        // Never offer an image file as a downloadable 3D model.
+        if ($mimeType !== '' && Helper::filterFilesByMimeType(['mimetype' => $mimeType], ['image'])) {
+            return ['url' => '', 'format' => ''];
+        }
         return ['url' => $modelUrl, 'format' => $this->getModelFormat($modelUrl, $mimeType)];
     }
 

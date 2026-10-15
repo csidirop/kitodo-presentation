@@ -438,6 +438,28 @@ body.tx-dlf-default-viewer-page {
   inset: 0;
 }
 
+.tx-dlf-default-viewer-3d-view {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.tx-dlf-default-viewer-3d-view .tx-dlf-embedded3dviewer,
+.tx-dlf-default-viewer-3d-view .tx-dlf-embedded3dviewer > iframe {
+  width: 100%;
+  height: 100%;
+}
+
+.tx-dlf-default-viewer-3d-view .tx-dlf-embedded3dviewer > iframe {
+  display: block;
+  border: 0;
+}
+
+.tx-dlf-default-viewer-3d-view .tx-dlf-embedded3dviewer > iframe[src]:not([src=""]) {
+  pointer-events: auto;
+}
+
 #tx-dlf-annotationselection,
 #tx-dlf-toolbox-fulltext-selection {
   border-radius: 10px;
